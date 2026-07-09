@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>Project Zero - Gemini 기반 의사결정 체계</title>
+<title>Project Zero - Gemini 기반 의사결정 체계 (기능 고도화)</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght=600;700;900&family=Noto+Sans+KR:wght=400;500;600;700&family=IBM+Plex+Mono:wght=500;600&display=swap');
 
@@ -67,7 +67,6 @@
 #pz-root .pz-btn-row{display:flex; justify-content:flex-end; margin-top:12px; gap:10px; align-items:center;}
 #pz-root .pz-hint{font-size:12px; color:var(--ink-300); margin-right:auto;}
 
-/* 파일 업로드 스타일 추가 */
 #pz-root .pz-file-btn-label { display:inline-flex; align-items:center; gap:6px; padding:9px 15px; background:var(--paper-0); border:1px solid var(--line-200); border-radius:7px; font-size:12.5px; font-weight:600; color:var(--ink-700); cursor:pointer; transition:all 0.15s; }
 #pz-root .pz-file-btn-label:hover { background:var(--line-100); border-color:var(--ink-300); }
 #pz-root .pz-file-info { font-size:12px; color:var(--ai-500); font-weight:500; }
@@ -102,7 +101,7 @@
 #pz-root .pz-card-title span.t-text::before{content:'◆'; font-size:8px; margin-right:6px;}
 #pz-root .pz-card-body{font-size:13px; color:var(--ink-700); white-space:pre-wrap; line-height:1.65; flex:1; cursor:pointer; border-radius:4px; transition:background 0.2s;}
 #pz-root .pz-card-body:hover:not(.editing){background:rgba(58,79,207,0.05); outline:1px dashed var(--line-200);}
-#pz-root .pz-card-body a{color:var(--ai-500); text-decoration:underline; font-weight:500;}
+#pz-root .pz-card-body a{color:var(--ai-500); text-decoration:underline; font-weight:600;}
 
 /* 수정 기능 UI */
 #pz-root .pz-card-edit-area { width:100%; min-height:150px; border:1px solid var(--ai-500); border-radius:6px; padding:10px; font-family:inherit; font-size:13px; resize:vertical; background:#fff; margin-bottom:8px; line-height:1.65; color:var(--ink-900); }
@@ -112,13 +111,17 @@
 #pz-root .pz-btn-mini.cancel { background:var(--line-200); color:var(--ink-700); }
 #pz-root .pz-edit-badge { font-size:10.5px; background:var(--human-100); color:var(--human-500); padding:2px 6px; border-radius:4px; margin-left:auto; font-weight:600; font-family:'IBM Plex Mono', monospace; border:1px solid rgba(184,128,42,0.2); }
 
-/* Loading Skeleton Animation & 실시간 정보창 */
+/* Loading Skeleton Animation */
 #pz-root .pz-card.skeleton { background: #fff; border-color: var(--ai-100); }
 #pz-root .pz-card.skeleton .pz-card-body{color:var(--ink-300); pointer-events:none;}
 #pz-root .pz-loading-text { font-size: 11.5px; font-weight: 600; color: var(--ai-500); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
 #pz-root .pz-loading-text::after { content: '...'; animation: pzdots 1.5s steps(4, end) infinite; }
 #pz-root .pz-skel-line{height:9px; background:var(--line-100); border-radius:4px; margin-bottom:7px; animation:pzpulse 1.2s ease-in-out infinite;}
 #pz-root .pz-skel-line:nth-child(2){width:88%;} #pz-root .pz-skel-line:nth-child(3){width:74%;} #pz-root .pz-skel-line:nth-child(4){width:45%;}
+
+@media (prefers-reduced-motion: reduce) {
+  #pz-root .pz-skel-line { animation: none; }
+}
 
 @keyframes pzpulse{0%,100%{opacity:.4;}50%{opacity:1;}}
 @keyframes pzdots{0%,20%{content:''}40%{content:'.'}60%{content:'..'}80%,100%{content:'...'}}
@@ -173,13 +176,12 @@
   <div class="pz-agenda">
     <div class="pz-agenda-label"><span class="n">INPUT</span> 주제 및 안건 입력</div>
     <p class="pz-sub">자유롭게 입력 가능하며 구체적인 내용을 기입 할 수록 데이터의 정확도가 증가합니다.</p>
-    <textarea class="pz-input" id="pz-agenda-text" id="s1-input" placeholder="예)     
+    <textarea class="pz-input" id="pz-agenda-text" placeholder="예)     
     [핵심 주제] : 
     안건 ① : 
     안건 ② : 
     검토 대안 :  
     의사결정 요청사항 : "></textarea>
-
 
     <div class="pz-btn-row">
       <span class="pz-hint" id="pz-agenda-hint">참고 서류 및 분석용 파일을 로드할 수 있습니다.</span>
@@ -196,7 +198,7 @@
 
   <div class="pz-stage locked" id="stage-1">
     <div class="pz-stage-head"><span class="pz-stage-num mono">STAGE 01</span><span class="pz-stage-title">회의 준비</span></div>
-    <p class="pz-stage-caption">실제 유관 산업 상호명과 벤치마킹 수치, 신뢰할 수 있는 언론사의 기사 링크가 주도적으로 연동됩니다.</p>
+    <p class="pz-stage-caption">글로벌 주요 뉴스 데이터를 바탕으로 검증용 기사 매칭 본문 링크가 연동되어 자동 생성됩니다.</p>
     
     <div id="s1-history-container"></div>
     <div id="s1-skeleton-holder"></div>
@@ -224,10 +226,8 @@
         <button class="pz-btn" id="s2-run">② 회의록 AI 정리</button>
       </div>
     </div>
-    
     <div id="s2-history-container" style="margin-top:20px;"></div>
     <div id="s2-skeleton-holder"></div>
-
     <div class="pz-review" id="s2-review">
       <label><input type="checkbox" data-stage="2"> 담당자 검토 완료 — 3단계로 진행</label>
       <span class="pz-review-tag">인간 확인 대기</span>
@@ -242,10 +242,8 @@
       <span class="pz-hint">1·2단계 내용을 그대로 이어받아 산출합니다.</span>
       <button class="pz-btn" id="s3-run">③ 의사결정 요약 생성</button>
     </div>
-    
     <div id="s3-history-container" style="margin-top:20px;"></div>
     <div id="s3-skeleton-holder"></div>
-
     <div class="pz-review" id="s3-review">
       <label><input type="checkbox" data-stage="3"> 담당자 검토 완료 — 4단계로 진행</label>
       <span class="pz-review-tag">인간 확인 대기</span>
@@ -264,7 +262,6 @@
         <button class="pz-btn" id="s4-run">④ 진행 현황 AI 분석</button>
       </div>
     </div>
-    
     <div id="s4-history-container" style="margin-top:20px;"></div>
     <div id="s4-skeleton-holder"></div>
   </div>
@@ -299,7 +296,6 @@
   const keySave = el('pz-key-save');
   const keyStatus = el('pz-key-status');
   
-  // 파일 업로드 데이터 저장을 위한 변수
   let uploadedAgendaFileText = "";
   let uploadedS2FileText = "";
 
@@ -339,7 +335,6 @@
     return k;
   }
 
-  // --- 파일 업로드 리스너 구현 ---
   el('pz-agenda-file').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if(!file) return;
@@ -399,7 +394,6 @@
   function setStageDone(n){
     pipeState[n] = 'done';
     renderPipeline(pipeState);
-    // 지속관리까지 완료되면 종합 보고서 섹션 노출
     if(n === 4) {
       el('pz-report-area').style.display = 'block';
     }
@@ -458,21 +452,35 @@
     holder.scrollIntoView({behavior:'smooth', block:'end'});
   }
 
-  function hideSkeleton(holder) {
-    holder.innerHTML = '';
-  }
+  function hideSkeleton(holder) { holder.innerHTML = ''; }
 
   function getTimestamp() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
   }
 
+  /* ★ 가짜 링크 절대 차단 엔진 ★
+    AI가 임의의 깨지는 도메인 결합 가짜 URL을 절대 생성해내지 못하도록 방지하고, 
+    기사 제목 키워드를 추출하여 실제 동작하는 구글 뉴스(Google News Search) 원문 리스트 인터페이스 주소로 즉시 완벽 빌드합니다.
+  */
   function formatContent(text) {
-    let contentStr = text ? String(text) : '—';
-    return contentStr
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\[(.*?)\]\((https?:\/\/.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
+    if (!text) return '—';
+    let contentStr = String(text).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // 커스텀 마크다운 구문 파싱 처리: [search :: 기사제목이나 정확한 검색어 키워드](사용자에게 보여줄 기사 텍스트명)
+    const pattern = /\[search\s*::\s*([^\]]+)\]\(([^)]+)\)/gi;
+    
+    contentStr = contentStr.replace(pattern, (match, keyword, displayText) => {
+      const trimmedKeyword = keyword.trim();
+      const encodedKeyword = encodeURIComponent(trimmedKeyword);
+
+      // 구글 종합 뉴스 검색 인터페이스 URL 결합 생성 (가짜 링크 생성 원천 방지)
+      const baseUrl = `https://www.google.com/search?q=${encodedKeyword}&tbm=nws`;
+
+      return `<a href="${baseUrl}" target="_blank" onclick="event.stopPropagation();">📰 ${displayText}</a>`;
+    });
+
+    return contentStr;
   }
 
   function enableCardEditing(bodyElement, originalRawText) {
@@ -574,7 +582,7 @@
 
   let state = { agenda:'', s1:[], s2:[], s3:[], s4:[] };
 
-  // ---- STAGE 1 (파일 분석 로직 결합) ----
+  // ---- STAGE 1 ----
   el('pz-run-agenda').addEventListener('click', async ()=>{
     const agenda = el('pz-agenda-text').value.trim();
     if(!agenda) return;
@@ -592,24 +600,30 @@
         combinedAgenda += `\n\n[첨부된 추가 참고 서류 데이터]\n"""${uploadedAgendaFileText}"""`;
       }
 
-      const prompt = `당신은 최고전략책임자(CSO) 및 글로벌 리서치 전문가 에이전트입니다. 
-아래 안건과 첨부 데이터를 바탕으로 실제 존재하는 시장 내 유관 상호명과 실존 지표 수치를 바탕으로 종합 분석 리포트를 도출하세요.
+      const prompt = `당신은 최고전략책임자(CSO) 및 마켓 리서처 에이전트입니다.
+안건 정보를 분석하여 신뢰할 수 있는 다각도의 시장 리포트를 도출해내야 합니다.
 
 [안건 및 데이터]
 """${combinedAgenda}"""
 
-[★양적 확장 및 가독성 지침★]
-1. 반드시 【두괄식 구조】로 작성하세요. 항목의 첫 번째 문장에 최종 결론 및 핵심 요약을 한 줄로 명확하게 선언해야 합니다.
-2. 각 카드 항목별로 결론 하단에 최소 [2개 이상]의 구체적이고 깊이 있는 세부 분석 내용 및 데이터(지표)가 무조건 강제 포함되어 기술되어야 합니다. 내용이 빈약해서는 안 됩니다.
-3. 텍스트 가독성을 극대화하기 위해 번호 기호('1.', '2.')와 시각 기호('■', '▶')를 결합하여 문맥을 구조화하세요. 단정형 어조(~임, ~로 분석됨)를 일관되게 사용하십시오.
-4. 각 항목 마지막 줄에는 [언론사명 - 기사제목](링크주소) 형태의 리서치 출처 링크를 반드시 1개 이상 추가하세요.
-5. 다른 부가 설명 없이 오직 다음 규격의 JSON 구조로만 출력하세요.
+[★중요: 실시간 검색 플랫폼 매칭 및 가짜 링크 금지 지침★]
+1. 분석 사실과 실존 지표 근거를 증명할 수 있는 '실제 뉴스 기사 제목'이나 '공식 기관의 핵심 키워드'를 본문 내에 인용해 주십시오.
+2. 각 기사 인용 문구 및 버튼은 사용자가 클릭 시 실제 브라우저 경로로 직접 연동될 수 있도록 반드시 아래 특수 규격 포맷을 심어 출력하세요.
+   - 포맷: [search :: 검색창에 넣을 기사 제목 전체 혹은 핵심 키워드 조합](화면에 깔끔하게 노출될 기사 제목 텍스트)
+   - 예시: [search :: 가트너 2026년 생성형 AI 비즈니스 가치 전망 리포트](가트너 '2026년 글로벌 생성형 AI 시장 규모 전망 및 가치 발표')
+   - 예시: [search :: 삼성전자 인공지능 반도체 인프라 인프라 확보 투자 확대](삼성전자, 차세대 AI 반도체 생산라인 및 설비 투자 본격화)
+3. 임의의 가짜 고유 도메인 주소(https://... 등)를 절대로 마음대로 지어내서 본문에 적지 마십시오. 오직 위의 [search :: 키워드](텍스트) 규칙만 사용하여 가짜 주소 생성을 원천 배제하세요.
 
-{"business_data":"■ 핵심 결론: ...\\n1. [첫 번째 분석 정보 및 근거]\\n▶ [관련 상세 수치 지표]\\n2. [두 번째 분석 정보 및 근거]\\n▶ [관련 상세 수치 지표]\\n• [참고기사](링크)", 
- "competitor_analysis":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n2. ...\\n▶ ...\\n• [참고기사](링크)", 
- "market_size":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n2. ...\\n▶ ...\\n• [참고기사](링크)", 
- "risk_analysis":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n2. ...\\n▶ ...\\n• [참고기사](링크)", 
- "investment_scenario":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n2. ...\\n▶ ...\\n• [참고기사](링크)"}`;
+[★양적 확장 및 구조화 지침★]
+1. 반드시 【두괄식 구조】로 작성하세요. 각 항목 최상단 첫 줄은 핵심 요약 선언문이어야 합니다.
+2. 지표 아래에는 최소 2개 이상의 구체적인 지표, 벤치마킹 데이터, 실존 기업 및 세부 근거가 포함되어야 합니다.
+3. 단정형 어조(~임, ~함, ~로 파악됨)를 유지하고, 오직 아래 지정된 JSON 구조로만 출력하세요.
+
+{"business_data":"■ 핵심 결론: ...\\n1. [첫 번째 분석 정보]\\n▶ [관련 지표]\\n2. [두 번째 분석 정보]\\n▶ [관련 지표]\\n• 참고 문헌: [search :: 기사제목키워드](기사 제목 명칭 요약)", 
+ "competitor_analysis":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n• 시장 자료: [search :: 경쟁사분석키워드](경쟁사 전략 동향 뉴스)", 
+ "market_size":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n• 통계 출처: [search :: 시장규모전망키워드](성장률 추이 통계)", 
+ "risk_analysis":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n• 리스크 뉴스: [search :: 공급망리스크키워드](공급망 리스크 분석 기사)", 
+ "investment_scenario":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n• 투자 리포트: [search :: 투자밸류에이션키워드](밸류에이션 추이 현황)"}`;
 
       const r = await callGemini(prompt);
       state.s1.push(r);
@@ -628,7 +642,7 @@
     }
   });
 
-  // ---- STAGE 2 (파일 분석 로직 결합) ----
+  // ---- STAGE 2 ----
   el('s2-run').addEventListener('click', async ()=>{
     if(state.s1.length === 0){ el('s2-error').textContent='먼저 1단계를 실행해 주세요.'; return; }
     const notes = el('s2-input').value.trim() || '(회의 메모 없음 — 안건과 1단계 자료를 근거로 예상 쟁점을 정리)';
@@ -652,7 +666,7 @@
 
 [★양적 확장 및 가독성 지침★]
 1. 반드시 【두괄식 구조】를 적용하여 첫 문장에 카드별 핵심 요약을 선언하세요.
-2. 각 카드 항목 하단에는 최소 [2개 이상]의 핵심 요약 내용, 분류된 의견 쟁점, 또는 R&R 액션 플랜이 실존 수치/조직명과 함께 기술되어야 합니다.
+2. 각 카드 항목 하단에는 최소 [2개 이상]의 핵심 요약 내용, 분류된 의견 쟁점, 또는 R&R 액션 플랜이 기술되어야 합니다.
 3. 숫자 번호('1.', '2.')와 기호('■', '▶')를 복합적으로 사용하여 가독성을 강화하세요.
 4. 다른 설명 없이 JSON으로만 응답하세요.
 
@@ -748,7 +762,6 @@
         ['계약 건전성 분석', r.contract_status],
       ]);
       
-      // STAGE 04 완료 마킹을 트리거하여 최종 보고서 버튼 활성화 유도
       setStageDone(4);
     }catch(e){
       hideSkeleton(el('s4-skeleton-holder'));
@@ -768,7 +781,6 @@
       </div>`;
 
     try {
-      // 사용자가 수정한 데이터까지 수집하기 위해 DOM 데이터 읽기 권장하나, 여기서는 state 백업본을 기반으로 종합
       const fullContext = {
         initial_agenda: state.agenda,
         stage1_prep: state.s1[state.s1.length - 1],
@@ -778,17 +790,17 @@
       };
 
       const prompt = `당신은 최고경영자(CEO) 및 이사회에 제출할 최고 수준의 전략 종합 레포트를 작성하는 전략기획실장 에이전트입니다.
-STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석하여, 한눈에 파악 가능한 고품질 보고서를 작성하세요.
+STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석하여 보고서를 작성하세요.
 
 [분석 대상 데이터]
 """${JSON.stringify(fullContext)}"""
 
 [★보고서 작성 지침 - 핵심필수★]
-1. 반드시 【전체 최고 요약문(Executive Summary)】을 최상단에 배치하되, 철저한 【두괄식 구조】로 작성하십시오. 핵심성과와 향후 방향성이 첫 문장에 나와야 합니다.
-2. 각 섹션(안건, 회의 분석 결과, 최종 결정 계획, 사후 리스크 현황 및 제언) 역시 첫 문장에 결론을 내리는 【두괄식 구조】를 엄격하게 적용하세요.
-3. 텍스트의 가독성을 극대화하기 위해 숫자 번호('1.', '2.')와 기호('■', '▶')를 고도로 조화시켜 구조화하십시오.
-4. 어조는 전문적이고 엄격한 단정형 어조(~임, ~함, ~을 건의함)를 사용하십시오.
-5. JSON 형태가 아닌 일반 텍스트 마크다운 형태로 직접 읽을 수 있게 출력하세요.`;
+1. 반드시 【전체 최고 요약문(Executive Summary)】을 최상단에 배치하되, 철저한 【두괄식 구조】로 작성하십시오.
+2. 각 섹션 역시 첫 문장에 결론을 내리는 【두괄식 구조】를 엄격하게 적용하세요.
+3. 가독성을 극대화하기 위해 숫자 번호('1.', '2.')와 기호('■', '▶')를 구조화하십시오.
+4. 어조는 전문적이고 엄격한 단정형 어조(~임, ~함)를 사용하십시오.
+5. 출력 형식에서 1단계 기사 링크 등 특수 검색 규격([search :: keyword](text))이 있다면 변형하지 말고 그대로 유지하여 출력하세요.`;
 
       const reportText = await callGemini(prompt, false);
       skeletonHolder.innerHTML = '';
