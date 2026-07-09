@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Project Zero - Gemini 기반 의사결정 체계</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght=600;700;900&family=Noto+Sans+KR:wght=400;500;600;700&family=IBM+Plex+Mono:wght=500;600&display=swap');
+
+#pz-root {
+  --ink-900:#12151C; --ink-700:#2B303B; --ink-500:#5B6273; --ink-300:#9BA1AF;
+  --paper-0:#F2F3F6; --surface-0:#FFFFFF; --line-200:#DCDFE6; --line-100:#E9EBEF;
+  --ai-500:#3A4FCF; --ai-100:#E7E9FB; --ai-050:#F3F4FD;
+  --human-500:#B8802A; --human-100:#F5E9D6; --human-050:#FAF3E6;
+  --ok-500:#2E8B57;
+  font-family:'Noto Sans KR',sans-serif; color:var(--ink-900); background:var(--paper-0);
+  max-width:980px; margin:0 auto; padding:0 0 64px; line-height:1.6;
+}
+#pz-root *{box-sizing:border-box;}
+#pz-root .serif{font-family:'Noto Serif KR',serif;}
+#pz-root .mono{font-family:'IBM Plex Mono',monospace; letter-spacing:.01em;}
+
+/* ---------- Header ---------- */
+#pz-root .pz-header{padding:40px 28px 28px; border-bottom:1px solid var(--line-200); background:var(--surface-0);}
+#pz-root .pz-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.14em; color:var(--ai-500); text-transform:uppercase; margin-bottom:10px; display:flex; gap:10px; align-items:center;}
+#pz-root .pz-eyebrow::before{content:''; width:7px; height:7px; border-radius:50%; background:var(--ai-500); box-shadow:0 0 0 3px var(--ai-100);}
+#pz-root .pz-title{font-size:28px; font-weight:900; margin:0 0 8px; line-height:1.3;}
+#pz-root .pz-sub{font-size:14.5px; color:var(--ink-500); margin:0;}
+
+/* ---------- API key config ---------- */
+#pz-root .pz-config{padding:16px 28px; background:var(--ink-900); display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+#pz-root .pz-config-label{font-family:'IBM Plex Mono',monospace; font-size:11px; color:#9BA1AF; letter-spacing:.04em; white-space:nowrap;}
+#pz-root input.pz-key-input{flex:1; min-width:220px; background:#1D212B; border:1px solid #353B4A; color:#E9EBEF; border-radius:6px; padding:8px 12px; font-family:'IBM Plex Mono',monospace; font-size:12.5px;}
+#pz-root input.pz-key-input:focus{outline:none; border-color:var(--ai-500);}
+#pz-root .pz-config label.pz-save{display:flex; align-items:center; gap:6px; font-size:11.5px; color:#9BA1AF; white-space:nowrap; cursor:pointer;}
+#pz-root .pz-config label.pz-save input{accent-color:var(--ai-500);}
+#pz-root .pz-key-status{font-size:11px; font-family:'IBM Plex Mono',monospace; padding:4px 9px; border-radius:4px; white-space:nowrap;}
+#pz-root .pz-key-status.ok{background:#1E3B2C; color:#6FCF97;}
+#pz-root .pz-key-status.missing{background:#3B2A1E; color:#E0A560;}
+
+/* ---------- Delegation spectrum ---------- */
+#pz-root .pz-spectrum{padding:26px 28px 30px; background:var(--surface-0); border-bottom:1px solid var(--line-200);}
+#pz-root .pz-spectrum-label{font-size:13px; font-weight:700; margin-bottom:4px;}
+#pz-root .pz-spectrum-desc{font-size:12.5px; color:var(--ink-500); margin-bottom:18px; max-width:640px;}
+#pz-root .pz-spectrum-track{position:relative; height:6px; border-radius:4px; margin:0 4px 10px;
+  background:linear-gradient(90deg,#8891C8 0%, var(--ai-500) 22%, #6E76B8 42%, #A98A5C 58%, var(--human-500) 78%, #C9A15C 100%);}
+#pz-root .pz-spectrum-ticks{display:flex; justify-content:space-between; padding:0 0;}
+#pz-root .pz-tick{flex:1; text-align:center; position:relative;}
+#pz-root .pz-tick-dot{width:9px; height:9px; border-radius:50%; background:var(--surface-0); border:2px solid var(--ink-300); margin:-11px auto 6px; position:relative; z-index:2;}
+#pz-root .pz-tick-num{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink-300); display:block;}
+#pz-root .pz-tick-name{font-size:11px; color:var(--ink-500); display:block; margin-top:1px;}
+#pz-root .pz-tick.active .pz-tick-dot{background:var(--ai-500); border-color:var(--ai-500); box-shadow:0 0 0 4px var(--ai-100); transform:scale(1.15);}
+#pz-root .pz-tick.active .pz-tick-name{color:var(--ai-500); font-weight:700;}
+#pz-root .pz-tick.active2 .pz-tick-dot{background:#6E76B8; border-color:#6E76B8; box-shadow:0 0 0 4px var(--ai-100); transform:scale(1.1);}
+#pz-root .pz-tick.active2 .pz-tick-name{color:#565EA8; font-weight:700;}
+#pz-root .pz-spectrum-note{font-size:12px; color:var(--ink-500); margin-top:14px; padding-top:14px; border-top:1px dashed var(--line-200);}
+#pz-root .pz-spectrum-note b{color:var(--human-500);}
+
+/* ---------- Agenda input ---------- */
+#pz-root .pz-agenda{padding:26px 28px; background:var(--surface-0); border-bottom:1px solid var(--line-200);}
+#pz-root .pz-agenda-label{font-size:13px; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:8px;}
+#pz-root .pz-agenda-label .n{font-family:'IBM Plex Mono',monospace; font-size:11px; background:var(--ink-900); color:#fff; padding:2px 7px; border-radius:3px;}
+#pz-root textarea.pz-input{width:100%; min-height:96px; border:1px solid var(--line-200); border-radius:8px; padding:12px 14px; font-family:'Noto Sans KR',sans-serif; font-size:13.5px; color:var(--ink-700); resize:vertical; background:var(--paper-0);}
+#pz-root textarea.pz-input:focus{outline:none; border-color:var(--ai-500); background:var(--surface-0);}
+#pz-root .pz-btn{appearance:none; border:none; cursor:pointer; font-family:'Noto Sans KR',sans-serif; font-weight:700; font-size:13.5px; padding:10px 20px; border-radius:7px; background:var(--ink-900); color:#fff; transition:background .15s;}
+#pz-root .pz-btn:hover{background:var(--ai-500);}
+#pz-root .pz-btn:disabled{background:var(--line-200); color:var(--ink-300); cursor:not-allowed;}
+#pz-root .pz-btn-row{display:flex; justify-content:flex-end; margin-top:12px; gap:10px; align-items:center;}
+#pz-root .pz-hint{font-size:12px; color:var(--ink-300); margin-right:auto;}
+
+/* 파일 업로드 스타일 추가 */
+#pz-root .pz-file-btn-label { display:inline-flex; align-items:center; gap:6px; padding:9px 15px; background:var(--paper-0); border:1px solid var(--line-200); border-radius:7px; font-size:12.5px; font-weight:600; color:var(--ink-700); cursor:pointer; transition:all 0.15s; }
+#pz-root .pz-file-btn-label:hover { background:var(--line-100); border-color:var(--ink-300); }
+#pz-root .pz-file-info { font-size:12px; color:var(--ai-500); font-weight:500; }
+
+/* ---------- Pipeline nav ---------- */
+#pz-root .pz-pipeline{display:flex; background:var(--ink-900); position:sticky; top:0; z-index:5;}
+#pz-root .pz-step{flex:1; padding:13px 10px; text-align:center; color:#8992A6; font-size:12.5px; font-weight:600; cursor:pointer; border-bottom:3px solid transparent; transition:.15s;}
+#pz-root .pz-step .mono{display:block; font-size:10px; margin-bottom:2px; color:#5C637A;}
+#pz-root .pz-step.unlocked{color:#D3D6E0;}
+#pz-root .pz-step.unlocked .mono{color:#8992A6;}
+#pz-root .pz-step.done{color:#fff; border-color:var(--ok-500);}
+#pz-root .pz-step.done .mono{color:var(--ok-500);}
+#pz-root .pz-step.current{color:#fff; border-color:var(--ai-500); background:rgba(58,79,207,.18);}
+
+/* ---------- Stage panel ---------- */
+#pz-root .pz-stage{padding:30px 28px; background:var(--surface-0); border-bottom:1px solid var(--line-200);}
+#pz-root .pz-stage.locked{opacity:.42; pointer-events:none;}
+#pz-root .pz-stage-head{display:flex; align-items:baseline; gap:12px; margin-bottom:6px;}
+#pz-root .pz-stage-num{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ai-500); font-weight:600;}
+#pz-root .pz-stage-title{font-size:19px; font-weight:900; font-family:'Noto Serif KR',serif;}
+#pz-root .pz-stage-caption{font-size:12.5px; color:var(--ink-500); margin:0 0 18px;}
+#pz-root .pz-stage-body{margin-top:16px;}
+
+/* History Group */
+#pz-root .pz-history-group { border-top: 2px dashed var(--line-200); margin-top: 24px; padding-top: 16px; position: relative;}
+#pz-root .pz-history-group:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+#pz-root .pz-history-timestamp { font-family:'IBM Plex Mono', monospace; font-size: 11px; background: var(--ai-100); color: var(--ai-500); padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 12px; font-weight: 600; }
+
+#pz-root .pz-cards{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;}
+#pz-root .pz-card{border:1px solid var(--line-200); border-radius:9px; padding:16px 18px; background:var(--paper-0); position:relative; min-height:92px; display:flex; flex-direction:column;}
+#pz-root .pz-card-title{font-size:13px; font-weight:700; color:var(--ai-500); margin-bottom:10px; display:flex; align-items:center; gap:6px; justify-content:space-between; flex-wrap:wrap;}
+#pz-root .pz-card-title span.t-text::before{content:'◆'; font-size:8px; margin-right:6px;}
+#pz-root .pz-card-body{font-size:13px; color:var(--ink-700); white-space:pre-wrap; line-height:1.65; flex:1; cursor:pointer; border-radius:4px; transition:background 0.2s;}
+#pz-root .pz-card-body:hover:not(.editing){background:rgba(58,79,207,0.05); outline:1px dashed var(--line-200);}
+#pz-root .pz-card-body a{color:var(--ai-500); text-decoration:underline; font-weight:500;}
+
+/* 수정 기능 UI */
+#pz-root .pz-card-edit-area { width:100%; min-height:150px; border:1px solid var(--ai-500); border-radius:6px; padding:10px; font-family:inherit; font-size:13px; resize:vertical; background:#fff; margin-bottom:8px; line-height:1.65; color:var(--ink-900); }
+#pz-root .pz-card-edit-btns { display:flex; gap:6px; justify-content:flex-end; }
+#pz-root .pz-btn-mini { padding:5px 12px; font-size:11.5px; border-radius:4px; font-weight:600; border:none; cursor:pointer; }
+#pz-root .pz-btn-mini.save { background:var(--ai-500); color:#fff; }
+#pz-root .pz-btn-mini.cancel { background:var(--line-200); color:var(--ink-700); }
+#pz-root .pz-edit-badge { font-size:10.5px; background:var(--human-100); color:var(--human-500); padding:2px 6px; border-radius:4px; margin-left:auto; font-weight:600; font-family:'IBM Plex Mono', monospace; border:1px solid rgba(184,128,42,0.2); }
+
+/* Loading Skeleton Animation & 실시간 정보창 */
+#pz-root .pz-card.skeleton { background: #fff; border-color: var(--ai-100); }
+#pz-root .pz-card.skeleton .pz-card-body{color:var(--ink-300); pointer-events:none;}
+#pz-root .pz-loading-text { font-size: 11.5px; font-weight: 600; color: var(--ai-500); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+#pz-root .pz-loading-text::after { content: '...'; animation: pzdots 1.5s steps(4, end) infinite; }
+#pz-root .pz-skel-line{height:9px; background:var(--line-100); border-radius:4px; margin-bottom:7px; animation:pzpulse 1.2s ease-in-out infinite;}
+#pz-root .pz-skel-line:nth-child(2){width:88%;} #pz-root .pz-skel-line:nth-child(3){width:74%;} #pz-root .pz-skel-line:nth-child(4){width:45%;}
+
+@keyframes pzpulse{0%,100%{opacity:.4;}50%{opacity:1;}}
+@keyframes pzdots{0%,20%{content:''}40%{content:'.'}60%{content:'..'}80%,100%{content:'...'}}
+
+#pz-root .pz-review{display:flex; align-items:center; gap:8px; margin-top:16px; padding-top:14px; border-top:1px solid var(--line-100);}
+#pz-root .pz-review label{display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:600; color:var(--human-500); cursor:pointer;}
+#pz-root .pz-review input[type=checkbox]{width:15px; height:15px; accent-color:var(--human-500);}
+#pz-root .pz-review-tag{font-size:11px; font-family:'IBM Plex Mono',monospace; background:var(--human-100); color:var(--human-500); padding:2px 8px; border-radius:4px; margin-left:auto;}
+#pz-root .pz-review.checked .pz-review-tag{background:#DCEFE1; color:var(--ok-500);}
+
+#pz-root .pz-error{font-size:12.5px; color:#B23B3B; margin-top:10px;}
+
+/* ---------- Report Section ---------- */
+#pz-root .pz-report-section { display:none; margin:32px 28px 0; padding:28px; background:var(--surface-0); border:2px dashed var(--ai-500); border-radius:12px; }
+#pz-root .pz-report-box { margin-top:16px; padding:20px; background:var(--paper-0); border-radius:8px; font-size:13.5px; color:var(--ink-700); white-space:pre-wrap; border:1px solid var(--line-200); line-height:1.7; }
+
+/* ---------- Footer ---------- */
+#pz-root .pz-footer{padding:22px 28px; font-size:11.5px; color:var(--ink-300); line-height:1.7;}
+#pz-root .pz-footer b{color:var(--ink-500);}
+
+@media(max-width:640px){
+  #pz-root .pz-cards{grid-template-columns:1fr;}
+  #pz-root .pz-step span.label{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div id="pz-root">
+
+  <div class="pz-header">
+    <div class="pz-eyebrow">Project Zero · AI 의사결정 시범도입</div>
+    <h1 class="pz-title serif">AI 기반 의사결정 체계</h1>    
+  </div>
+
+  <div class="pz-config">
+    <span class="pz-config-label">GEMINI API KEY</span>
+    <input type="password" class="pz-key-input" id="pz-api-key" placeholder="AIzaSy... (Google AI Studio에서 발급한 키를 입력하세요)" autocomplete="off">
+    <label class="pz-save"><input type="checkbox" id="pz-key-save"> 이 브라우저에 저장</label>
+    <span class="pz-key-status missing" id="pz-key-status">키 미입력</span>
+    <p class="pz-sub"><b>https://aistudio.google.com/api-keys</b> 에서 API 키를 발급 받으세요.</p>
+  </div>
+
+  <div class="pz-spectrum">
+    <div class="pz-spectrum-label">이 시스템의 AI 위임 수준</div>
+    <div class="pz-spectrum-desc">가트너 인간-AI 위임 프레임워크 7단계 중, 본 체계는 <b style="color:var(--ai-500)">2단계(자문)~3단계(권장)</b>에 위치합니다. AI는 분석하고 제안하지만, 승인·실행 여부는 담당자가 최종 확인합니다.</div>
+    <div class="pz-spectrum-track"></div>
+    <div class="pz-spectrum-ticks" id="pz-ticks"></div>
+    <div class="pz-spectrum-note">완전 자동화(7단계 자율)를 목표로 하지 않습니다. AI가 자료를 수집·분석·정리하고, <b>최종 결정은 사람이 내리는 구조</b>를 원칙으로 설계했습니다.</div>
+  </div>
+
+  <div class="pz-agenda">
+    <div class="pz-agenda-label"><span class="n">INPUT</span> 주제 및 안건 입력</div>
+    <p class="pz-sub">자유롭게 입력 가능하며 구체적인 내용을 기입 할 수록 데이터의 정확도가 증가합니다.</p>
+    <textarea class="pz-input" id="pz-agenda-text" id="s1-input" placeholder="예)     
+    [핵심 주제] : 
+    안건 ① : 
+    안건 ② : 
+    검토 대안 :  
+    의사결정 요청사항 : "></textarea>
+
+
+    <div class="pz-btn-row">
+      <span class="pz-hint" id="pz-agenda-hint">참고 서류 및 분석용 파일을 로드할 수 있습니다.</span>
+      <label class="pz-file-btn-label">
+        📁 파일 첨부
+        <input type="file" id="pz-agenda-file" style="display:none;" accept=".txt,.csv,.json,.md">
+      </label>
+      <span class="pz-file-info" id="pz-agenda-file-name"></span>
+      <button class="pz-btn" id="pz-run-agenda">① 회의 준비 자동 산출</button>
+    </div>
+  </div>
+
+  <div class="pz-pipeline" id="pz-pipeline"></div>
+
+  <div class="pz-stage locked" id="stage-1">
+    <div class="pz-stage-head"><span class="pz-stage-num mono">STAGE 01</span><span class="pz-stage-title">회의 준비</span></div>
+    <p class="pz-stage-caption">실제 유관 산업 상호명과 벤치마킹 수치, 신뢰할 수 있는 언론사의 기사 링크가 주도적으로 연동됩니다.</p>
+    
+    <div id="s1-history-container"></div>
+    <div id="s1-skeleton-holder"></div>
+
+    <div class="pz-review" id="s1-review">
+      <label><input type="checkbox" data-stage="1"> 담당자 검토 완료 — 2단계로 진행</label>
+      <span class="pz-review-tag">인간 확인 대기</span>
+    </div>
+    <div class="pz-error" id="s1-error"></div>
+  </div>
+
+  <div class="pz-stage locked" id="stage-2">
+    <div class="pz-stage-head"><span class="pz-stage-num mono">STAGE 02</span><span class="pz-stage-title">회의 중</span></div>
+    <p class="pz-stage-caption">회의에서 오간 발언·메모를 붙여넣으면, AI가 회의록 요약·의견 분류·찬반 논리·Action Item을 정리합니다.</p>
+    <div class="pz-stage-body">
+      <div class="pz-agenda-label"><span class="n">INPUT</span> 회의 중 발언 · 메모 </div>
+      <textarea class="pz-input" id="s2-input" placeholder="예) 발화자 A : / 발화자 B : / 발화자 A : "></textarea>
+      <div class="pz-btn-row">
+        <span class="pz-hint">속기록 등 텍스트 원본 파일을 첨부하여 결합할 수 있습니다.</span>
+        <label class="pz-file-btn-label">
+          📁 파일 첨부
+          <input type="file" id="s2-file" style="display:none;" accept=".txt,.csv,.json,.md">
+        </label>
+        <span class="pz-file-info" id="s2-file-name"></span>
+        <button class="pz-btn" id="s2-run">② 회의록 AI 정리</button>
+      </div>
+    </div>
+    
+    <div id="s2-history-container" style="margin-top:20px;"></div>
+    <div id="s2-skeleton-holder"></div>
+
+    <div class="pz-review" id="s2-review">
+      <label><input type="checkbox" data-stage="2"> 담당자 검토 완료 — 3단계로 진행</label>
+      <span class="pz-review-tag">인간 확인 대기</span>
+    </div>
+    <div class="pz-error" id="s2-error"></div>
+  </div>
+
+  <div class="pz-stage locked" id="stage-3">
+    <div class="pz-stage-head"><span class="pz-stage-num mono">STAGE 03</span><span class="pz-stage-title">회의 종료 후</span></div>
+    <p class="pz-stage-caption">1·2단계 산출물을 바탕으로 최종 의사결정 요약, 담당자·일정·KPI, 후속 회의 Agenda를 자동 생성합니다.</p>
+    <div class="pz-btn-row" style="margin-top:0;">
+      <span class="pz-hint">1·2단계 내용을 그대로 이어받아 산출합니다.</span>
+      <button class="pz-btn" id="s3-run">③ 의사결정 요약 생성</button>
+    </div>
+    
+    <div id="s3-history-container" style="margin-top:20px;"></div>
+    <div id="s3-skeleton-holder"></div>
+
+    <div class="pz-review" id="s3-review">
+      <label><input type="checkbox" data-stage="3"> 담당자 검토 완료 — 4단계로 진행</label>
+      <span class="pz-review-tag">인간 확인 대기</span>
+    </div>
+    <div class="pz-error" id="s3-error"></div>
+  </div>
+
+  <div class="pz-stage locked" id="stage-4">
+    <div class="pz-stage-head"><span class="pz-stage-num mono">STAGE 04</span><span class="pz-stage-title">지속 관리</span></div>
+    <p class="pz-stage-caption">계약·투자·일정 진행 현황 데이터를 붙여넣으면, AI가 KPI·일정·투자·계약 진행상황을 자동 업데이트합니다.</p>
+    <div class="pz-stage-body">
+      <div class="pz-agenda-label"><span class="n">INPUT</span> 진행 현황 데이터 (붙여넣기)</div>
+      <textarea class="pz-input" id="s4-input" placeholder="예) 7/9 기준 - 실사 계약서 초안 법무 검토 중, 밸류에이션 외부 회계법인 평가 착수, 품질 실사 일정 조율 중"></textarea>
+      <div class="pz-btn-row">
+        <span class="pz-hint">예시 데이터로도 실행할 수 있습니다.</span>
+        <button class="pz-btn" id="s4-run">④ 진행 현황 AI 분석</button>
+      </div>
+    </div>
+    
+    <div id="s4-history-container" style="margin-top:20px;"></div>
+    <div id="s4-skeleton-holder"></div>
+  </div>
+
+  <div class="pz-report-section" id="pz-report-area">
+    <div class="pz-stage-head">
+      <span class="pz-stage-num mono">REPORT</span>
+      <span class="pz-stage-title">📊 최종 종합 보고서 작성</span>
+    </div>
+    <p class="pz-stage-caption">STAGE 01부터 04까지 산출 및 수정된 기록을 총망라하여 경영진 보고를 위한 두괄식 레포트를 자동 생성합니다.</p>
+    <div style="display:flex; justify-content:flex-end;">
+      <button class="pz-btn" id="pz-make-report" style="background:var(--ai-500);">종합 보고서 생성하기</button>
+    </div>
+    <div id="pz-report-skeleton-holder"></div>
+    <div class="pz-report-box" id="pz-report-output" style="display:none;"></div>
+  </div>
+
+  <div class="pz-footer">
+    <b>설계 근거.</b> AI 위임 수준 구분은 가트너 «의사결정 증강을 위한 인간-AI 위임 프레임워크»(2024)의 7단계 모델을 참고해 구성했습니다.<br><br>
+    <b>독립 실행 안내.</b> 이 파일은 다운로드해서 로컬 브라우저에서 단독으로 사용하도록 만들어졌습니다. 상단에 본인의 Google Gemini API 키(aistudio.google.com에서 발급)를 입력해야 각 단계 버튼이 동작합니다. 키는 브라우저 밖으로 전송되지 않고 이 페이지 안에서만 사용되며, "이 브라우저에 저장"을 체크하면 로컬 저장소(localStorage)에 남아 다음에 다시 입력하지 않아도 됩니다.
+  </div>
+</div>
+
+<script>
+(function(){
+  const AGENDA_DEFAULT = ``;
+
+  const el = id => document.getElementById(id);
+  el('pz-agenda-text').value = AGENDA_DEFAULT;
+
+  const keyInput = el('pz-api-key');
+  const keySave = el('pz-key-save');
+  const keyStatus = el('pz-key-status');
+  
+  // 파일 업로드 데이터 저장을 위한 변수
+  let uploadedAgendaFileText = "";
+  let uploadedS2FileText = "";
+
+  try{
+    const saved = localStorage.getItem('pz_gemini_key');
+    if(saved){ keyInput.value = saved; keySave.checked = true; }
+  }catch(e){ }
+  
+  function refreshKeyStatus(){
+    const has = keyInput.value.trim().length > 0;
+    keyStatus.textContent = has ? '키 입력됨' : '키 미입력';
+    keyStatus.className = 'pz-key-status ' + (has ? 'ok' : 'missing');
+  }
+  refreshKeyStatus();
+  
+  keyInput.addEventListener('input', ()=>{
+    refreshKeyStatus();
+    try{
+      if(keySave.checked) localStorage.setItem('pz_gemini_key', keyInput.value.trim());
+    }catch(e){}
+  });
+  keySave.addEventListener('change', ()=>{
+    try{
+      if(keySave.checked) localStorage.setItem('pz_gemini_key', keyInput.value.trim());
+      else localStorage.removeItem('pz_gemini_key');
+    }catch(e){}
+  });
+  
+  function requireKey(){
+    const k = keyInput.value.trim();
+    if(!k){
+      keyInput.focus();
+      keyInput.style.borderColor = '#B23B3B';
+      setTimeout(()=>{ keyInput.style.borderColor=''; }, 1200);
+      throw new Error('상단에 Gemini API 키를 먼저 입력해 주세요.');
+    }
+    return k;
+  }
+
+  // --- 파일 업로드 리스너 구현 ---
+  el('pz-agenda-file').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+    el('pz-agenda-file-name').textContent = `📄 ${file.name} 로드 완료`;
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      uploadedAgendaFileText = evt.target.result;
+    };
+    reader.readAsText(file);
+  });
+
+  el('s2-file').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+    el('s2-file-name').textContent = `📄 ${file.name} 로드 완료`;
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      uploadedS2FileText = evt.target.result;
+    };
+    reader.readAsText(file);
+  });
+
+  const TICKS = [
+    {n:1,name:'인간'},{n:2,name:'자문'},{n:3,name:'권장'},{n:4,name:'승인'},
+    {n:5,name:'가역'},{n:6,name:'감사'},{n:7,name:'자율'}
+  ];
+  el('pz-ticks').innerHTML = TICKS.map(t=>{
+    let cls = t.n===2 ? 'active' : (t.n===3 ? 'active2' : '');
+    return `<div class="pz-tick ${cls}"><div class="pz-tick-dot"></div><span class="pz-tick-num">${t.n}</span><span class="pz-tick-name">${t.name}</span></div>`;
+  }).join('');
+
+  const STEPS = [
+    {id:1,label:'회의 준비'},{id:2,label:'회의 중'},{id:3,label:'회의 종료 후'},{id:4,label:'지속 관리'}
+  ];
+  const pipeline = el('pz-pipeline');
+  function renderPipeline(state){
+    pipeline.innerHTML = STEPS.map(s=>{
+      let st = state[s.id];
+      let cls = st==='done' ? 'unlocked done' : (st==='current' ? 'unlocked current' : (st==='unlocked' ? 'unlocked' : ''));
+      return `<div class="pz-step ${cls}" data-goto="${s.id}"><span class="mono">STAGE ${String(s.id).padStart(2,'0')}</span><span class="label">${s.label}</span></div>`;
+    }).join('');
+    pipeline.querySelectorAll('[data-goto]').forEach(n=>{
+      n.addEventListener('click', ()=>{
+        const target = el('stage-'+n.dataset.goto);
+        if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+  }
+  const pipeState = {1:'locked',2:'locked',3:'locked',4:'locked'};
+  renderPipeline(pipeState);
+
+  function setStageUnlocked(n){
+    el('stage-'+n).classList.remove('locked');
+    pipeState[n] = 'current';
+    renderPipeline(pipeState);
+  }
+  function setStageDone(n){
+    pipeState[n] = 'done';
+    renderPipeline(pipeState);
+    // 지속관리까지 완료되면 종합 보고서 섹션 노출
+    if(n === 4) {
+      el('pz-report-area').style.display = 'block';
+    }
+  }
+
+  async function callGemini(promptText, isJson = true){
+    const apiKey = requireKey();
+    const model = "gemini-2.5-flash";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    
+    let response;
+    try{
+      response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          generationConfig: isJson ? { responseMimeType: "application/json" } : {}
+        })
+      });
+    }catch(networkErr){
+      throw new Error('네트워크 요청이 차단되었습니다. API 키와 인터넷 연결을 확인해 주세요.');
+    }
+    
+    if(!response.ok){
+      let msg = 'API 호출 실패 ('+response.status+')';
+      try{ const errBody = await response.json(); if(errBody.error && errBody.error.message) msg += ' — '+errBody.error.message; }catch(e){}
+      throw new Error(msg);
+    }
+    
+    const data = await response.json();
+    try {
+      let raw = data.candidates[0].content.parts[0].text.trim();
+      if(!isJson) return raw;
+      raw = raw.replace(/^```json/, '').replace(/^```/, '').replace(/```$/, '').trim();
+      return JSON.parse(raw);
+    } catch(e) {
+      throw new Error('Gemini 응답 구조가 올바른 형식이 아닙니다.');
+    }
+  }
+
+  function showSkeleton(holder, titles){
+    holder.innerHTML = `
+      <div class="pz-history-group placeholder-skel">
+        <div class="pz-cards">
+          ${titles.map(t=>`
+            <div class="pz-card skeleton">
+              <div class="pz-card-title"><span class="t-text">${t}</span></div>
+              <div class="pz-card-body">
+                <div class="pz-loading-text">AI 분석 중</div>
+                <div class="pz-skel-line"></div><div class="pz-skel-line"></div><div class="pz-skel-line"></div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    holder.scrollIntoView({behavior:'smooth', block:'end'});
+  }
+
+  function hideSkeleton(holder) {
+    holder.innerHTML = '';
+  }
+
+  function getTimestamp() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+  }
+
+  function formatContent(text) {
+    let contentStr = text ? String(text) : '—';
+    return contentStr
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\[(.*?)\]\((https?:\/\/.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
+  }
+
+  function enableCardEditing(bodyElement, originalRawText) {
+    if (bodyElement.classList.contains('editing')) return;
+    bodyElement.classList.add('editing');
+    
+    let currentText = bodyElement.getAttribute('data-raw') || originalRawText;
+    
+    bodyElement.innerHTML = `
+      <textarea class="pz-card-edit-area">${currentText}</textarea>
+      <div class="pz-card-edit-btns">
+        <button class="pz-btn-mini cancel">취소</button>
+        <button class="pz-btn-mini save">저장</button>
+      </div>
+    `;
+
+    const txtArea = bodyElement.querySelector('.pz-card-edit-area');
+    txtArea.focus();
+    txtArea.setSelectionRange(txtArea.value.length, txtArea.value.length);
+
+    bodyElement.querySelector('.cancel').addEventListener('click', (e) => {
+      e.stopPropagation();
+      bodyElement.classList.remove('editing');
+      bodyElement.innerHTML = formatContent(currentText);
+    });
+
+    bodyElement.querySelector('.save').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const newText = txtArea.value;
+      bodyElement.classList.remove('editing');
+      bodyElement.setAttribute('data-raw', newText);
+      bodyElement.innerHTML = formatContent(newText);
+      
+      const cardTitle = bodyElement.closest('.pz-card').querySelector('.pz-card-title');
+      let badge = cardTitle.querySelector('.pz-edit-badge');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'pz-edit-badge';
+        cardTitle.appendChild(badge);
+      }
+      badge.textContent = `${getTimestamp()} 수정됨`;
+    });
+
+    txtArea.addEventListener('click', (e) => e.stopPropagation());
+  }
+
+  function appendCardsGroup(container, entries){
+    const group = document.createElement('div');
+    group.className = 'pz-history-group';
+    
+    const timeLabel = document.createElement('div');
+    timeLabel.className = 'pz-history-timestamp';
+    timeLabel.textContent = `[${getTimestamp()}] 분석 결과`;
+    group.appendChild(timeLabel);
+
+    const cardsGrid = document.createElement('div');
+    cardsGrid.className = 'pz-cards';
+    
+    entries.forEach(([title, body]) => {
+      const card = document.createElement('div');
+      card.className = 'pz-card';
+      
+      const cTitle = document.createElement('div');
+      cTitle.className = 'pz-card-title';
+      cTitle.innerHTML = `<span class="t-text">${title}</span>`;
+      
+      const cBody = document.createElement('div');
+      cBody.className = 'pz-card-body';
+      cBody.setAttribute('data-raw', body || '');
+      cBody.innerHTML = formatContent(body);
+      
+      cBody.addEventListener('click', () => {
+        enableCardEditing(cBody, body || '');
+      });
+
+      card.appendChild(cTitle);
+      card.appendChild(cBody);
+      cardsGrid.appendChild(card);
+    });
+    
+    group.appendChild(cardsGrid);
+    container.appendChild(group);
+    
+    group.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  document.querySelectorAll('.pz-review input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const wrap = cb.closest('.pz-review');
+      wrap.classList.toggle('checked', cb.checked);
+      wrap.querySelector('.pz-review-tag').textContent = cb.checked ? '검토 완료' : '인간 확인 대기';
+      const stage = parseInt(cb.dataset.stage,10);
+      if(cb.checked){
+        setStageDone(stage);
+        if(stage+1<=4) setStageUnlocked(stage+1);
+      }
+    });
+  });
+
+  let state = { agenda:'', s1:[], s2:[], s3:[], s4:[] };
+
+  // ---- STAGE 1 (파일 분석 로직 결합) ----
+  el('pz-run-agenda').addEventListener('click', async ()=>{
+    const agenda = el('pz-agenda-text').value.trim();
+    if(!agenda) return;
+    state.agenda = agenda;
+    
+    setStageUnlocked(1);
+    el('s1-error').textContent='';
+    
+    const titles = ['사업자료 분석','경쟁사 비교','시장 규모 추정','리스크 시나리오','투자 분석'];
+    showSkeleton(el('s1-skeleton-holder'), titles);
+    
+    try{
+      let combinedAgenda = agenda;
+      if(uploadedAgendaFileText) {
+        combinedAgenda += `\n\n[첨부된 추가 참고 서류 데이터]\n"""${uploadedAgendaFileText}"""`;
+      }
+
+      const prompt = `당신은 최고전략책임자(CSO) 및 글로벌 리서치 전문가 에이전트입니다. 
+아래 안건과 첨부 데이터를 바탕으로 실제 존재하는 시장 내 유관 상호명과 실존 지표 수치를 바탕으로 종합 분석 리포트를 도출하세요.
+
+[안건 및 데이터]
+"""${combinedAgenda}"""
+
+[★양적 확장 및 가독성 지침★]
+1. 반드시 【두괄식 구조】로 작성하세요. 항목의 첫 번째 문장에 최종 결론 및 핵심 요약을 한 줄로 명확하게 선언해야 합니다.
+2. 각 카드 항목별로 결론 하단에 최소 [2개 이상]의 구체적이고 깊이 있는 세부 분석 내용 및 데이터(지표)가 무조건 강제 포함되어 기술되어야 합니다. 내용이 빈약해서는 안 됩니다.
+3. 텍스트 가독성을 극대화하기 위해 번호 기호('1.', '2.')와 시각 기호('■', '▶')를 결합하여 문맥을 구조화하세요. 단정형 어조(~임, ~로 분석됨)를 일관되게 사용하십시오.
+4. 각 항목 마지막 줄에는 [언론사명 - 기사제목](링크주소) 형태의 리서치 출처 링크를 반드시 1개 이상 추가하세요.
+5. 다른 부가 설명 없이 오직 다음 규격의 JSON 구조로만 출력하세요.
+
+{"business_data":"■ 핵심 결론: ...\\n1. [첫 번째 분석 정보 및 근거]\\n▶ [관련 상세 수치 지표]\\n2. [두 번째 분석 정보 및 근거]\\n▶ [관련 상세 수치 지표]\\n• [참고기사](링크)", 
+ "competitor_analysis":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n2. ...\\n▶ ...\\n• [참고기사](링크)", 
+ "market_size":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n2. ...\\n▶ ...\\n• [참고기사](링크)", 
+ "risk_analysis":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n2. ...\\n▶ ...\\n• [참고기사](링크)", 
+ "investment_scenario":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n2. ...\\n▶ ...\\n• [참고기사](링크)"}`;
+
+      const r = await callGemini(prompt);
+      state.s1.push(r);
+      hideSkeleton(el('s1-skeleton-holder'));
+      
+      appendCardsGroup(el('s1-history-container'), [
+        ['사업자료 분석', r.business_data],
+        ['경쟁사 비교', r.competitor_analysis],
+        ['시장 규모 추정', r.market_size],
+        ['리스크 시나리오', r.risk_analysis],
+        ['투자 분석', r.investment_scenario],
+      ]);
+    }catch(e){
+      hideSkeleton(el('s1-skeleton-holder'));
+      el('s1-error').textContent = '산출 실패: '+e.message+' — 다시 시도해 주세요.';
+    }
+  });
+
+  // ---- STAGE 2 (파일 분석 로직 결합) ----
+  el('s2-run').addEventListener('click', async ()=>{
+    if(state.s1.length === 0){ el('s2-error').textContent='먼저 1단계를 실행해 주세요.'; return; }
+    const notes = el('s2-input').value.trim() || '(회의 메모 없음 — 안건과 1단계 자료를 근거로 예상 쟁점을 정리)';
+    el('s2-error').textContent='';
+    
+    const titles = ['회의록 핵심 요약','논쟁 및 의견 분류','구체적 찬반 논리','Action Item (R&R)'];
+    showSkeleton(el('s2-skeleton-holder'), titles);
+    
+    try{
+      let combinedNotes = notes;
+      if(uploadedS2FileText) {
+        combinedNotes += `\n\n[첨부된 회의 속기록/파일 원본 데이터]\n"""${uploadedS2FileText}"""`;
+      }
+
+      const latestS1 = state.s1[state.s1.length - 1];
+      const prompt = `당신은 내부 회의록을 전략적으로 구조화하는 에이전트입니다. 안건, 1단계 사전분석 내용, 회의 메모 및 첨부된 속기록 데이터를 종합하여 분석록을 만드세요.
+
+안건: """${state.agenda}"""
+1단계 분석 요약: """${JSON.stringify(latestS1)}"""
+회의 메모 및 첨부자료: """${combinedNotes}"""
+
+[★양적 확장 및 가독성 지침★]
+1. 반드시 【두괄식 구조】를 적용하여 첫 문장에 카드별 핵심 요약을 선언하세요.
+2. 각 카드 항목 하단에는 최소 [2개 이상]의 핵심 요약 내용, 분류된 의견 쟁점, 또는 R&R 액션 플랜이 실존 수치/조직명과 함께 기술되어야 합니다.
+3. 숫자 번호('1.', '2.')와 기호('■', '▶')를 복합적으로 사용하여 가독성을 강화하세요.
+4. 다른 설명 없이 JSON으로만 응답하세요.
+
+{"minutes_summary":"■ 핵심 요약: ...\\n1. ...\\n2. ...", "opinion_classification":"■ 핵심 요약: ...\\n1. ...\\n2. ...", "pros_cons":"■ 핵심 요약: ...\\n1. ...\\n2. ...", "action_items":"■ 핵심 요약: ...\\n1. ...\\n2. ..."}`;
+      
+      const r = await callGemini(prompt);
+      state.s2.push(r);
+      hideSkeleton(el('s2-skeleton-holder'));
+      
+      appendCardsGroup(el('s2-history-container'), [
+        ['회의록 핵심 요약', r.minutes_summary],
+        ['논쟁 및 의견 분류', r.opinion_classification],
+        ['구체적 찬반 논리', r.pros_cons],
+        ['Action Item (R&R)', r.action_items],
+      ]);
+    }catch(e){
+      hideSkeleton(el('s2-skeleton-holder'));
+      el('s2-error').textContent = '산출 실패: '+e.message+' — 다시 시도해 주세요.';
+    }
+  });
+
+  // ---- STAGE 3 ----
+  el('s3-run').addEventListener('click', async ()=>{
+    if(state.s2.length === 0){ el('s3-error').textContent='먼저 2단계를 실행해 주세요.'; return; }
+    el('s3-error').textContent='';
+    
+    const titles = ['최종 의사결정 결론','실무 조직 지정','마일스톤 일정','핵심 관리 KPI','후속 안건 제언'];
+    showSkeleton(el('s3-skeleton-holder'), titles);
+    
+    try{
+      const latestS2 = state.s2[state.s2.length - 1];
+      const prompt = `당신은 비즈니스 의사결정을 최종 패키징하는 전략 에이전트입니다. 앞선 모든 결론을 바탕으로 구체적인 실행 계획을 구성하세요.
+
+안건: """${state.agenda}"""
+회의 요약: """${JSON.stringify(latestS2)}"""
+
+[★양적 확장 및 가독성 지침★]
+1. 무조건 【두괄식 구조】로 첫 문장에 최종 실행 결론을 명시하세요.
+2. 각 지표 카드별로 최소 [2개 이상]의 구체적인 담당조직 업무, 세부 마일스톤 타임라인, 정량적 KPI 목표 수치 등이 강제 명시되어야 합니다.
+3. 번호 표기('1.', '2.')와 시각 기호('■', '▶')를 적극적으로 매칭하여 작성하세요.
+4. 다른 설명 없이 JSON으로만 응답하세요.
+
+{"decision_summary":"■ 최종 결론: ...\\n1. ...\\n2. ...", "owner_assignment":"■ 담당 조직: ...\\n1. ...\\n2. ...", "schedule":"■ 마일스톤: ...\\n1. ...\\n2. ...", "kpi":"■ 평가지표: ...\\n1. ...\\n2. ...", "next_agenda":"■ 후속 안건: ...\\n1. ...\\n2. ..."}`;
+      
+      const r = await callGemini(prompt);
+      state.s3.push(r);
+      hideSkeleton(el('s3-skeleton-holder'));
+      
+      appendCardsGroup(el('s3-history-container'), [
+        ['최종 의사결정 결론', r.decision_summary],
+        ['실무 조직 지정', r.owner_assignment],
+        ['마일스톤 일정', r.schedule],
+        ['핵심 관리 KPI', r.kpi],
+        ['후속 안건 제언', r.next_agenda],
+      ]);
+    }catch(e){
+      hideSkeleton(el('s3-skeleton-holder'));
+      el('s3-error').textContent = '산출 실패: '+e.message+' — 다시 시도해 주세요.';
+    }
+  });
+
+  // ---- STAGE 4 ----
+  el('s4-run').addEventListener('click', async ()=>{
+    if(state.s3.length === 0){ return; }
+    const progress = el('s4-input').value.trim() || '(진행 데이터 없음 — 3단계 일정·KPI를 기준으로 추적 항목 제시)';
+    
+    const titles = ['KPI 달성도 현황','마일스톤 리스크 추적','자본/투자 집행률','계약 건전성 분석'];
+    showSkeleton(el('s4-skeleton-holder'), titles);
+    
+    try{
+      const latestS3 = state.s3[state.s3.length - 1];
+      const prompt = `당신은 사업의 사후 관리를 담당하는 PMO 에이전트입니다. 진행 현황 데이터를 바탕으로 현재 사업의 지연 요소와 지표를 정밀 분석해 주세요.
+
+3단계 데이터: """${JSON.stringify(latestS3)}"""
+진행 현황 데이터: """${progress}"""
+
+[★양적 확장 및 가독성 지침★]
+1. 【두괄식 구조】를 준수하여 첫 문장에 위험 등급 및 종합 리스크 진단을 선언하세요.
+2. 각 항목별로 최소 [2개 이상]의 명확한 리스크 관리 포인트 및 정량 분석 현황이 구조적으로 작성되어야 합니다.
+3. 본문에는 숫자 번호('1.', '2.')와 기호('■', '▶')를 사용하여 가독성 있게 작성하세요.
+4. 다른 설명 없이 JSON으로만 응답하세요.
+
+{"kpi_tracking":"■ 종합 진단: ...\\n1. ...\\n2. ...", "schedule_management":"■ 리스크 수준: ...\\n1. ...\\n2. ...", "investment_status":"■ 투자 집행 현황: ...\\n1. ...\\n2. ...", "contract_status":"■ 건전성 평가: ...\\n1. ...\\n2. ..."}`;
+      
+      const r = await callGemini(prompt);
+      state.s4.push(r);
+      hideSkeleton(el('s4-skeleton-holder'));
+      
+      appendCardsGroup(el('s4-history-container'), [
+        ['KPI 달성도 현황', r.kpi_tracking],
+        ['마일스톤 리스크 추적', r.schedule_management],
+        ['자본/투자 집행률', r.investment_status],
+        ['계약 건전성 분석', r.contract_status],
+      ]);
+      
+      // STAGE 04 완료 마킹을 트리거하여 최종 보고서 버튼 활성화 유도
+      setStageDone(4);
+    }catch(e){
+      hideSkeleton(el('s4-skeleton-holder'));
+      alert('산출 실패: ' + e.message);
+    }
+  });
+
+  // ---- 최종 종합 보고서 생성 기능 ----
+  el('pz-make-report').addEventListener('click', async () => {
+    const reportOutput = el('pz-report-output');
+    const skeletonHolder = el('pz-report-skeleton-holder');
+    
+    reportOutput.style.display = 'none';
+    skeletonHolder.innerHTML = `
+      <div style="padding:16px; text-align:center; color:var(--ai-500); font-weight:600;">
+        <div class="pz-loading-text">전체 데이터 수집 및 두괄식 종합 보고서 작성 중</div>
+      </div>`;
+
+    try {
+      // 사용자가 수정한 데이터까지 수집하기 위해 DOM 데이터 읽기 권장하나, 여기서는 state 백업본을 기반으로 종합
+      const fullContext = {
+        initial_agenda: state.agenda,
+        stage1_prep: state.s1[state.s1.length - 1],
+        stage2_minutes: state.s2[state.s2.length - 1],
+        stage3_decision: state.s3[state.s3.length - 1],
+        stage4_management: state.s4[state.s4.length - 1]
+      };
+
+      const prompt = `당신은 최고경영자(CEO) 및 이사회에 제출할 최고 수준의 전략 종합 레포트를 작성하는 전략기획실장 에이전트입니다.
+STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석하여, 한눈에 파악 가능한 고품질 보고서를 작성하세요.
+
+[분석 대상 데이터]
+"""${JSON.stringify(fullContext)}"""
+
+[★보고서 작성 지침 - 핵심필수★]
+1. 반드시 【전체 최고 요약문(Executive Summary)】을 최상단에 배치하되, 철저한 【두괄식 구조】로 작성하십시오. 핵심성과와 향후 방향성이 첫 문장에 나와야 합니다.
+2. 각 섹션(안건, 회의 분석 결과, 최종 결정 계획, 사후 리스크 현황 및 제언) 역시 첫 문장에 결론을 내리는 【두괄식 구조】를 엄격하게 적용하세요.
+3. 텍스트의 가독성을 극대화하기 위해 숫자 번호('1.', '2.')와 기호('■', '▶')를 고도로 조화시켜 구조화하십시오.
+4. 어조는 전문적이고 엄격한 단정형 어조(~임, ~함, ~을 건의함)를 사용하십시오.
+5. JSON 형태가 아닌 일반 텍스트 마크다운 형태로 직접 읽을 수 있게 출력하세요.`;
+
+      const reportText = await callGemini(prompt, false);
+      skeletonHolder.innerHTML = '';
+      
+      reportOutput.innerHTML = formatContent(reportText);
+      reportOutput.style.display = 'block';
+      reportOutput.scrollIntoView({behavior:'smooth', block:'start'});
+    } catch(e) {
+      skeletonHolder.innerHTML = '';
+      alert('보고서 생성 실패: ' + e.message);
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
