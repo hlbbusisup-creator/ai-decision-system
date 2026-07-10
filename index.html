@@ -16,6 +16,30 @@
   max-width:980px; margin:0 auto; padding:0 0 64px; line-height:1.6;
 }
 #pz-root *{box-sizing:border-box;}
+#pz-root .pz-stage,
+#pz-root .pz-stage-body,
+#pz-root .pz-cards,
+#pz-root .pz-card,
+#pz-root .pz-card-body,
+#pz-root .pz-source-block,
+#pz-root .pz-source-text,
+#pz-root .pz-report-box{
+  min-width:0;
+}
+#pz-root .pz-card,
+#pz-root .pz-card-body,
+#pz-root .pz-source-text,
+#pz-root .pz-report-box,
+#pz-root .pz-stage-caption,
+#pz-root .pz-hint{
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+#pz-root .pz-search-attribution{
+  overflow-x:auto;
+  max-width:100%;
+}
+
 #pz-root .serif{font-family:'Noto Serif KR',serif;}
 #pz-root .mono{font-family:'IBM Plex Mono',monospace; letter-spacing:.01em;}
 
@@ -111,6 +135,28 @@
 #pz-root .pz-btn-mini.cancel { background:var(--line-200); color:var(--ink-700); }
 #pz-root .pz-edit-badge { font-size:10.5px; background:var(--human-100); color:var(--human-500); padding:2px 6px; border-radius:4px; margin-left:auto; font-weight:600; font-family:'IBM Plex Mono', monospace; border:1px solid rgba(184,128,42,0.2); }
 
+
+/* 실제 원문 출처 */
+#pz-root .pz-source-block{
+  margin-top:14px; padding-top:12px; border-top:1px dashed var(--line-200);
+  font-size:12px; color:var(--ink-500); cursor:default;
+}
+#pz-root .pz-source-label{
+  font-size:11px; font-weight:700; color:var(--ok-500); margin-bottom:7px;
+  font-family:'IBM Plex Mono',monospace; letter-spacing:.02em;
+}
+#pz-root .pz-source-text{white-space:pre-wrap; line-height:1.65; overflow-wrap:anywhere; word-break:break-word; max-width:100%;}
+#pz-root .pz-source-text a{
+  display:inline-flex; align-items:center; margin-left:3px; color:var(--ai-500);
+  font-weight:700; text-decoration:underline; max-width:100%;
+}
+#pz-root .pz-search-attribution{
+  margin-top:8px; overflow:hidden; max-width:100%;
+}
+#pz-root .pz-source-error{
+  color:#B23B3B; font-size:11.5px;
+}
+
 /* Loading Skeleton Animation */
 #pz-root .pz-card.skeleton { background: #fff; border-color: var(--ai-100); }
 #pz-root .pz-card.skeleton .pz-card-body{color:var(--ink-300); pointer-events:none;}
@@ -159,7 +205,7 @@
 
   <div class="pz-config">
     <span class="pz-config-label">GEMINI API KEY</span>
-    <input type="password" class="pz-key-input" id="pz-api-key" placeholder="AIzaSy... (Google AI Studio에서 발급한 키를 입력하세요)" autocomplete="off">
+    <input type="password" class="pz-key-input" id="pz-api-key" value="AQ.Ab8RN6KzWeBN-x9bETmgxgGMfai--GX5uJ-KiyxnfVWQ0XNtGA" placeholder="필요 시 API Key를 수정하세요." autocomplete="off">
     <label class="pz-save"><input type="checkbox" id="pz-key-save"> 이 브라우저에 저장</label>
     <span class="pz-key-status missing" id="pz-key-status">키 미입력</span>
     <p class="pz-sub"><b>https://aistudio.google.com/api-keys</b> 에서 API 키를 발급 받으세요.</p>
@@ -198,14 +244,14 @@
 
   <div class="pz-stage locked" id="stage-1">
     <div class="pz-stage-head"><span class="pz-stage-num mono">STAGE 01</span><span class="pz-stage-title">회의 준비</span></div>
-    <p class="pz-stage-caption">글로벌 주요 뉴스 데이터를 바탕으로 검증용 기사 매칭 본문 링크가 연동되어 자동 생성됩니다.</p>
+    <p class="pz-stage-caption">실제 기사·공식 보고서·통계 등 Google Search로 확인된 참조 자료의 원문 링크를 근거로 5개 기본 분석과 AI 선정 필수 분석 1개를 생성합니다.</p>
     
     <div id="s1-history-container"></div>
     <div id="s1-skeleton-holder"></div>
 
     <div class="pz-review" id="s1-review">
       <label><input type="checkbox" data-stage="1"> 담당자 검토 완료 — 2단계로 진행</label>
-      <span class="pz-review-tag">인간 확인 대기</span>
+      <span class="pz-review-tag">확인 대기</span>
     </div>
     <div class="pz-error" id="s1-error"></div>
   </div>
@@ -230,7 +276,7 @@
     <div id="s2-skeleton-holder"></div>
     <div class="pz-review" id="s2-review">
       <label><input type="checkbox" data-stage="2"> 담당자 검토 완료 — 3단계로 진행</label>
-      <span class="pz-review-tag">인간 확인 대기</span>
+      <span class="pz-review-tag">확인 대기</span>
     </div>
     <div class="pz-error" id="s2-error"></div>
   </div>
@@ -246,7 +292,7 @@
     <div id="s3-skeleton-holder"></div>
     <div class="pz-review" id="s3-review">
       <label><input type="checkbox" data-stage="3"> 담당자 검토 완료 — 4단계로 진행</label>
-      <span class="pz-review-tag">인간 확인 대기</span>
+      <span class="pz-review-tag">확인 대기</span>
     </div>
     <div class="pz-error" id="s3-error"></div>
   </div>
@@ -299,9 +345,14 @@
   let uploadedAgendaFileText = "";
   let uploadedS2FileText = "";
 
+  const DEFAULT_API_KEY = 'AQ.Ab8RN6KzWeBN-x9bETmgxgGMfai--GX5uJ-KiyxnfVWQ0XNtGA';
+  keyInput.value = DEFAULT_API_KEY;
   try{
     const saved = localStorage.getItem('pz_gemini_key');
-    if(saved){ keyInput.value = saved; keySave.checked = true; }
+    if(saved){
+      keyInput.value = saved;
+      keySave.checked = true;
+    }
   }catch(e){ }
   
   function refreshKeyStatus(){
@@ -459,28 +510,271 @@
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
   }
 
-  /* ★ 가짜 링크 절대 차단 엔진 ★
-    AI가 임의의 깨지는 도메인 결합 가짜 URL을 절대 생성해내지 못하도록 방지하고, 
-    기사 제목 키워드를 추출하여 실제 동작하는 구글 뉴스(Google News Search) 원문 리스트 인터페이스 주소로 즉시 완벽 빌드합니다.
+  /* ★ 실제 출처 링크 렌더링 ★
+     Google Search Grounding 응답의 groundingMetadata에서 받은 URI만 링크로 표시합니다.
+     검색어 문장을 Google 검색 결과 URL로 변환하는 기존 방식은 사용하지 않습니다.
   */
+  function normalizeSingleItemNumbering(text) {
+    if (!text) return text;
+    const value = String(text);
+    const numberedLines = value.match(/^\s*[1-3]\.\s+/gm) || [];
+
+    if (numberedLines.length === 1 && /^\s*1\.\s+/m.test(value)) {
+      return value.replace(/^(\s*)1\.\s+/m, '$1');
+    }
+    return value;
+  }
+
+  function escapeHtmlAttr(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function escapeHtmlText(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function buildSafeLink(url, label) {
+    try {
+      const parsed = new URL(url);
+      if(parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        return escapeHtmlText(label);
+      }
+      const safeUrl = escapeHtmlAttr(parsed.href);
+      const safeLabel = escapeHtmlText(label);
+      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();">${safeLabel}</a>`;
+    } catch(e) {
+      return escapeHtmlText(label);
+    }
+  }
+
   function formatContent(text) {
     if (!text) return '—';
-    let contentStr = String(text).replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-    // 커스텀 마크다운 구문 파싱 처리: [search :: 기사제목이나 정확한 검색어 키워드](사용자에게 보여줄 기사 텍스트명)
-    const pattern = /\[search\s*::\s*([^\]]+)\]\(([^)]+)\)/gi;
-    
-    contentStr = contentStr.replace(pattern, (match, keyword, displayText) => {
-      const trimmedKeyword = keyword.trim();
-      const encodedKeyword = encodeURIComponent(trimmedKeyword);
+    const source = String(text);
+    const tokens = [];
+    const tokenPrefix = '___PZ_LINK_TOKEN_';
 
-      // 구글 종합 뉴스 검색 인터페이스 URL 결합 생성 (가짜 링크 생성 원천 방지)
-      const baseUrl = `https://www.google.com/search?q=${encodedKeyword}&tbm=nws`;
+    function reserveLink(html) {
+      const token = `${tokenPrefix}${tokens.length}___`;
+      tokens.push(html);
+      return token;
+    }
 
-      return `<a href="${baseUrl}" target="_blank" onclick="event.stopPropagation();">📰 ${displayText}</a>`;
+    // 1. Grounding 인용 Markdown을 먼저 안전한 토큰으로 보관
+    let contentStr = source.replace(/\[(\d+)\]\((https?:\/\/[^)\s]+)\)/gi, (match, number, url) => {
+      return reserveLink(buildSafeLink(url, `🔗 원문 ${number}`));
+    });
+
+    // 2. 인용 외에 응답 본문에 남아 있는 일반 URL은 화면에서 제거
+    //    실제 원문 이동은 위 Grounding 인용의 '🔗 원문 N' 링크만 사용
+    contentStr = contentStr.replace(/\s*\(?https?:\/\/[^\s<>()]+\)?/gi, '');
+
+    // 3. 일반 텍스트만 HTML escape
+    contentStr = escapeHtmlText(contentStr);
+
+    // 4. 이미 안전하게 만든 '원문' 링크 HTML만 마지막에 복원
+    tokens.forEach((html, index) => {
+      const token = `${tokenPrefix}${index}___`;
+      contentStr = contentStr.split(token).join(html);
     });
 
     return contentStr;
+  }
+
+  function getCandidateText(candidate) {
+    const parts = candidate?.content?.parts || [];
+    return parts
+      .filter(part => !part.thought && typeof part.text === 'string')
+      .map(part => part.text)
+      .join('')
+      .trim();
+  }
+
+  function normalizeMatchText(value) {
+    return String(value || '')
+      .toLowerCase()
+      .replace(/https?:\/\/\S+/g, ' ')
+      .replace(/[^\p{L}\p{N}]+/gu, ' ')
+      .trim();
+  }
+
+  function getMatchTokens(value) {
+    return normalizeMatchText(value)
+      .split(/\s+/)
+      .filter(token => token.length >= 2);
+  }
+
+  function scoreSourceChunk(sourceText, chunk) {
+    const sourceTokens = new Set(getMatchTokens(sourceText));
+    const chunkText = [
+      chunk?.web?.title || '',
+      chunk?.web?.uri || ''
+    ].join(' ');
+    const chunkTokens = new Set(getMatchTokens(chunkText));
+
+    let score = 0;
+    sourceTokens.forEach(token => {
+      if(chunkTokens.has(token)) score += 3;
+      else {
+        for(const candidateToken of chunkTokens) {
+          if(candidateToken.includes(token) || token.includes(candidateToken)) {
+            score += 1;
+            break;
+          }
+        }
+      }
+    });
+    return score;
+  }
+
+  function attachOneOriginalLinkPerSource(textValue, candidate) {
+    const rawText = String(textValue || '').trim();
+    const metadata = candidate?.groundingMetadata;
+    const chunks = (metadata?.groundingChunks || [])
+      .filter(chunk => chunk?.web?.uri)
+      .filter((chunk, index, arr) =>
+        arr.findIndex(item => item.web.uri === chunk.web.uri) === index
+      );
+
+    if(!rawText || chunks.length === 0) return rawText;
+
+    // '• 자료명:' 단위로 실제 출력된 출처 항목을 분리
+    const sourceEntryPattern = /(^|\n)(•\s*자료명:[\s\S]*?)(?=\n\s*•\s*자료명:|$)/g;
+    const entries = [];
+    let match;
+
+    while((match = sourceEntryPattern.exec(rawText)) !== null) {
+      entries.push({
+        full: match[0],
+        prefix: match[1] || '',
+        body: match[2].trim()
+      });
+    }
+
+    // 자료명 형식이 아닌 예외 응답은 첫 번째 Grounding 원문만 연결
+    if(entries.length === 0) {
+      return `${rawText} [1](${chunks[0].web.uri})`;
+    }
+
+    const unusedChunkIndexes = new Set(chunks.map((_, index) => index));
+    const linkedEntries = [];
+
+    for(let sourceIndex = 0; sourceIndex < entries.length; sourceIndex++) {
+      // 확인 가능한 Grounding URI 수보다 자료명이 많은 경우,
+      // 링크 없는 자료명을 남기지 않고 해당 미검증 항목은 출력에서 제외
+      if(unusedChunkIndexes.size === 0) break;
+
+      const entry = entries[sourceIndex];
+      let bestChunkIndex = null;
+      let bestScore = -1;
+
+      unusedChunkIndexes.forEach(chunkIndex => {
+        const score = scoreSourceChunk(entry.body, chunks[chunkIndex]);
+        if(score > bestScore) {
+          bestScore = score;
+          bestChunkIndex = chunkIndex;
+        }
+      });
+
+      if(bestChunkIndex === null) break;
+
+      unusedChunkIndexes.delete(bestChunkIndex);
+      const originalNumber = linkedEntries.length + 1;
+      const uri = chunks[bestChunkIndex].web.uri;
+
+      // 각 자료명 항목의 끝에 정확히 하나의 원문 링크를 1:1로 부여
+      linkedEntries.push(
+        `${entry.body}\n  [${originalNumber}](${uri})`
+      );
+    }
+
+    return linkedEntries.join('\n\n');
+  }
+
+  async function callGeminiGroundedSource(promptText) {
+    const apiKey = requireKey();
+    const model = "gemini-2.5-flash";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+    let response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          tools: [{ google_search: {} }],
+          generationConfig: { temperature: 0.2 }
+        })
+      });
+    } catch(networkErr) {
+      throw new Error('실제 참조 자료 검색 요청이 차단되었습니다.');
+    }
+
+    if(!response.ok) {
+      let msg = 'Google Search 근거 조회 실패 (' + response.status + ')';
+      try {
+        const errBody = await response.json();
+        if(errBody.error?.message) msg += ' — ' + errBody.error.message;
+      } catch(e) {}
+      throw new Error(msg);
+    }
+
+    const data = await response.json();
+    const candidate = data.candidates?.[0];
+    if(!candidate) throw new Error('근거 검색 응답에 후보 데이터가 없습니다.');
+
+    const rawText = getCandidateText(candidate);
+    const metadata = candidate.groundingMetadata;
+    const chunks = metadata?.groundingChunks || [];
+
+    if(!rawText || chunks.length === 0) {
+      throw new Error('실제 원문 근거가 확인되지 않았습니다.');
+    }
+
+    return {
+      text: attachOneOriginalLinkPerSource(rawText, candidate),
+      searchHtml: metadata?.searchEntryPoint?.renderedContent || ''
+    };
+  }
+
+  async function getStage1SourceEvidence(agenda, categoryTitle, categoryBody) {
+    const prompt = `당신은 의사결정 자료의 출처 검증 전담 리서처입니다.
+Google Search를 사용하여 아래 분석 내용을 직접 확인할 수 있는 【실제로 존재하는 원문 자료】를 1~2개만 선정하세요.
+
+[안건]
+"""${agenda}"""
+
+[분석 카테고리]
+${categoryTitle}
+
+[분석 내용]
+"""${categoryBody}"""
+
+[필수 기준]
+1. 실제 뉴스 기사, 공식 기관 보고서, 정부·공공기관 통계, 기업 공식 발표, 학술·산업 보고서처럼 구체적인 원문 내용이 존재하는 자료만 사용하세요.
+2. 검색어, 검색 문장, '검색해 보세요' 같은 안내는 출력하지 마세요.
+3. URL을 직접 작성하거나 추측하지 마세요. Google Search Grounding으로 확인된 자료만 근거로 사용하세요.
+4. 분석과 직접 관련 없는 자료는 제외하세요.
+5. 가능하면 공식 기관·기업 원문 또는 신뢰도 높은 언론·조사기관 자료를 우선하세요.
+6. 출력은 아래 형식만 사용하세요. 제목은 원문 자료의 실제 제목을 최대한 정확히 작성하세요.
+7. 서로 다른 자료를 2개 제시하는 경우 실제로 Google Search Grounding에서 각각 확인된 서로 다른 원문 자료만 사용하세요. 하나의 원문을 두 개의 자료명으로 나누어 작성하지 마세요.
+
+• 자료명: [실제 기사·보고서·공식 문서 제목]
+  발행처: [기관·기업·언론사명]
+  관련성: [현재 분석을 어떤 사실 또는 지표로 확인할 수 있는지 한 문장]
+
+필요한 경우 두 번째 자료를 같은 형식으로 이어서 작성하세요.`;
+
+    return await callGeminiGroundedSource(prompt);
   }
 
   function enableCardEditing(bodyElement, originalRawText) {
@@ -539,28 +833,58 @@
     const cardsGrid = document.createElement('div');
     cardsGrid.className = 'pz-cards';
     
-    entries.forEach(([title, body]) => {
+    entries.forEach(([title, body, sourceResult]) => {
       const card = document.createElement('div');
       card.className = 'pz-card';
-      
+
       const cTitle = document.createElement('div');
       cTitle.className = 'pz-card-title';
       cTitle.innerHTML = `<span class="t-text">${title}</span>`;
-      
+
       const cBody = document.createElement('div');
       cBody.className = 'pz-card-body';
       cBody.setAttribute('data-raw', body || '');
       cBody.innerHTML = formatContent(body);
-      
+
       cBody.addEventListener('click', () => {
         enableCardEditing(cBody, body || '');
       });
 
       card.appendChild(cTitle);
       card.appendChild(cBody);
+
+      if(sourceResult) {
+        const sourceBlock = document.createElement('div');
+        sourceBlock.className = 'pz-source-block';
+        sourceBlock.addEventListener('click', e => e.stopPropagation());
+
+        const sourceLabel = document.createElement('div');
+        sourceLabel.className = 'pz-source-label';
+        sourceLabel.textContent = 'VERIFIED SOURCE · 실제 원문 참조';
+        sourceBlock.appendChild(sourceLabel);
+
+        const sourceText = document.createElement('div');
+        sourceText.className = sourceResult.error ? 'pz-source-text pz-source-error' : 'pz-source-text';
+        sourceText.innerHTML = formatContent(
+          sourceResult.error
+            ? `출처 자동 연결 실패: ${sourceResult.error}`
+            : sourceResult.text
+        );
+        sourceBlock.appendChild(sourceText);
+
+        if(sourceResult.searchHtml) {
+          const attribution = document.createElement('div');
+          attribution.className = 'pz-search-attribution';
+          attribution.innerHTML = sourceResult.searchHtml;
+          sourceBlock.appendChild(attribution);
+        }
+
+        card.appendChild(sourceBlock);
+      }
+
       cardsGrid.appendChild(card);
     });
-    
+
     group.appendChild(cardsGrid);
     container.appendChild(group);
     
@@ -571,7 +895,7 @@
     cb.addEventListener('change', ()=>{
       const wrap = cb.closest('.pz-review');
       wrap.classList.toggle('checked', cb.checked);
-      wrap.querySelector('.pz-review-tag').textContent = cb.checked ? '검토 완료' : '인간 확인 대기';
+      wrap.querySelector('.pz-review-tag').textContent = cb.checked ? '검토 완료' : '확인 대기';
       const stage = parseInt(cb.dataset.stage,10);
       if(cb.checked){
         setStageDone(stage);
@@ -591,7 +915,7 @@
     setStageUnlocked(1);
     el('s1-error').textContent='';
     
-    const titles = ['사업자료 분석','경쟁사 비교','시장 규모 추정','리스크 시나리오','투자 분석'];
+    const titles = ['사업자료 분석','경쟁사 비교','시장 규모 추정','리스크 시나리오','투자 분석','AI 선정 필수 분석'];
     showSkeleton(el('s1-skeleton-holder'), titles);
     
     try{
@@ -606,35 +930,95 @@
 [안건 및 데이터]
 """${combinedAgenda}"""
 
-[★중요: 실시간 검색 플랫폼 매칭 및 가짜 링크 금지 지침★]
-1. 분석 사실과 실존 지표 근거를 증명할 수 있는 '실제 뉴스 기사 제목'이나 '공식 기관의 핵심 키워드'를 본문 내에 인용해 주십시오.
-2. 각 기사 인용 문구 및 버튼은 사용자가 클릭 시 실제 브라우저 경로로 직접 연동될 수 있도록 반드시 아래 특수 규격 포맷을 심어 출력하세요.
-   - 포맷: [search :: 검색창에 넣을 기사 제목 전체 혹은 핵심 키워드 조합](화면에 깔끔하게 노출될 기사 제목 텍스트)
-   - 예시: [search :: 가트너 2026년 생성형 AI 비즈니스 가치 전망 리포트](가트너 '2026년 글로벌 생성형 AI 시장 규모 전망 및 가치 발표')
-   - 예시: [search :: 삼성전자 인공지능 반도체 인프라 인프라 확보 투자 확대](삼성전자, 차세대 AI 반도체 생산라인 및 설비 투자 본격화)
-3. 임의의 가짜 고유 도메인 주소(https://... 등)를 절대로 마음대로 지어내서 본문에 적지 마십시오. 오직 위의 [search :: 키워드](텍스트) 규칙만 사용하여 가짜 주소 생성을 원천 배제하세요.
+[★중요: 분석 본문 작성 지침★]
+1. 이 1차 JSON 분석 본문에는 URL, 검색 링크, 검색어 링크 또는 존재 여부를 확인하지 않은 기사 제목을 작성하지 마세요.
+2. 구체적인 사실·수치·기업 사례는 분석에 활용하되, 참조 자료 원문 링크는 별도의 Google Search Grounding 검증 단계에서 자동 연결합니다.
+3. 검색엔진 검색 결과 페이지를 출처처럼 제시하지 마세요.
 
 [★양적 확장 및 구조화 지침★]
 1. 반드시 【두괄식 구조】로 작성하세요. 각 항목 최상단 첫 줄은 핵심 요약 선언문이어야 합니다.
-2. 지표 아래에는 최소 2개 이상의 구체적인 지표, 벤치마킹 데이터, 실존 기업 및 세부 근거가 포함되어야 합니다.
-3. 단정형 어조(~임, ~함, ~로 파악됨)를 유지하고, 오직 아래 지정된 JSON 구조로만 출력하세요.
+2. 각 카테고리의 세부 분석 개수는 안건의 중요도·복잡도·근거량을 AI가 자체 판단하여 【최소 1개, 최대 3개】로 작성하세요.
+3. 억지로 분석 개수를 늘리지 마세요. 핵심 쟁점이 1개면 1개만 작성하고, 서로 구분되는 핵심 쟁점이 있을 때만 2개 또는 3개로 확장하세요.
+4. 세부 분석이 1개뿐인 카테고리는 '1.' 번호를 절대 붙이지 말고 바로 분석 문장을 작성하세요.
+5. 세부 분석이 2개 이상인 경우에만 '1.', '2.' 또는 '1.', '2.', '3.' 번호를 순서대로 사용하세요.
+6. 각 세부 분석에는 가능한 경우 구체적인 지표, 벤치마킹 데이터, 실존 기업, 공식 통계 또는 실제 사례 근거를 포함하세요.
+7. 기본 5개 분석 외에, 현재 안건을 실제 의사결정하기 위해 빠지면 안 되는 【추가 분석 카테고리 1개】를 당신이 직접 판단해 선정하세요.
+8. 추가 카테고리는 사업자료·경쟁사·시장규모·리스크·투자 분석과 내용이 중복되면 안 됩니다.
+9. 추가 카테고리는 안건 성격에 따라 법률·규제, 기술·보안, 운영역량, 고객·타깃 적합성, IP 시너지, 유통·채널, 데이터 품질, 조직·거버넌스, 이해관계자 영향 등에서 가장 중요한 관점을 선택하거나 더 적절한 관점을 새로 정의할 수 있습니다.
+10. additional_category_title에는 짧고 명확한 한국어 카테고리명만 작성하세요. 예: '법률·규제 검토', 'IP 시너지 분석', '기술·보안 적합성'.
+11. additional_category_content 첫 줄에는 반드시 '■ 추가 선정 사유:'로 시작하여 왜 이 안건에 해당 카테고리가 필수인지 선언하세요. 이후 세부 분석 역시 AI가 판단하여 1~3개로 작성하고, 1개일 때는 번호를 붙이지 마세요.
+12. 추가 카테고리도 다른 카테고리와 동일하게 구체적인 사실·지표·사례를 기반으로 작성하세요. 실제 원문 출처 연결은 별도의 Grounding 검증 단계에서 처리합니다.
+13. 단정형 어조(~임, ~함, ~로 파악됨)를 유지하고, 오직 아래 지정된 JSON 구조로만 출력하세요. JSON 키는 누락하거나 이름을 변경하지 마세요.
 
-{"business_data":"■ 핵심 결론: ...\\n1. [첫 번째 분석 정보]\\n▶ [관련 지표]\\n2. [두 번째 분석 정보]\\n▶ [관련 지표]\\n• 참고 문헌: [search :: 기사제목키워드](기사 제목 명칭 요약)", 
- "competitor_analysis":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n• 시장 자료: [search :: 경쟁사분석키워드](경쟁사 전략 동향 뉴스)", 
- "market_size":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n• 통계 출처: [search :: 시장규모전망키워드](성장률 추이 통계)", 
- "risk_analysis":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n• 리스크 뉴스: [search :: 공급망리스크키워드](공급망 리스크 분석 기사)", 
- "investment_scenario":"■ 핵심 결론: ...\\n1. ...\\n▶ ...\\n• 투자 리포트: [search :: 투자밸류에이션키워드](밸류에이션 추이 현황)"}`;
+{"business_data":"■ 핵심 결론: ...\\n[AI 판단에 따라 세부 분석 1~3개 작성. 1개면 번호 없이 작성, 2~3개면 번호 사용]\\n▶ [관련 지표 또는 근거]", 
+ "competitor_analysis":"■ 핵심 결론: ...\\n[AI 판단에 따라 세부 분석 1~3개]\\n▶ [경쟁사·벤치마킹 근거]", 
+ "market_size":"■ 핵심 결론: ...\\n[AI 판단에 따라 세부 분석 1~3개]\\n▶ [시장 규모·성장률·통계 근거]", 
+ "risk_analysis":"■ 핵심 결론: ...\\n[AI 판단에 따라 세부 분석 1~3개]\\n▶ [리스크 발생 사례 또는 영향 근거]", 
+ "investment_scenario":"■ 핵심 결론: ...\\n[AI 판단에 따라 세부 분석 1~3개]\\n▶ [투자·밸류에이션·수익성 근거]",
+ "additional_category_title":"안건 특성에 맞춰 AI가 직접 선정한 카테고리명",
+ "additional_category_content":"■ 추가 선정 사유: 이 안건의 의사결정에서 ... 관점이 필수임.\\n[AI 판단에 따라 세부 분석 1~3개. 1개면 번호 없이 작성]\\n▶ [구체적 사실·지표·사례 근거]"}`;
 
       const r = await callGemini(prompt);
+
+      const stage1TextFields = [
+        'business_data',
+        'competitor_analysis',
+        'market_size',
+        'risk_analysis',
+        'investment_scenario',
+        'additional_category_content'
+      ];
+      stage1TextFields.forEach(key => {
+        if (typeof r[key] === 'string') {
+          r[key] = normalizeSingleItemNumbering(r[key]);
+        }
+      });
+
+      const aiSelectedCategoryTitle =
+        (typeof r.additional_category_title === 'string' && r.additional_category_title.trim())
+          ? `AI 선정 · ${r.additional_category_title.trim()}`
+          : 'AI 선정 · 필수 추가 분석';
+
+      const aiSelectedCategoryContent =
+        (typeof r.additional_category_content === 'string' && r.additional_category_content.trim())
+          ? r.additional_category_content
+          : '■ 추가 선정 사유: AI 응답에서 추가 분석 내용이 누락됨. 동일 안건으로 다시 산출이 필요함.';
+
+      const sourceTargets = [
+        ['business_data', '사업자료 분석', r.business_data],
+        ['competitor_analysis', '경쟁사 비교', r.competitor_analysis],
+        ['market_size', '시장 규모 추정', r.market_size],
+        ['risk_analysis', '리스크 시나리오', r.risk_analysis],
+        ['investment_scenario', '투자 분석', r.investment_scenario],
+        ['additional_category_content', aiSelectedCategoryTitle, aiSelectedCategoryContent]
+      ];
+
+      const sourceResults = await Promise.all(
+        sourceTargets.map(async ([key, title, body]) => {
+          try {
+            const result = await getStage1SourceEvidence(combinedAgenda, title, body);
+            return [key, result];
+          } catch(sourceError) {
+            return [key, { text:'', searchHtml:'', error: sourceError.message }];
+          }
+        })
+      );
+
+      const groundedSources = Object.fromEntries(sourceResults);
+      r.verified_sources = Object.fromEntries(
+        sourceResults.map(([key, value]) => [key, value.error ? '' : value.text])
+      );
+
       state.s1.push(r);
       hideSkeleton(el('s1-skeleton-holder'));
-      
+
       appendCardsGroup(el('s1-history-container'), [
-        ['사업자료 분석', r.business_data],
-        ['경쟁사 비교', r.competitor_analysis],
-        ['시장 규모 추정', r.market_size],
-        ['리스크 시나리오', r.risk_analysis],
-        ['투자 분석', r.investment_scenario],
+        ['사업자료 분석', r.business_data, groundedSources.business_data],
+        ['경쟁사 비교', r.competitor_analysis, groundedSources.competitor_analysis],
+        ['시장 규모 추정', r.market_size, groundedSources.market_size],
+        ['리스크 시나리오', r.risk_analysis, groundedSources.risk_analysis],
+        ['투자 분석', r.investment_scenario, groundedSources.investment_scenario],
+        [aiSelectedCategoryTitle, aiSelectedCategoryContent, groundedSources.additional_category_content],
       ]);
     }catch(e){
       hideSkeleton(el('s1-skeleton-holder'));
@@ -800,7 +1184,7 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
 2. 각 섹션 역시 첫 문장에 결론을 내리는 【두괄식 구조】를 엄격하게 적용하세요.
 3. 가독성을 극대화하기 위해 숫자 번호('1.', '2.')와 기호('■', '▶')를 구조화하십시오.
 4. 어조는 전문적이고 엄격한 단정형 어조(~임, ~함)를 사용하십시오.
-5. 출력 형식에서 1단계 기사 링크 등 특수 검색 규격([search :: keyword](text))이 있다면 변형하지 말고 그대로 유지하여 출력하세요.`;
+5. 1단계 검증 출처의 인용 링크 표기([숫자](URL))가 데이터에 포함되어 있다면 URL과 인용 번호를 변형하지 말고 그대로 유지하여 출력하세요.`;
 
       const reportText = await callGemini(prompt, false);
       skeletonHolder.innerHTML = '';
