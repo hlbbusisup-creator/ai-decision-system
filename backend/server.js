@@ -14,8 +14,9 @@ const PORT = Number(process.env.PORT || 3000);
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'https://hlbbusisup-creator.github.io';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
-const DELETE_CODE = process.env.DELETE_CODE || '';
-const DELETE_CODE_FALLBACK_HASH = '04f21e1fc82e36aa8346a4cb5a2db97a97dc2f800967e44e6b0950b63b29bd87';
+// 모든 삭제 API는 동일한 공통 삭제코드를 사용합니다.
+// Render에 과거 DELETE_CODE 환경변수가 남아 있어도 이 고정 검증값만 사용합니다.
+const UNIFIED_DELETE_CODE_HASH = '04f21e1fc82e36aa8346a4cb5a2db97a97dc2f800967e44e6b0950b63b29bd87';
 
 if (!DATABASE_URL) {
   throw new Error('DATABASE_URL is required.');
@@ -67,18 +68,17 @@ function requireAdmin(req, res, next) {
 }
 
 function requireDeleteCode(req, res, next) {
-  const suppliedCode = String(req.headers['x-delete-code'] || '');
+  const suppliedCode = String(req.headers['x-delete-code'] || '').trim();
   const suppliedHash = crypto
     .createHash('sha256')
     .update(suppliedCode, 'utf8')
     .digest('hex');
 
-  const isValid = DELETE_CODE
-    ? suppliedCode === DELETE_CODE
-    : suppliedHash === DELETE_CODE_FALLBACK_HASH;
-
-  if (!isValid) {
-    return res.status(401).json({ error: 'Invalid delete code.' });
+  if (suppliedHash !== UNIFIED_DELETE_CODE_HASH) {
+    return res.status(401).json({
+      error: 'Invalid delete code.',
+      code: 'INVALID_DELETE_CODE'
+    });
   }
 
   next();
@@ -135,6 +135,134 @@ function safeString(value, maxLength = 1000000) {
   return String(value ?? '').slice(0, maxLength);
 }
 
+function historyRecordTimestamp(record) {
+  const value = record?.createdAt || record?.created_at || '';
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function historyResetRange(record) {
+  if (String(record?.type || '') !== 'stage_reset') return null;
+
+  const data = record?.data || {};
+  const resetFromStage = Math.max(
+    1,
+    Math.min(5, Number(data.resetFromStage || record.stage || 1))
+  );
+  const resetThroughStage = Math.max(
+    resetFromStage,
+    Math.min(5, Number(data.resetThroughStage || 5))
+  );
+
+  return {
+    resetFromStage,
+    resetThroughStage,
+    timestamp: historyRecordTimestamp(record)
+  };
+}
+
+function filterActiveHistoryRecords(records) {
+  const resetRanges = records
+    .map(historyResetRange)
+    .filter(Boolean);
+
+  return records.filter(record => {
+    if (String(record?.type || '') === 'stage_reset') return true;
+
+    const stage = Number(record.stage);
+    const applicableReset = resetRanges
+      .filter(reset =>
+        stage >= reset.resetFromStage &&
+        stage <= reset.resetThroughStage
+      )
+      .sort((a, b) => b.timestamp - a.timestamp)[0];
+
+    if (!applicableReset) return true;
+
+    if (
+      stage === 1 &&
+      record.kind === 'input' &&
+      ['agenda', 'draft_save'].includes(String(record.type || ''))
+    ) {
+      return true;
+    }
+
+    return historyRecordTimestamp(record) > applicableReset.timestamp;
+  });
+}
+
+async function rebuildDecisionSessionSummary(client, sessionId) {
+  const historyResult = await client.query(
+    `SELECT *
+     FROM decision_history
+     WHERE session_id = $1::text
+     ORDER BY created_at DESC, version_no DESC`,
+    [sessionId]
+  );
+
+  if (historyResult.rowCount === 0) {
+    await client.query(
+      `DELETE FROM decision_sessions WHERE session_id = $1::text`,
+      [sessionId]
+    );
+    return;
+  }
+
+  const records = historyResult.rows.map(normalizeRecord);
+  const activeRecords = filterActiveHistoryRecords(records);
+  const operationalRecords = activeRecords.filter(
+    record => String(record.type || '') !== 'stage_reset'
+  );
+  const sortedAll = [...records].sort(
+    (a, b) => historyRecordTimestamp(b) - historyRecordTimestamp(a)
+  );
+
+  const latestWithTitle = sortedAll.find(record => record.decisionTitle) || sortedAll[0];
+  const latestWithAuthor = sortedAll.find(record => record.authorName) || sortedAll[0];
+  const latestWithAgenda = sortedAll.find(record => record.agendaSummary) || sortedAll[0];
+
+  const currentStage = operationalRecords.reduce((max, record) => {
+    const stage = Number(record.stage);
+    return stage >= 1 && stage <= 5 ? Math.max(max, stage) : max;
+  }, 0);
+
+  const hasReport = operationalRecords.some(
+    record => Number(record.stage) === 5 || record.kind === 'report'
+  );
+  const hasProgress = operationalRecords.some(record =>
+    record.kind === 'output' ||
+    record.kind === 'report' ||
+    Number(record.stage) > 1
+  );
+  const status = hasReport
+    ? 'completed'
+    : (hasProgress ? 'in_progress' : 'draft');
+
+  await client.query(
+    `UPDATE decision_sessions
+     SET decision_title = $2::text,
+         author_name = $3::text,
+         agenda_summary = $4::text,
+         current_stage = $5::smallint,
+         status = $6::text,
+         has_report = $7::boolean,
+         last_record_id = $8::text,
+         updated_at = $9::timestamptz
+     WHERE session_id = $1::text`,
+    [
+      sessionId,
+      latestWithTitle?.decisionTitle || '',
+      latestWithAuthor?.authorName || '',
+      latestWithAgenda?.agendaSummary || '',
+      currentStage,
+      status,
+      hasReport,
+      sortedAll[0]?.id || null,
+      sortedAll[0]?.createdAt || new Date().toISOString()
+    ]
+  );
+}
+
 async function initializeSchema() {
   const schemaPath = path.join(__dirname, 'schema.postgresql.sql');
   const schemaSql = fs.readFileSync(schemaPath, 'utf8');
@@ -147,6 +275,8 @@ app.get('/api/health', async (req, res) => {
     res.json({
       ok: true,
       service: 'project-zero-shared-db-api',
+      serviceVersion: '2026-07-delete-code-unified-v1',
+      deleteCodeMode: 'unified-fixed-hash',
       database: 'postgresql',
       dbTime: result.rows[0].db_time,
       time: new Date().toISOString()
@@ -327,6 +457,8 @@ app.post('/api/history', async (req, res) => {
         createdAt
       ]
     );
+
+    await rebuildDecisionSessionSummary(client, sessionId);
 
     await client.query('COMMIT');
     res.status(201).json(normalizeRecord(insertResult.rows[0]));
@@ -522,8 +654,7 @@ app.get('/api/analytics', async (req, res) => {
       summaryResult,
       stageResult,
       statusResult,
-      authorResult,
-      dailyResult
+      authorResult
     ] = await Promise.all([
       pool.query(
         `SELECT
@@ -607,29 +738,7 @@ app.get('/api/analytics', async (req, res) => {
          GROUP BY 1
          ORDER BY count DESC, author ASC
          LIMIT 10`
-      ),
-      pool.query(
-        `WITH days AS (
-           SELECT generate_series(
-             CURRENT_DATE - INTERVAL '13 days',
-             CURRENT_DATE,
-             INTERVAL '1 day'
-           )::DATE AS date
-         ),
-         activity AS (
-           SELECT created_at::DATE AS date, COUNT(*)::INTEGER AS count
-           FROM decision_history
-           WHERE created_at >= CURRENT_DATE - INTERVAL '13 days'
-           GROUP BY created_at::DATE
-         )
-         SELECT
-           TO_CHAR(days.date, 'YYYY-MM-DD') AS date,
-           COALESCE(activity.count, 0)::INTEGER AS count
-         FROM days
-         LEFT JOIN activity USING (date)
-         ORDER BY days.date`
-      )
-    ]);
+      )    ]);
 
     const summaryRow = summaryResult.rows[0] || {};
 
@@ -657,10 +766,6 @@ app.get('/api/analytics', async (req, res) => {
       })),
       authorDistribution: authorResult.rows.map(row => ({
         author: row.author,
-        count: Number(row.count || 0)
-      })),
-      dailyActivity: dailyResult.rows.map(row => ({
-        date: row.date,
         count: Number(row.count || 0)
       }))
     });
@@ -715,12 +820,45 @@ app.get('/api/export', async (req, res) => {
   }
 });
 
-app.delete('/api/history/:id', requireAdmin, async (req, res) => {
+app.post('/api/delete-code/verify', requireDeleteCode, (req, res) => {
+  res.json({
+    ok: true,
+    verified: true,
+    deleteCodeMode: 'unified-fixed-hash'
+  });
+});
+
+app.delete('/api/history/:id', requireDeleteCode, async (req, res) => {
+  const client = await pool.connect();
+
   try {
-    await pool.query('DELETE FROM decision_history WHERE id = $1', [req.params.id]);
+    await client.query('BEGIN');
+
+    const deleteResult = await client.query(
+      `DELETE FROM decision_history
+       WHERE id = $1::text
+       RETURNING session_id`,
+      [req.params.id]
+    );
+
+    if (deleteResult.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'History record not found.' });
+    }
+
+    await rebuildDecisionSessionSummary(
+      client,
+      deleteResult.rows[0].session_id
+    );
+
+    await client.query('COMMIT');
     res.status(204).end();
   } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('DELETE /api/history/:id failed:', error);
     res.status(500).json({ error: error.message });
+  } finally {
+    client.release();
   }
 });
 
@@ -764,7 +902,7 @@ app.post('/api/documents/bulk-delete', requireDeleteCode, async (req, res) => {
   }
 });
 
-app.delete('/api/documents/:sessionId', requireAdmin, async (req, res) => {
+app.delete('/api/documents/:sessionId', requireDeleteCode, async (req, res) => {
   try {
     await pool.query('DELETE FROM decision_sessions WHERE session_id = $1', [req.params.sessionId]);
     res.status(204).end();
@@ -773,7 +911,7 @@ app.delete('/api/documents/:sessionId', requireAdmin, async (req, res) => {
   }
 });
 
-app.delete('/api/history', requireAdmin, async (req, res) => {
+app.delete('/api/history', requireDeleteCode, async (req, res) => {
   const client = await pool.connect();
 
   try {
