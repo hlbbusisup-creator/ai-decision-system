@@ -14,8 +14,9 @@ const PORT = Number(process.env.PORT || 3000);
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'https://hlbbusisup-creator.github.io';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
-const DELETE_CODE = process.env.DELETE_CODE || '';
-const DELETE_CODE_FALLBACK_HASH = '04f21e1fc82e36aa8346a4cb5a2db97a97dc2f800967e44e6b0950b63b29bd87';
+// 모든 삭제 API는 동일한 공통 삭제코드를 사용합니다.
+// Render에 과거 DELETE_CODE 환경변수가 남아 있어도 이 고정 검증값만 사용합니다.
+const UNIFIED_DELETE_CODE_HASH = '04f21e1fc82e36aa8346a4cb5a2db97a97dc2f800967e44e6b0950b63b29bd87';
 
 if (!DATABASE_URL) {
   throw new Error('DATABASE_URL is required.');
@@ -67,18 +68,17 @@ function requireAdmin(req, res, next) {
 }
 
 function requireDeleteCode(req, res, next) {
-  const suppliedCode = String(req.headers['x-delete-code'] || '');
+  const suppliedCode = String(req.headers['x-delete-code'] || '').trim();
   const suppliedHash = crypto
     .createHash('sha256')
     .update(suppliedCode, 'utf8')
     .digest('hex');
 
-  const isValid = DELETE_CODE
-    ? suppliedCode === DELETE_CODE
-    : suppliedHash === DELETE_CODE_FALLBACK_HASH;
-
-  if (!isValid) {
-    return res.status(401).json({ error: 'Invalid delete code.' });
+  if (suppliedHash !== UNIFIED_DELETE_CODE_HASH) {
+    return res.status(401).json({
+      error: 'Invalid delete code.',
+      code: 'INVALID_DELETE_CODE'
+    });
   }
 
   next();
