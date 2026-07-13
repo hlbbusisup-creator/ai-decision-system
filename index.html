@@ -269,19 +269,6 @@
 #pz-root .pz-status-count{
   font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--ink-900);
 }
-#pz-root .pz-activity-svg{width:100%; height:auto; display:block; overflow:visible;}
-#pz-root .pz-chart-axis-label{
-  font-family:'IBM Plex Mono',monospace; font-size:9px; fill:#7A8190;
-}
-#pz-root .pz-chart-grid-line{stroke:#E8EAF1; stroke-width:1;}
-#pz-root .pz-chart-line{
-  fill:none; stroke:#3F51B5; stroke-width:3; stroke-linecap:round; stroke-linejoin:round;
-}
-#pz-root .pz-chart-area{fill:rgba(63,81,181,.10);}
-#pz-root .pz-chart-point{fill:#fff; stroke:#3F51B5; stroke-width:2;}
-#pz-root .pz-chart-point-value{
-  font-family:'IBM Plex Mono',monospace; font-size:8.5px; fill:#3F51B5; font-weight:700;
-}
 #pz-root .pz-analytics-error{
   padding:18px; border:1px dashed #D7B1B1; border-radius:9px; color:#9B4A4A;
   background:#FFF8F8; font-size:11.5px; line-height:1.5;
@@ -719,14 +706,7 @@
             <div class="pz-analytics-card-desc">초안, 진행 중, 최종 완료 문서 구성비</div>
             <div id="pz-status-chart" class="pz-chart-empty">데이터를 집계하는 중입니다.</div>
           </article>
-
-          <article class="pz-analytics-card wide">
-            <div class="pz-analytics-card-title">최근 14일 저장 활동</div>
-            <div class="pz-analytics-card-desc">일자별 입력·산출·보고서 이력 저장 건수</div>
-            <div id="pz-activity-chart" class="pz-chart-empty">데이터를 집계하는 중입니다.</div>
-          </article>
-
-          <article class="pz-analytics-card wide">
+<article class="pz-analytics-card wide">
             <div class="pz-analytics-card-title">작성자별 의사결정 문서</div>
             <div class="pz-analytics-card-desc">등록 문서 수 기준 상위 작성자</div>
             <div id="pz-author-chart" class="pz-chart-empty">데이터를 집계하는 중입니다.</div>
@@ -3681,15 +3661,6 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     return records;
   }
 
-  function getAnalyticsDateKey(value) {
-    const date = new Date(value);
-    if(Number.isNaN(date.getTime())) return '';
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
   function buildDashboardAnalyticsFallback(documents, records) {
     const now = new Date();
     const sevenDaysAgo = new Date(now);
@@ -3761,30 +3732,6 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
       .sort((a, b) => b.count - a.count || a.author.localeCompare(b.author, 'ko'))
       .slice(0, 10);
 
-    const dailyMap = new Map();
-    const dailyActivity = [];
-
-    for(let offset = 13; offset >= 0; offset--) {
-      const date = new Date(now);
-      date.setHours(0, 0, 0, 0);
-      date.setDate(date.getDate() - offset);
-
-      const key = getAnalyticsDateKey(date);
-      dailyMap.set(key, 0);
-      dailyActivity.push({ date:key, count:0 });
-    }
-
-    normalizedRecords.forEach(record => {
-      const key = getAnalyticsDateKey(record.createdAt || record.created_at || '');
-      if(dailyMap.has(key)) {
-        dailyMap.set(key, Number(dailyMap.get(key) || 0) + 1);
-      }
-    });
-
-    dailyActivity.forEach(item => {
-      item.count = Number(dailyMap.get(item.date) || 0);
-    });
-
     return {
       generatedAt:new Date().toISOString(),
       source:'browser_fallback',
@@ -3807,8 +3754,7 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
         status,
         count
       })),
-      authorDistribution,
-      dailyActivity
+      authorDistribution
     };
   }
 
@@ -3836,12 +3782,6 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
   function setAnalyticsKpi(id, value, suffix = '') {
     const target = el(id);
     if(target) target.textContent = `${value}${suffix}`;
-  }
-
-  function formatAnalyticsDateLabel(dateValue) {
-    const date = new Date(`${dateValue}T00:00:00`);
-    if(Number.isNaN(date.getTime())) return String(dateValue || '');
-    return `${String(date.getMonth() + 1).padStart(2,'0')}.${String(date.getDate()).padStart(2,'0')}`;
   }
 
   function renderHorizontalBarChart(containerId, rows, labelKey, valueKey) {
@@ -3971,73 +3911,8 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     container.replaceChildren(layout);
   }
 
-  function renderActivityLineChart(rows) {
-    const container = el('pz-activity-chart');
-    container.className = '';
-
-    if(!Array.isArray(rows) || rows.length === 0) {
-      container.className = 'pz-chart-empty';
-      container.textContent = '최근 활동 데이터가 없습니다.';
-      return;
-    }
-
-    const width = 760;
-    const height = 250;
-    const padding = { left:42, right:18, top:25, bottom:38 };
-    const values = rows.map(item => Number(item.count || 0));
-    const maxValue = Math.max(...values, 1);
-    const plotWidth = width - padding.left - padding.right;
-    const plotHeight = height - padding.top - padding.bottom;
-    const stepX = rows.length > 1 ? plotWidth / (rows.length - 1) : 0;
-
-    const points = rows.map((item, index) => {
-      const x = padding.left + (stepX * index);
-      const y = padding.top + plotHeight - ((Number(item.count || 0) / maxValue) * plotHeight);
-      return { x, y, value:Number(item.count || 0), label:formatAnalyticsDateLabel(item.date) };
-    });
-
-    const pointString = points.map(point => `${point.x},${point.y}`).join(' ');
-    const areaPath = [
-      `M ${points[0].x} ${padding.top + plotHeight}`,
-      ...points.map(point => `L ${point.x} ${point.y}`),
-      `L ${points[points.length - 1].x} ${padding.top + plotHeight}`,
-      'Z'
-    ].join(' ');
-
-    const gridLines = [0, 0.25, 0.5, 0.75, 1].map(ratio => {
-      const y = padding.top + plotHeight - (ratio * plotHeight);
-      const value = Math.round(maxValue * ratio);
-      return `
-        <line class="pz-chart-grid-line" x1="${padding.left}" y1="${y}" x2="${width-padding.right}" y2="${y}"></line>
-        <text class="pz-chart-axis-label" x="${padding.left-8}" y="${y+3}" text-anchor="end">${value}</text>
-      `;
-    }).join('');
-
-    const xLabels = points.map((point, index) => {
-      if(index % 2 !== 0 && index !== points.length - 1) return '';
-      return `<text class="pz-chart-axis-label" x="${point.x}" y="${height-14}" text-anchor="middle">${escapeHtml(point.label)}</text>`;
-    }).join('');
-
-    const circles = points.map(point => `
-      <circle class="pz-chart-point" cx="${point.x}" cy="${point.y}" r="4">
-        <title>${escapeHtml(point.label)} · ${point.value}건</title>
-      </circle>
-      ${point.value > 0 ? `<text class="pz-chart-point-value" x="${point.x}" y="${point.y-9}" text-anchor="middle">${point.value}</text>` : ''}
-    `).join('');
-
-    container.innerHTML = `
-      <svg class="pz-activity-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="최근 14일 저장 활동 선 그래프">
-        ${gridLines}
-        <path class="pz-chart-area" d="${areaPath}"></path>
-        <polyline class="pz-chart-line" points="${pointString}"></polyline>
-        ${circles}
-        ${xLabels}
-      </svg>
-    `;
-  }
-
   function resetDashboardAnalytics(message = '데이터를 집계하는 중입니다.') {
-    ['pz-stage-chart','pz-status-chart','pz-activity-chart','pz-author-chart'].forEach(id => {
+    ['pz-stage-chart','pz-status-chart','pz-author-chart'].forEach(id => {
       const target = el(id);
       if(!target) return;
       target.className = 'pz-chart-empty';
@@ -4077,7 +3952,6 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
       'count'
     );
     renderStatusDonut(payload.statusDistribution || [], summary.documentCount || 0);
-    renderActivityLineChart(payload.dailyActivity || []);
     renderHorizontalBarChart(
       'pz-author-chart',
       payload.authorDistribution || [],
