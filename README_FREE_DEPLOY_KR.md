@@ -155,3 +155,39 @@ DpdlclDpfql
 삭제코드는 브라우저 소스에 저장하지 않고 Render 서버 환경변수에서 검증합니다. 올바른 코드가 입력되면 선택한 `decision_sessions` 행을 삭제하고, 외래키 `ON DELETE CASCADE`에 따라 연결된 `decision_history` 이력도 함께 삭제합니다.
 
 이 코드는 비밀번호 기반 사용자 인증이 아니라 삭제 확인용 코드입니다. 사이트가 공개되어 있거나 민감한 데이터를 다룬다면 별도의 로그인·권한 관리가 필요합니다.
+
+
+## Gemini 503 고수요 오류 자동 복구
+
+일시적인 오류인 408, 429, 500, 502, 503, 504가 발생하면 자동 복구합니다.
+
+1. `gemini-2.5-flash` 최대 3회 시도
+2. 1초, 2초, 4초 수준의 지수 백오프
+3. 동시 재시도 집중을 줄이는 무작위 jitter
+4. API의 `Retry-After` 또는 `retry in N seconds`가 있으면 안내 대기시간 우선
+5. 계속 실패하면 `gemini-2.5-flash-lite`로 전환해 최대 2회 추가 시도
+6. 단일 요청이 90초를 넘으면 시간 초과 처리
+7. 모든 자동 복구가 실패했을 때만 최종 오류 표시
+
+Google Search Grounding에도 같은 복구 로직을 적용합니다. 이미 두 모델의 모든 용량 복구 시도가 실패한 경우 동일 Grounding 배치를 즉시 반복하지 않아 요청 폭증을 방지합니다.
+
+
+## 저장하기 500 오류 수정
+
+다음 오류는 PostgreSQL prepared statement에서 같은 매개변수 `$5`가
+`SMALLINT` 입력값과 비교식의 정수값으로 동시에 추론되어 발생한 타입 모호성 오류입니다.
+
+```text
+inconsistent types deduced for parameter $5
+```
+
+수정 사항:
+
+- `decision_sessions` INSERT의 모든 파라미터에 `::text`, `::smallint`,
+  `::boolean`, `::timestamptz` 명시
+- 상태 및 보고서 여부를 JavaScript에서 먼저 계산한 뒤 각각 별도 파라미터로 전달
+- `decision_history` INSERT 및 버전 조회에도 명시적 PostgreSQL 타입 캐스팅 적용
+- 기존 완료 문서에 추가 이력이 저장될 때 상태가 다시 `in_progress`로 내려가지 않도록 보완
+
+GitHub에 새 `backend/server.js`를 올리면 Render의 Auto Deploy가 실행됩니다.
+배포 완료 후 `/api/health`가 정상인지 확인하고 다시 저장합니다.

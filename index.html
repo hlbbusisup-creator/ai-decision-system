@@ -210,6 +210,15 @@
 #pz-root .pz-key-status{font-size:11px; font-family:'IBM Plex Mono',monospace; padding:4px 9px; border-radius:4px; white-space:nowrap;}
 #pz-root .pz-key-status.ok{background:#1E3B2C; color:#6FCF97;}
 #pz-root .pz-key-status.missing{background:#3B2A1E; color:#E0A560;}
+#pz-root .pz-ai-call-status{
+  font-size:10.5px; font-family:'IBM Plex Mono',monospace; padding:4px 8px;
+  border-radius:4px; white-space:nowrap; background:#2A303D; color:#AEB5C4;
+}
+#pz-root .pz-ai-call-status.retry{background:#4A3A1E;color:#F4CA72;}
+#pz-root .pz-ai-call-status.fallback{background:#2E3157;color:#B9C1FF;}
+#pz-root .pz-ai-call-status.ok{background:#1E3B2C;color:#6FCF97;}
+#pz-root .pz-ai-call-status.error{background:#442727;color:#F09A9A;}
+
 
 
 /* ---------- Input history DB ---------- */
@@ -563,6 +572,7 @@
     <input type="password" class="pz-key-input" id="pz-api-key" value="AQ.Ab8RN6KzWeBN-x9bETmgxgGMfai--GX5uJ-KiyxnfVWQ0XNtGA" placeholder="필요 시 API Key를 수정하세요." autocomplete="off">
     <label class="pz-save"><input type="checkbox" id="pz-key-save"> 이 브라우저에 저장</label>
     <span class="pz-key-status missing" id="pz-key-status">키 미입력</span>
+    <span class="pz-ai-call-status" id="pz-ai-call-status">AI 준비됨</span>
     <button type="button" class="pz-history-open" id="pz-open-history">🗂 입력 이력 <span id="pz-history-count">0</span></button>
     <span class="pz-db-status" id="pz-db-status">DB 준비 중</span>
     <span class="pz-config-label">DB API</span>
@@ -774,6 +784,7 @@
   
   keyInput.addEventListener('input', ()=>{
     refreshKeyStatus();
+    setGeminiCallStatus('AI 준비됨');
     try{
       if(keySave.checked) localStorage.setItem('pz_gemini_key', keyInput.value.trim());
     }catch(e){}
@@ -862,39 +873,217 @@
     updateStageResetButtons();
   }
 
-  async function callGemini(promptText, isJson = true){
-    const apiKey = requireKey();
-    const model = "gemini-2.5-flash";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    
-    let response;
-    try{
-      response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }],
-          generationConfig: isJson ? { responseMimeType: "application/json" } : {}
-        })
-      });
-    }catch(networkErr){
-      throw new Error('네트워크 요청이 차단되었습니다. API 키와 인터넷 연결을 확인해 주세요.');
+  const GEMINI_PRIMARY_MODEL = 'gemini-2.5-flash';
+  const GEMINI_FALLBACK_MODEL = 'gemini-2.5-flash-lite';
+  const GEMINI_TRANSIENT_HTTP = new Set([408, 429, 500, 502, 503, 504]);
+  const GEMINI_REQUEST_TIMEOUT_MS = 90000;
+
+  function setGeminiCallStatus(message, type = '') {
+    const status = el('pz-ai-call-status');
+    if(!status) return;
+    status.textContent = message;
+    status.className = 'pz-ai-call-status' + (type ? ` ${type}` : '');
+  }
+
+  function getGeminiRetryAfterMs(response, errorMessage = '') {
+    let retryAfterMs = 0;
+    const headerValue = response?.headers?.get?.('retry-after');
+
+    if(headerValue) {
+      const seconds = Number(headerValue);
+      if(Number.isFinite(seconds)) {
+        retryAfterMs = Math.max(retryAfterMs, Math.ceil(seconds * 1000));
+      } else {
+        const retryDate = Date.parse(headerValue);
+        if(Number.isFinite(retryDate)) {
+          retryAfterMs = Math.max(retryAfterMs, retryDate - Date.now());
+        }
+      }
     }
-    
-    if(!response.ok){
-      let msg = 'API 호출 실패 ('+response.status+')';
-      try{ const errBody = await response.json(); if(errBody.error && errBody.error.message) msg += ' — '+errBody.error.message; }catch(e){}
-      throw new Error(msg);
+
+    const messageMatch = String(errorMessage || '').match(/retry in\s+([0-9.]+)s/i);
+    if(messageMatch) {
+      const seconds = Number(messageMatch[1]);
+      if(Number.isFinite(seconds)) {
+        retryAfterMs = Math.max(retryAfterMs, Math.ceil(seconds * 1000));
+      }
     }
-    
-    const data = await response.json();
+
+    return Math.max(0, Math.min(retryAfterMs, 30000));
+  }
+
+  function getGeminiBackoffMs(failureIndex, retryAfterMs = 0) {
+    const exponential = Math.min(1000 * (2 ** Math.max(failureIndex, 0)), 8000);
+    const jitter = Math.floor(Math.random() * 900);
+    return Math.max(exponential + jitter, retryAfterMs);
+  }
+
+  async function parseGeminiErrorResponse(response) {
+    let apiMessage = '';
+
     try {
-      let raw = data.candidates[0].content.parts[0].text.trim();
+      const body = await response.clone().json();
+      apiMessage = body?.error?.message || '';
+    } catch(e) {
+      try {
+        apiMessage = (await response.clone().text()).trim();
+      } catch(ignore) {}
+    }
+
+    return apiMessage || response.statusText || '알 수 없는 Gemini API 오류';
+  }
+
+  async function fetchGeminiWithResilience(payload, requestLabel = 'AI 분석') {
+    const apiKey = requireKey();
+    const attemptPlan = [
+      GEMINI_PRIMARY_MODEL,
+      GEMINI_PRIMARY_MODEL,
+      GEMINI_PRIMARY_MODEL,
+      GEMINI_FALLBACK_MODEL,
+      GEMINI_FALLBACK_MODEL
+    ];
+
+    let lastFailure = {
+      status:0,
+      message:'응답 없음',
+      model:GEMINI_PRIMARY_MODEL
+    };
+    let nextDelayMs = 0;
+
+    for(let attemptIndex = 0; attemptIndex < attemptPlan.length; attemptIndex++) {
+      const model = attemptPlan[attemptIndex];
+      const isFallback = model === GEMINI_FALLBACK_MODEL;
+
+      if(attemptIndex > 0) {
+        const seconds = Math.max(1, Math.ceil(nextDelayMs / 1000));
+        setGeminiCallStatus(
+          isFallback
+            ? `혼잡 지속 · 대체 모델 전환 (${seconds}초 후)`
+            : `서비스 혼잡 · 자동 재시도 ${attemptIndex + 1}/5 (${seconds}초 후)`,
+          isFallback ? 'fallback' : 'retry'
+        );
+        await sleep(nextDelayMs);
+      }
+
+      setGeminiCallStatus(
+        isFallback
+          ? `대체 모델로 ${requestLabel} 처리 중`
+          : `${requestLabel} 처리 중${attemptIndex ? ` · 재시도 ${attemptIndex + 1}/5` : ''}`,
+        isFallback ? 'fallback' : (attemptIndex ? 'retry' : '')
+      );
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), GEMINI_REQUEST_TIMEOUT_MS);
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const response = await fetch(url, {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body:JSON.stringify(payload),
+          signal:controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if(response.ok) {
+          const data = await response.json();
+
+          setGeminiCallStatus(
+            isFallback
+              ? '대체 모델로 완료'
+              : (attemptIndex > 0 ? '자동 재시도 후 완료' : 'AI 응답 완료'),
+            'ok'
+          );
+
+          return { data, model, attemptCount:attemptIndex + 1 };
+        }
+
+        const apiMessage = await parseGeminiErrorResponse(response);
+        lastFailure = {
+          status:response.status,
+          message:apiMessage,
+          model
+        };
+
+        if(!GEMINI_TRANSIENT_HTTP.has(response.status)) {
+          const error = new Error(`API 호출 실패 (${response.status}) — ${apiMessage}`);
+          error.status = response.status;
+          error.isGeminiCapacityError = false;
+          setGeminiCallStatus(`AI 오류 ${response.status}`, 'error');
+          throw error;
+        }
+
+        nextDelayMs = getGeminiBackoffMs(
+          attemptIndex,
+          getGeminiRetryAfterMs(response, apiMessage)
+        );
+      } catch(error) {
+        clearTimeout(timeoutId);
+
+        if(error?.status && !GEMINI_TRANSIENT_HTTP.has(error.status)) {
+          throw error;
+        }
+
+        const isTimeout = error?.name === 'AbortError';
+        lastFailure = {
+          status:error?.status || 0,
+          message:isTimeout
+            ? `요청 제한시간 ${Math.round(GEMINI_REQUEST_TIMEOUT_MS / 1000)}초 초과`
+            : (error?.message || '네트워크 요청 실패'),
+          model
+        };
+
+        nextDelayMs = getGeminiBackoffMs(attemptIndex, 0);
+      }
+    }
+
+    const statusText = lastFailure.status
+      ? `HTTP ${lastFailure.status}`
+      : '네트워크/시간 초과';
+
+    const finalError = new Error(
+      `${requestLabel} 실패 — ${statusText}. ` +
+      `Gemini 2.5 Flash 3회와 Flash-Lite 대체 모델 2회까지 자동 시도했으나 응답하지 않았습니다. ` +
+      `잠시 후 다시 시도해 주세요. 마지막 오류: ${lastFailure.message}`
+    );
+
+    finalError.status = lastFailure.status;
+    finalError.isGeminiCapacityError =
+      lastFailure.status === 429 ||
+      lastFailure.status === 503 ||
+      /high demand|overload|capacity|unavailable/i.test(lastFailure.message);
+
+    setGeminiCallStatus('자동 복구 실패 · 잠시 후 재시도', 'error');
+    throw finalError;
+  }
+
+  async function callGemini(promptText, isJson = true){
+    const payload = {
+      contents:[{ parts:[{ text:promptText }] }],
+      generationConfig:isJson ? { responseMimeType:'application/json' } : {}
+    };
+
+    const result = await fetchGeminiWithResilience(payload, 'AI 산출');
+    const data = result.data;
+
+    try {
+      let raw = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+      if(!raw) throw new Error('빈 응답');
+
       if(!isJson) return raw;
-      raw = raw.replace(/^```json/, '').replace(/^```/, '').replace(/```$/, '').trim();
+
+      raw = raw
+        .replace(/^```json/i, '')
+        .replace(/^```/, '')
+        .replace(/```$/, '')
+        .trim();
+
       return JSON.parse(raw);
     } catch(e) {
-      throw new Error('Gemini 응답 구조가 올바른 형식이 아닙니다.');
+      throw new Error(
+        `Gemini 응답 구조가 올바른 형식이 아닙니다. 사용 모델: ${result.model}`
+      );
     }
   }
 
@@ -1156,50 +1345,34 @@
   }
 
   async function callGeminiGroundedSource(promptText) {
-    const apiKey = requireKey();
-    const model = "gemini-2.5-flash";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const payload = {
+      contents:[{ parts:[{ text:promptText }] }],
+      tools:[{ google_search:{} }],
+      generationConfig:{ temperature:0.2 }
+    };
 
-    let response;
-    try {
-      response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }],
-          tools: [{ google_search: {} }],
-          generationConfig: { temperature: 0.2 }
-        })
-      });
-    } catch(networkErr) {
-      throw new Error('실제 참조 자료 검색 요청이 차단되었습니다.');
+    const result = await fetchGeminiWithResilience(payload, 'Google Search 근거 조회');
+    const candidate = result.data.candidates?.[0];
+
+    if(!candidate) {
+      throw new Error(`근거 검색 응답에 후보 데이터가 없습니다. 사용 모델: ${result.model}`);
     }
-
-    if(!response.ok) {
-      let msg = 'Google Search 근거 조회 실패 (' + response.status + ')';
-      try {
-        const errBody = await response.json();
-        if(errBody.error?.message) msg += ' — ' + errBody.error.message;
-      } catch(e) {}
-      throw new Error(msg);
-    }
-
-    const data = await response.json();
-    const candidate = data.candidates?.[0];
-    if(!candidate) throw new Error('근거 검색 응답에 후보 데이터가 없습니다.');
 
     const rawText = getCandidateText(candidate);
     const metadata = candidate.groundingMetadata;
     const chunks = metadata?.groundingChunks || [];
 
     if(!rawText || chunks.length === 0) {
-      throw new Error('실제 원문 근거가 확인되지 않았습니다.');
+      throw new Error(
+        `실제 원문 근거가 확인되지 않았습니다. 사용 모델: ${result.model}`
+      );
     }
 
     return {
       rawText,
       candidate,
-      searchHtml: metadata?.searchEntryPoint?.renderedContent || ''
+      searchHtml:metadata?.searchEntryPoint?.renderedContent || '',
+      model:result.model
     };
   }
 
@@ -1352,6 +1525,10 @@ ${categoryOutputFormat}`;
           { text:'', searchHtml:'', error: initialError.message }
         ])
       );
+
+      if(initialError?.isGeminiCapacityError) {
+        return results;
+      }
 
       const waitMs = getRetryDelayMs(initialError.message);
       await sleep(waitMs);

@@ -176,6 +176,10 @@ app.post('/api/history', async (req, res) => {
     const decisionTitle = safeString(body.decisionTitle || body.decision_title || '', 500);
     const authorName = safeString(body.authorName || body.author_name || '', 200);
     const createdAt = body.createdAt || body.created_at || new Date().toISOString();
+    const hasReportRecord = stage === 5 || kind === 'report';
+    const sessionStatus = hasReportRecord
+      ? 'completed'
+      : (type === 'draft_save' ? 'draft' : 'in_progress');
 
     if (!Number.isInteger(stage) || stage < 1 || stage > 5) {
       return res.status(400).json({ error: 'stage must be an integer from 1 through 5.' });
@@ -194,10 +198,16 @@ app.post('/api/history', async (req, res) => {
          created_at, updated_at
        )
        VALUES (
-         $1, $2, $3, $4, $5,
-         CASE WHEN $5 = 5 OR $6 = 'report' THEN 'completed' ELSE 'in_progress' END,
-         ($5 = 5 OR $6 = 'report'),
-         $7, $8, $8
+         $1::text,
+         $2::text,
+         $3::text,
+         $4::text,
+         $5::smallint,
+         $6::text,
+         $7::boolean,
+         $8::text,
+         $9::timestamptz,
+         $9::timestamptz
        )
        ON CONFLICT (session_id) DO UPDATE SET
          decision_title = CASE
@@ -212,21 +222,29 @@ app.post('/api/history', async (req, res) => {
            WHEN EXCLUDED.agenda_summary <> '' THEN EXCLUDED.agenda_summary
            ELSE decision_sessions.agenda_summary
          END,
-         current_stage = GREATEST(decision_sessions.current_stage, EXCLUDED.current_stage),
+         current_stage = GREATEST(
+           decision_sessions.current_stage,
+           EXCLUDED.current_stage
+         ),
          status = CASE
-           WHEN EXCLUDED.has_report THEN 'completed'
-           ELSE 'in_progress'
+           WHEN decision_sessions.has_report OR EXCLUDED.has_report THEN 'completed'
+           WHEN decision_sessions.status = 'in_progress' THEN 'in_progress'
+           ELSE EXCLUDED.status
          END,
          has_report = decision_sessions.has_report OR EXCLUDED.has_report,
          last_record_id = EXCLUDED.last_record_id,
-         updated_at = GREATEST(decision_sessions.updated_at, EXCLUDED.updated_at)`,
+         updated_at = GREATEST(
+           decision_sessions.updated_at,
+           EXCLUDED.updated_at
+         )`,
       [
         sessionId,
         decisionTitle,
         authorName,
         agendaSummary,
         stage,
-        kind,
+        sessionStatus,
+        hasReportRecord,
         id,
         createdAt
       ]
@@ -235,7 +253,9 @@ app.post('/api/history', async (req, res) => {
     const versionResult = await client.query(
       `SELECT COALESCE(MAX(version_no), 0) + 1 AS next_version
        FROM decision_history
-       WHERE session_id = $1 AND stage = $2 AND kind = $3`,
+       WHERE session_id = $1::text
+         AND stage = $2::smallint
+         AND kind = $3::text`,
       [sessionId, stage, kind]
     );
 
@@ -248,9 +268,22 @@ app.post('/api/history', async (req, res) => {
          author_name, data_json, display_json, version_no, created_at
        )
        VALUES (
-         $1, $2, $3, $4, $5, $6, $7,
-         $8, $9, $10, $11, $12, $13::jsonb,
-         $14::jsonb, $15, $16
+         $1::text,
+         $2::text,
+         $3::smallint,
+         $4::text,
+         $5::text,
+         $6::text,
+         $7::text,
+         $8::text,
+         $9::text,
+         $10::text,
+         $11::text,
+         $12::text,
+         $13::jsonb,
+         $14::jsonb,
+         $15::integer,
+         $16::timestamptz
        )
        ON CONFLICT (id) DO UPDATE SET
          session_id = EXCLUDED.session_id,
@@ -295,8 +328,16 @@ app.post('/api/history', async (req, res) => {
     res.status(201).json(normalizeRecord(insertResult.rows[0]));
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('POST /api/history failed:', error);
-    res.status(500).json({ error: error.message });
+    console.error('POST /api/history failed:', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      hint: error.hint
+    });
+    res.status(500).json({
+      error: error.message,
+      code: error.code || 'DB_WRITE_FAILED'
+    });
   } finally {
     client.release();
   }
