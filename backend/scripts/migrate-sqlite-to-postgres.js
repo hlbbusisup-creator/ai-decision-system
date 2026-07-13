@@ -1,7 +1,13 @@
 require('dotenv').config();
 
 const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
+let sqlite3;
+try {
+  sqlite3 = require('sqlite3').verbose();
+} catch (error) {
+  console.error('sqlite3 모듈이 필요합니다. 이관 PC에서 npm install sqlite3 --no-save 를 먼저 실행하세요.');
+  process.exit(1);
+}
 const { Pool } = require('pg');
 
 const sqlitePath = process.env.SQLITE_PATH || './data/project_zero_history.sqlite';
