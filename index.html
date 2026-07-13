@@ -953,17 +953,56 @@
     <div class="pz-spectrum-note">완전 자동화(7단계 자율)를 목표로 하지 않습니다. AI가 자료를 수집·분석·정리하고, <b>최종 결정은 사람이 내리는 구조</b>를 원칙으로 설계했습니다.</div>
   </div>
 
+
+
+  <div class="pz-agenda">
+    <div class="pz-decision-title-box">
+      <div class="pz-decision-title-label">AUTO GENERATED DECISION TITLE</div>
+      <div class="pz-generated-title empty" id="pz-generated-title">주제 및 안건을 입력하면 제목이 자동 생성됩니다.</div>
+      <div class="pz-title-meta">
+        <span id="pz-title-source">입력 데이터 대기</span>
+        <span id="pz-title-updated">제목 미생성</span>
+      </div>
+    </div>
+
+    <div class="pz-author-row">
+      <label class="pz-author-label" for="pz-author-name"><span class="n">AUTHOR</span>작성자 이름</label>
+      <input type="text" class="pz-author-input" id="pz-author-name" placeholder="예) OOO 과장">
+    </div>
+
+    <div class="pz-agenda-label"><span class="n">INPUT</span> 주제 및 안건 입력</div>
+    <p class="pz-sub">자유롭게 입력 가능하며 구체적인 내용을 기입 할 수록 데이터의 정확도가 증가합니다.</p>
+    <textarea class="pz-input" id="pz-agenda-text" placeholder="예)     
+    [핵심 주제] : 
+    안건 ① : 
+    안건 ② : 
+    검토 대안 :  
+    의사결정 요청사항 : "></textarea>
+
+    <div class="pz-btn-row">
+      <span class="pz-hint" id="pz-agenda-hint">참고 서류 및 분석용 파일을 로드할 수 있습니다.</span>
+      <label class="pz-file-btn-label">
+        📁 파일 첨부
+        <input type="file" id="pz-agenda-file" style="display:none;" accept=".txt,.csv,.json,.md">
+      </label>
+      <span class="pz-file-info" id="pz-agenda-file-name"></span>
+      <span class="pz-save-status" id="pz-draft-save-status"></span>
+      <button type="button" class="pz-save-draft-btn" id="pz-save-draft">💾 저장하기</button>
+      <button class="pz-btn" id="pz-run-agenda">① 회의 준비 자동 산출</button>
+    </div>
+  </div>
+
   <section class="pz-framework" id="pz-framework">
     <div class="pz-framework-head">
       <div>
         <div class="pz-framework-eyebrow">DECISION DESIGN · 5 CORE ELEMENTS</div>
         <h2 class="pz-framework-title">의사결정 5대 핵심요소 설계</h2>
-        <p class="pz-framework-desc">목표 정의 → 평가기준 → 대안·시나리오 → 실행 가능성 → KPI·Plan B 순으로 입력합니다. 입력 내용은 각 STAGE의 AI 분석과 최종 종합 보고서에 자동 반영됩니다.</p>
+        <p class="pz-framework-desc">저장하기와 ① 회의 준비 자동 산출 버튼 아래에서 단계별 설계 내용을 확인합니다. ① 회의 준비 실행 시 1~3번, ③ 의사결정 요약 실행 시 4번, ④ 진행 현황 분석 실행 시 5번 초안이 자동 작성되며 모든 내용은 최종 보고서에 반영됩니다.</p>
       </div>
       <div class="pz-framework-actions">
-        <button type="button" class="pz-framework-action primary" id="pz-framework-ai-fill">AI 초안 자동작성</button>
+        <button type="button" class="pz-framework-action primary" id="pz-framework-ai-fill">5요소 전체 AI 초안작성</button>
         <button type="button" class="pz-framework-action" id="pz-framework-reset">5요소 초기화</button>
-        <div class="pz-framework-ai-status" id="pz-framework-ai-status">기존 입력은 유지하고 비어 있는 항목을 중심으로 작성합니다.</div>
+        <div class="pz-framework-ai-status" id="pz-framework-ai-status">자동작성 연계: ① 회의 준비 → 1~3번 · ③ 의사결정 요약 → 4번 · ④ 진행 현황 분석 → 5번</div>
       </div>
     </div>
 
@@ -1139,43 +1178,6 @@
       </div>
     </div>
   </section>
-
-  <div class="pz-agenda">
-    <div class="pz-decision-title-box">
-      <div class="pz-decision-title-label">AUTO GENERATED DECISION TITLE</div>
-      <div class="pz-generated-title empty" id="pz-generated-title">주제 및 안건을 입력하면 제목이 자동 생성됩니다.</div>
-      <div class="pz-title-meta">
-        <span id="pz-title-source">입력 데이터 대기</span>
-        <span id="pz-title-updated">제목 미생성</span>
-      </div>
-    </div>
-
-    <div class="pz-author-row">
-      <label class="pz-author-label" for="pz-author-name"><span class="n">AUTHOR</span>작성자 이름</label>
-      <input type="text" class="pz-author-input" id="pz-author-name" placeholder="예) OOO 과장">
-    </div>
-
-    <div class="pz-agenda-label"><span class="n">INPUT</span> 주제 및 안건 입력</div>
-    <p class="pz-sub">자유롭게 입력 가능하며 구체적인 내용을 기입 할 수록 데이터의 정확도가 증가합니다.</p>
-    <textarea class="pz-input" id="pz-agenda-text" placeholder="예)     
-    [핵심 주제] : 
-    안건 ① : 
-    안건 ② : 
-    검토 대안 :  
-    의사결정 요청사항 : "></textarea>
-
-    <div class="pz-btn-row">
-      <span class="pz-hint" id="pz-agenda-hint">참고 서류 및 분석용 파일을 로드할 수 있습니다.</span>
-      <label class="pz-file-btn-label">
-        📁 파일 첨부
-        <input type="file" id="pz-agenda-file" style="display:none;" accept=".txt,.csv,.json,.md">
-      </label>
-      <span class="pz-file-info" id="pz-agenda-file-name"></span>
-      <span class="pz-save-status" id="pz-draft-save-status"></span>
-      <button type="button" class="pz-save-draft-btn" id="pz-save-draft">💾 저장하기</button>
-      <button class="pz-btn" id="pz-run-agenda">① 회의 준비 자동 산출</button>
-    </div>
-  </div>
 
   <div class="pz-pipeline" id="pz-pipeline"></div>
 
@@ -2049,87 +2051,243 @@
     updateDecisionTitle();
   }
 
-  async function autoFillDecisionFramework() {
-    const agenda = (el('pz-agenda-text')?.value || '').trim();
-    if(!agenda) {
-      alert('AI 초안 자동작성을 위해 주제 및 안건을 먼저 입력해 주세요.');
-      el('pz-agenda-text')?.focus();
-      return;
+  let frameworkDraftPromise = null;
+
+  function filterFrameworkDraftBySections(result, sectionNumbers) {
+    const requested = new Set(sectionNumbers.map(Number));
+    const filtered = {};
+
+    if(requested.has(1) && result?.objective) {
+      filtered.objective = result.objective;
+    }
+    if(requested.has(2) && Array.isArray(result?.criteria)) {
+      filtered.criteria = result.criteria;
+    }
+    if(requested.has(3) && Array.isArray(result?.alternatives)) {
+      filtered.alternatives = result.alternatives;
+    }
+    if(requested.has(4) && result?.constraints) {
+      filtered.constraints = result.constraints;
+    }
+    if(requested.has(5) && result?.feedback) {
+      filtered.feedback = result.feedback;
     }
 
-    const button = el('pz-framework-ai-fill');
-    const status = el('pz-framework-ai-status');
-    button.disabled = true;
-    button.textContent = 'AI 작성 중…';
-    if(status) status.textContent = '안건과 현재 STAGE 산출물을 바탕으로 5대 핵심요소 초안을 생성하고 있습니다.';
+    return filtered;
+  }
 
-    try {
-      const context = {
-        agenda,
-        currentFramework:collectDecisionFrameworkRawData(),
-        stage1:state.s1[state.s1.length - 1] || null,
-        stage2:state.s2[state.s2.length - 1] || null,
-        stage3:state.s3[state.s3.length - 1] || null,
-        stage4:state.s4[state.s4.length - 1] || null
-      };
+  function getFrameworkDraftSchema(sectionNumbers) {
+    const requested = new Set(sectionNumbers.map(Number));
+    const schemaParts = [];
 
-      const prompt = `당신은 전략기획실의 의사결정 설계 전문가입니다.
-아래 안건과 기존 분석 내용을 바탕으로 의사결정의 5대 핵심요소 초안을 작성하세요.
-
-[입력 데이터]
-"""${JSON.stringify(context)}"""
-
-[작성 원칙]
-1. 목표와 문제는 서로 구분하여 구체적으로 작성하세요.
-2. 평가기준은 3~5개로 작성하고 가중치 합계는 반드시 100으로 맞추세요.
-3. 대안은 최소 2개, 최대 4개로 구성하며 각 대안의 실행 방식·낙관 시나리오·최악 시나리오를 작성하세요.
-4. 실행 제약은 예산, 일정, 인력·기술, 절대 준수조건으로 나누세요.
-5. 사후 관리는 KPI, 점검 주기·책임자, 경고·전환 조건, Plan B로 나누세요.
-6. 현재 데이터로 확인할 수 없는 내용은 확정 사실처럼 만들지 말고 "확인 필요"라고 표시하세요.
-7. 다른 설명 없이 아래 JSON 구조로만 응답하세요.
-
-{
-  "objective":{
+    if(requested.has(1)) {
+      schemaParts.push(`"objective":{
     "problem":"...",
     "target":"...",
     "decisionQuestion":"..."
-  },
-  "criteria":[
+  }`);
+    }
+
+    if(requested.has(2)) {
+      schemaParts.push(`"criteria":[
     {"name":"기대효과","weight":30,"rationale":"..."}
-  ],
-  "alternatives":[
+  ]`);
+    }
+
+    if(requested.has(3)) {
+      schemaParts.push(`"alternatives":[
     {
       "name":"대안 A",
       "description":"...",
       "bestScenario":"...",
       "worstScenario":"..."
     }
-  ],
-  "constraints":{
+  ]`);
+    }
+
+    if(requested.has(4)) {
+      schemaParts.push(`"constraints":{
     "budget":"...",
     "time":"...",
     "resource":"...",
     "nonNegotiable":"..."
-  },
-  "feedback":{
+  }`);
+    }
+
+    if(requested.has(5)) {
+      schemaParts.push(`"feedback":{
     "kpi":"...",
     "reviewCycle":"...",
     "trigger":"...",
     "planB":"..."
-  }
-}`;
-
-      const result = await callGemini(prompt);
-      applyFrameworkAiDraft(result);
-
-      if(status) status.textContent = 'AI 초안 작성 완료. 기준·가중치와 각 대안 점수는 담당자가 검토해 주세요.';
-    } catch(error) {
-      if(status) status.textContent = `AI 초안 작성 실패: ${error.message}`;
-      alert('5대 핵심요소 AI 초안 작성 실패: ' + error.message);
-    } finally {
-      button.disabled = false;
-      button.textContent = 'AI 초안 자동작성';
+  }`);
     }
+
+    return `{\n  ${schemaParts.join(',\n  ')}\n}`;
+  }
+
+  function getFrameworkDraftRules(sectionNumbers) {
+    const requested = new Set(sectionNumbers.map(Number));
+    const rules = [];
+
+    if(requested.has(1)) {
+      rules.push('목표와 문제를 구분하고, 이번 회의에서 실제로 결정할 질문을 명확하게 작성하세요.');
+    }
+    if(requested.has(2)) {
+      rules.push('평가기준은 3~5개로 작성하고 가중치 합계를 반드시 100으로 맞추세요.');
+    }
+    if(requested.has(3)) {
+      rules.push('대안은 최소 2개, 최대 4개로 구성하고 실행 방식·낙관 시나리오·최악 시나리오를 작성하세요.');
+    }
+    if(requested.has(4)) {
+      rules.push('실행 가능성을 예산, 일정, 인력·기술, 절대 준수조건으로 구분하여 작성하세요.');
+    }
+    if(requested.has(5)) {
+      rules.push('KPI, 점검 주기·책임자, 경고·전환 조건, Plan B를 구분하여 작성하세요.');
+    }
+
+    rules.push('입력 자료로 확인할 수 없는 정보는 확정하지 말고 "확인 필요"라고 표시하세요.');
+    rules.push('기존에 사용자가 작성한 내용과 충돌하지 않는 초안을 작성하세요.');
+    rules.push('다른 설명 없이 지정된 JSON 구조로만 응답하세요.');
+
+    return rules.map((rule, index) => `${index + 1}. ${rule}`).join('\n');
+  }
+
+  function getFrameworkSectionLabel(sectionNumbers) {
+    const labels = {
+      1:'목표 및 문제 정의',
+      2:'기준 및 가중치',
+      3:'대안 및 시나리오',
+      4:'실행력 및 자원 제약',
+      5:'피드백 및 Plan B'
+    };
+
+    return sectionNumbers
+      .map(number => `${number}번 ${labels[number]}`)
+      .join(', ');
+  }
+
+  async function autoFillDecisionFrameworkSections(
+    sectionNumbers,
+    options = {}
+  ) {
+    const requestedSections = [...new Set(sectionNumbers.map(Number))]
+      .filter(number => number >= 1 && number <= 5);
+
+    if(requestedSections.length === 0) return false;
+
+    const agenda = (el('pz-agenda-text')?.value || state?.agenda || '').trim();
+    if(!agenda) {
+      if(!options.silent) {
+        alert('AI 초안 자동작성을 위해 주제 및 안건을 먼저 입력해 주세요.');
+        el('pz-agenda-text')?.focus();
+      }
+      return false;
+    }
+
+    if(frameworkDraftPromise) {
+      return await frameworkDraftPromise;
+    }
+
+    const button = el('pz-framework-ai-fill');
+    const status = el('pz-framework-ai-status');
+    const sectionLabel = getFrameworkSectionLabel(requestedSections);
+    const previousButtonText = button?.textContent || '5요소 전체 AI 초안작성';
+
+    if(button) {
+      button.disabled = true;
+      button.textContent = 'AI 작성 중…';
+    }
+    if(status) {
+      status.textContent = `${sectionLabel} 초안을 자동 작성하고 있습니다.`;
+    }
+
+    frameworkDraftPromise = (async () => {
+      try {
+        const context = {
+          trigger:options.trigger || 'manual',
+          agenda,
+          currentFramework:collectDecisionFrameworkRawData(),
+          stage1:requestedSections.some(number => number >= 4)
+            ? (state.s1[state.s1.length - 1] || null)
+            : null,
+          stage2:requestedSections.some(number => number >= 4)
+            ? (state.s2[state.s2.length - 1] || null)
+            : null,
+          stage3:requestedSections.includes(5)
+            ? (state.s3[state.s3.length - 1] || null)
+            : null,
+          progress:requestedSections.includes(5)
+            ? String(options.progress || el('s4-input')?.value || '').trim()
+            : ''
+        };
+
+        const prompt = `당신은 전략기획실의 의사결정 설계 전문가입니다.
+아래 주제 및 안건과 현재까지의 분석 결과를 사용하여 지정된 의사결정 요소의 초안만 작성하세요.
+
+[자동 작성 대상]
+${sectionLabel}
+
+[입력 데이터]
+"""${JSON.stringify(context)}"""
+
+[작성 원칙]
+${getFrameworkDraftRules(requestedSections)}
+
+[응답 JSON 구조]
+${getFrameworkDraftSchema(requestedSections)}`;
+
+        const result = await callGemini(prompt);
+        const filteredResult = filterFrameworkDraftBySections(
+          result,
+          requestedSections
+        );
+
+        applyFrameworkAiDraft(filteredResult);
+
+        const finalPanel = requestedSections[requestedSections.length - 1];
+        if(options.activatePanel !== false) {
+          setFrameworkPanel(finalPanel);
+        }
+
+        if(status) {
+          status.textContent = `${sectionLabel} 초안 작성 완료. 실제 조건과 수치는 담당자가 검토해 주세요.`;
+        }
+
+        return true;
+      } catch(error) {
+        console.warn(`Framework sections ${requestedSections.join(',')} auto draft failed:`, error);
+
+        if(status) {
+          status.textContent = `${sectionLabel} 초안 작성 실패: ${error.message}`;
+        }
+
+        if(!options.silent) {
+          alert(`${sectionLabel} AI 초안 작성 실패: ${error.message}`);
+        }
+
+        return false;
+      } finally {
+        if(button) {
+          button.disabled = false;
+          button.textContent = previousButtonText;
+        }
+        frameworkDraftPromise = null;
+      }
+    })();
+
+    return await frameworkDraftPromise;
+  }
+
+  async function autoFillDecisionFramework() {
+    return await autoFillDecisionFrameworkSections(
+      [1, 2, 3, 4, 5],
+      {
+        trigger:'manual_full',
+        silent:false,
+        activatePanel:false
+      }
+    );
   }
 
   function initializeDecisionFramework() {
@@ -3591,6 +3749,15 @@ ${categoryOutputFormat}`;
     showSkeleton(el('s1-skeleton-holder'), titles);
     
     try{
+      await autoFillDecisionFrameworkSections(
+        [1, 2, 3],
+        {
+          trigger:'stage1_meeting_preparation',
+          silent:true,
+          activatePanel:false
+        }
+      );
+
       let combinedAgenda = agenda;
       if(uploadedAgendaFileText) {
         combinedAgenda += `\n\n[첨부된 추가 참고 서류 데이터]\n"""${uploadedAgendaFileText}"""`;
@@ -3800,6 +3967,15 @@ ${categoryOutputFormat}`;
     showSkeleton(el('s3-skeleton-holder'), titles);
     
     try{
+      await autoFillDecisionFrameworkSections(
+        [4],
+        {
+          trigger:'stage3_decision_summary',
+          silent:true,
+          activatePanel:false
+        }
+      );
+
       const latestS2 = state.s2[state.s2.length - 1];
       const prompt = `당신은 비즈니스 의사결정을 최종 패키징하는 전략 에이전트입니다. 앞선 모든 결론을 바탕으로 구체적인 실행 계획을 구성하세요.
 
@@ -3864,6 +4040,16 @@ ${categoryOutputFormat}`;
     showSkeleton(el('s4-skeleton-holder'), titles);
     
     try{
+      await autoFillDecisionFrameworkSections(
+        [5],
+        {
+          trigger:'stage4_progress_analysis',
+          silent:true,
+          activatePanel:false,
+          progress
+        }
+      );
+
       const latestS3 = state.s3[state.s3.length - 1];
       const prompt = `당신은 사업의 사후 관리를 담당하는 PMO 에이전트입니다. 진행 현황 데이터를 바탕으로 현재 사업의 지연 요소와 지표를 정밀 분석해 주세요.
 
