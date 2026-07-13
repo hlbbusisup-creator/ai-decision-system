@@ -516,6 +516,167 @@ app.get('/api/history', async (req, res) => {
   }
 });
 
+app.get('/api/analytics', async (req, res) => {
+  try {
+    const [
+      summaryResult,
+      stageResult,
+      statusResult,
+      authorResult,
+      dailyResult
+    ] = await Promise.all([
+      pool.query(
+        `SELECT
+           COUNT(*)::INTEGER AS document_count,
+           COUNT(*) FILTER (WHERE has_report)::INTEGER AS completed_count,
+           COALESCE(
+             ROUND(
+               (COUNT(*) FILTER (WHERE has_report)::NUMERIC * 100)
+               / NULLIF(COUNT(*), 0),
+               1
+             ),
+             0
+           ) AS completion_rate,
+           COALESCE(
+             ROUND(
+               (SELECT COUNT(*)::NUMERIC FROM decision_history)
+               / NULLIF(COUNT(*), 0),
+               1
+             ),
+             0
+           ) AS average_records_per_document,
+           (
+             SELECT COUNT(*)::INTEGER
+             FROM decision_history
+             WHERE created_at >= NOW() - INTERVAL '7 days'
+           ) AS records_last_7_days,
+           (
+             SELECT COUNT(DISTINCT session_id)::INTEGER
+             FROM decision_history
+             WHERE created_at >= NOW() - INTERVAL '7 days'
+           ) AS active_documents_last_7_days
+         FROM decision_sessions`
+      ),
+      pool.query(
+        `SELECT
+           CASE
+             WHEN has_report THEN 'REPORT'
+             WHEN current_stage <= 0 THEN '신규'
+             WHEN current_stage = 1 THEN 'STAGE 01'
+             WHEN current_stage = 2 THEN 'STAGE 02'
+             WHEN current_stage = 3 THEN 'STAGE 03'
+             WHEN current_stage = 4 THEN 'STAGE 04'
+             ELSE '기타'
+           END AS label,
+           COUNT(*)::INTEGER AS count,
+           CASE
+             WHEN BOOL_OR(has_report) THEN 6
+             WHEN MIN(current_stage) <= 0 THEN 0
+             ELSE MIN(current_stage)
+           END AS sort_order
+         FROM decision_sessions
+         GROUP BY
+           CASE
+             WHEN has_report THEN 'REPORT'
+             WHEN current_stage <= 0 THEN '신규'
+             WHEN current_stage = 1 THEN 'STAGE 01'
+             WHEN current_stage = 2 THEN 'STAGE 02'
+             WHEN current_stage = 3 THEN 'STAGE 03'
+             WHEN current_stage = 4 THEN 'STAGE 04'
+             ELSE '기타'
+           END
+         ORDER BY sort_order`
+      ),
+      pool.query(
+        `SELECT
+           CASE
+             WHEN has_report OR status = 'completed' THEN 'completed'
+             WHEN status = 'draft' THEN 'draft'
+             ELSE 'in_progress'
+           END AS status,
+           COUNT(*)::INTEGER AS count
+         FROM decision_sessions
+         GROUP BY 1
+         ORDER BY 1`
+      ),
+      pool.query(
+        `SELECT
+           COALESCE(NULLIF(TRIM(author_name), ''), '작성자 미입력') AS author,
+           COUNT(*)::INTEGER AS count
+         FROM decision_sessions
+         GROUP BY 1
+         ORDER BY count DESC, author ASC
+         LIMIT 10`
+      ),
+      pool.query(
+        `WITH days AS (
+           SELECT generate_series(
+             CURRENT_DATE - INTERVAL '13 days',
+             CURRENT_DATE,
+             INTERVAL '1 day'
+           )::DATE AS date
+         ),
+         activity AS (
+           SELECT created_at::DATE AS date, COUNT(*)::INTEGER AS count
+           FROM decision_history
+           WHERE created_at >= CURRENT_DATE - INTERVAL '13 days'
+           GROUP BY created_at::DATE
+         )
+         SELECT
+           TO_CHAR(days.date, 'YYYY-MM-DD') AS date,
+           COALESCE(activity.count, 0)::INTEGER AS count
+         FROM days
+         LEFT JOIN activity USING (date)
+         ORDER BY days.date`
+      )
+    ]);
+
+    const summaryRow = summaryResult.rows[0] || {};
+
+    res.json({
+      generatedAt: new Date().toISOString(),
+      summary: {
+        documentCount: Number(summaryRow.document_count || 0),
+        completedCount: Number(summaryRow.completed_count || 0),
+        completionRate: Number(summaryRow.completion_rate || 0),
+        averageRecordsPerDocument: Number(
+          summaryRow.average_records_per_document || 0
+        ),
+        recordsLast7Days: Number(summaryRow.records_last_7_days || 0),
+        activeDocumentsLast7Days: Number(
+          summaryRow.active_documents_last_7_days || 0
+        )
+      },
+      stageDistribution: stageResult.rows.map(row => ({
+        label: row.label,
+        count: Number(row.count || 0)
+      })),
+      statusDistribution: statusResult.rows.map(row => ({
+        status: row.status,
+        count: Number(row.count || 0)
+      })),
+      authorDistribution: authorResult.rows.map(row => ({
+        author: row.author,
+        count: Number(row.count || 0)
+      })),
+      dailyActivity: dailyResult.rows.map(row => ({
+        date: row.date,
+        count: Number(row.count || 0)
+      }))
+    });
+  } catch (error) {
+    console.error('GET /api/analytics failed:', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail
+    });
+    res.status(500).json({
+      error: error.message,
+      code: error.code || 'ANALYTICS_QUERY_FAILED'
+    });
+  }
+});
+
 app.get('/api/stats', async (req, res) => {
   try {
     const result = await pool.query(

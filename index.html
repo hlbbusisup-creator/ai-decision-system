@@ -175,6 +175,127 @@
 #pz-root .pz-dashboard-loading{
   grid-column:1/-1; padding:45px 20px; text-align:center; color:var(--ai-500); font-size:13px;
 }
+
+#pz-root .pz-analytics-section{
+  margin-top:28px; padding-top:24px; border-top:1px solid var(--line-200);
+}
+#pz-root .pz-analytics-head{
+  display:flex; align-items:flex-end; justify-content:space-between; gap:14px;
+  margin-bottom:14px; flex-wrap:wrap;
+}
+#pz-root .pz-analytics-title{
+  font-family:'Noto Serif KR',serif; font-size:18px; font-weight:900; color:var(--ink-900);
+}
+#pz-root .pz-analytics-sub{
+  font-size:11.5px; color:var(--ink-500); line-height:1.55;
+}
+#pz-root .pz-analytics-kpis{
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:11px; margin-bottom:12px;
+}
+#pz-root .pz-analytics-kpi{
+  background:#fff; border:1px solid var(--line-200); border-radius:10px; padding:14px 15px;
+}
+#pz-root .pz-analytics-kpi-label{
+  font-size:10.5px; color:var(--ink-500); font-weight:700; margin-bottom:7px;
+}
+#pz-root .pz-analytics-kpi-value{
+  font-family:'IBM Plex Mono',monospace; font-size:22px; font-weight:700; color:var(--ink-900);
+}
+#pz-root .pz-analytics-kpi-note{
+  margin-top:5px; font-size:10px; color:var(--ink-300); line-height:1.4;
+}
+#pz-root .pz-analytics-grid{
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px;
+}
+#pz-root .pz-analytics-card{
+  background:#fff; border:1px solid var(--line-200); border-radius:11px; padding:16px;
+  min-height:280px; overflow:hidden;
+}
+#pz-root .pz-analytics-card.wide{grid-column:1/-1; min-height:315px;}
+#pz-root .pz-analytics-card-title{
+  font-size:13.5px; font-weight:900; color:var(--ink-900); margin-bottom:4px;
+}
+#pz-root .pz-analytics-card-desc{
+  font-size:10.5px; color:var(--ink-500); line-height:1.45; margin-bottom:16px;
+}
+#pz-root .pz-chart-empty{
+  height:205px; display:flex; align-items:center; justify-content:center;
+  color:var(--ink-300); font-size:12px; text-align:center;
+}
+#pz-root .pz-bar-chart{display:grid; gap:11px;}
+#pz-root .pz-bar-row{
+  display:grid; grid-template-columns:92px minmax(0,1fr) 34px; gap:9px; align-items:center;
+}
+#pz-root .pz-bar-label{
+  font-size:10.5px; font-weight:700; color:var(--ink-700); overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap;
+}
+#pz-root .pz-bar-track{
+  height:12px; border-radius:999px; background:var(--line-100); overflow:hidden;
+}
+#pz-root .pz-bar-fill{
+  height:100%; min-width:2px; border-radius:999px;
+  background:linear-gradient(90deg,var(--ai-300),var(--ai-500));
+}
+#pz-root .pz-bar-value{
+  font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700;
+  color:var(--ink-700); text-align:right;
+}
+#pz-root .pz-status-layout{
+  display:grid; grid-template-columns:150px minmax(0,1fr); gap:18px; align-items:center;
+  min-height:205px;
+}
+#pz-root .pz-status-donut{
+  width:142px; height:142px; border-radius:50%; position:relative; margin:auto;
+  background:conic-gradient(#9AA5F5 0deg,#9AA5F5 0deg);
+}
+#pz-root .pz-status-donut::after{
+  content:''; position:absolute; inset:27px; border-radius:50%; background:#fff;
+}
+#pz-root .pz-status-donut-center{
+  position:absolute; inset:0; z-index:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; pointer-events:none;
+}
+#pz-root .pz-status-donut-value{
+  font-family:'IBM Plex Mono',monospace; font-size:23px; font-weight:700; color:var(--ink-900);
+}
+#pz-root .pz-status-donut-label{font-size:9.5px; color:var(--ink-500);}
+#pz-root .pz-status-legend{display:grid; gap:10px;}
+#pz-root .pz-status-legend-row{
+  display:grid; grid-template-columns:10px minmax(0,1fr) auto; gap:8px; align-items:center;
+  font-size:10.5px; color:var(--ink-700);
+}
+#pz-root .pz-status-dot{width:9px; height:9px; border-radius:50%;}
+#pz-root .pz-status-count{
+  font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--ink-900);
+}
+#pz-root .pz-activity-svg{width:100%; height:auto; display:block; overflow:visible;}
+#pz-root .pz-chart-axis-label{
+  font-family:'IBM Plex Mono',monospace; font-size:9px; fill:#7A8190;
+}
+#pz-root .pz-chart-grid-line{stroke:#E8EAF1; stroke-width:1;}
+#pz-root .pz-chart-line{
+  fill:none; stroke:#3F51B5; stroke-width:3; stroke-linecap:round; stroke-linejoin:round;
+}
+#pz-root .pz-chart-area{fill:rgba(63,81,181,.10);}
+#pz-root .pz-chart-point{fill:#fff; stroke:#3F51B5; stroke-width:2;}
+#pz-root .pz-chart-point-value{
+  font-family:'IBM Plex Mono',monospace; font-size:8.5px; fill:#3F51B5; font-weight:700;
+}
+#pz-root .pz-analytics-error{
+  padding:18px; border:1px dashed #D7B1B1; border-radius:9px; color:#9B4A4A;
+  background:#FFF8F8; font-size:11.5px; line-height:1.5;
+}
+@media(max-width:850px){
+  #pz-root .pz-analytics-kpis{grid-template-columns:repeat(2,minmax(0,1fr));}
+  #pz-root .pz-analytics-grid{grid-template-columns:1fr;}
+  #pz-root .pz-analytics-card.wide{grid-column:auto;}
+}
+@media(max-width:520px){
+  #pz-root .pz-analytics-kpis{grid-template-columns:1fr 1fr;}
+  #pz-root .pz-status-layout{grid-template-columns:1fr;}
+  #pz-root .pz-bar-row{grid-template-columns:78px minmax(0,1fr) 28px;}
+}
 #pz-root .pz-editor-home-btn{
   margin-left:auto; appearance:none; border:1px solid var(--line-200); border-radius:7px;
   padding:7px 11px; background:#fff; color:var(--ink-700); font-family:'Noto Sans KR',sans-serif;
@@ -553,6 +674,65 @@
       <div class="pz-dashboard-grid" id="pz-dashboard-grid">
         <div class="pz-dashboard-loading">저장된 문서를 불러오는 중입니다.</div>
       </div>
+
+      <section class="pz-analytics-section" aria-labelledby="pz-analytics-title">
+        <div class="pz-analytics-head">
+          <div>
+            <div class="pz-analytics-title" id="pz-analytics-title">의사결정 운영 분석</div>
+            <div class="pz-analytics-sub">공유 DB의 문서 진행 단계, 완료 현황, 작성자별 등록 건수와 최근 저장 활동을 집계합니다.</div>
+          </div>
+          <div class="pz-analytics-sub" id="pz-analytics-updated">분석 데이터 준비 중</div>
+        </div>
+
+        <div class="pz-analytics-kpis">
+          <div class="pz-analytics-kpi">
+            <div class="pz-analytics-kpi-label">보고서 완료율</div>
+            <div class="pz-analytics-kpi-value" id="pz-kpi-completion-rate">-</div>
+            <div class="pz-analytics-kpi-note">전체 문서 중 최종 보고서 생성 비율</div>
+          </div>
+          <div class="pz-analytics-kpi">
+            <div class="pz-analytics-kpi-label">문서당 평균 이력</div>
+            <div class="pz-analytics-kpi-value" id="pz-kpi-average-records">-</div>
+            <div class="pz-analytics-kpi-note">입력·산출·보고서 저장 이력 평균</div>
+          </div>
+          <div class="pz-analytics-kpi">
+            <div class="pz-analytics-kpi-label">최근 7일 저장</div>
+            <div class="pz-analytics-kpi-value" id="pz-kpi-records-7d">-</div>
+            <div class="pz-analytics-kpi-note">최근 7일 동안 생성된 전체 이력</div>
+          </div>
+          <div class="pz-analytics-kpi">
+            <div class="pz-analytics-kpi-label">최근 7일 활성 문서</div>
+            <div class="pz-analytics-kpi-value" id="pz-kpi-active-docs">-</div>
+            <div class="pz-analytics-kpi-note">최근 7일 내 수정된 고유 문서 수</div>
+          </div>
+        </div>
+
+        <div class="pz-analytics-grid" id="pz-analytics-grid">
+          <article class="pz-analytics-card">
+            <div class="pz-analytics-card-title">진행 단계별 문서 분포</div>
+            <div class="pz-analytics-card-desc">신규·STAGE 01~04·최종 보고서 완료 문서 수</div>
+            <div id="pz-stage-chart" class="pz-chart-empty">데이터를 집계하는 중입니다.</div>
+          </article>
+
+          <article class="pz-analytics-card">
+            <div class="pz-analytics-card-title">문서 처리 상태</div>
+            <div class="pz-analytics-card-desc">초안, 진행 중, 최종 완료 문서 구성비</div>
+            <div id="pz-status-chart" class="pz-chart-empty">데이터를 집계하는 중입니다.</div>
+          </article>
+
+          <article class="pz-analytics-card wide">
+            <div class="pz-analytics-card-title">최근 14일 저장 활동</div>
+            <div class="pz-analytics-card-desc">일자별 입력·산출·보고서 이력 저장 건수</div>
+            <div id="pz-activity-chart" class="pz-chart-empty">데이터를 집계하는 중입니다.</div>
+          </article>
+
+          <article class="pz-analytics-card wide">
+            <div class="pz-analytics-card-title">작성자별 의사결정 문서</div>
+            <div class="pz-analytics-card-desc">등록 문서 수 기준 상위 작성자</div>
+            <div id="pz-author-chart" class="pz-chart-empty">데이터를 집계하는 중입니다.</div>
+          </article>
+        </div>
+      </section>
     </div>
   </section>
 
@@ -3476,6 +3656,290 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     };
   }
 
+  async function fetchDashboardAnalytics() {
+    if(!shouldUseExternalDb()) {
+      throw new Error('공유 DB API 연결이 필요합니다.');
+    }
+
+    return externalDbRequest('/api/analytics', { method:'GET' });
+  }
+
+  function setAnalyticsKpi(id, value, suffix = '') {
+    const target = el(id);
+    if(target) target.textContent = `${value}${suffix}`;
+  }
+
+  function formatAnalyticsDateLabel(dateValue) {
+    const date = new Date(`${dateValue}T00:00:00`);
+    if(Number.isNaN(date.getTime())) return String(dateValue || '');
+    return `${String(date.getMonth() + 1).padStart(2,'0')}.${String(date.getDate()).padStart(2,'0')}`;
+  }
+
+  function renderHorizontalBarChart(containerId, rows, labelKey, valueKey) {
+    const container = el(containerId);
+    container.className = '';
+
+    if(!Array.isArray(rows) || rows.length === 0) {
+      container.className = 'pz-chart-empty';
+      container.textContent = '표시할 집계 데이터가 없습니다.';
+      return;
+    }
+
+    const maxValue = Math.max(...rows.map(row => Number(row[valueKey] || 0)), 1);
+    const chart = document.createElement('div');
+    chart.className = 'pz-bar-chart';
+
+    rows.forEach(row => {
+      const value = Number(row[valueKey] || 0);
+      const rowEl = document.createElement('div');
+      rowEl.className = 'pz-bar-row';
+
+      const label = document.createElement('div');
+      label.className = 'pz-bar-label';
+      label.title = String(row[labelKey] || '');
+      label.textContent = String(row[labelKey] || '');
+
+      const track = document.createElement('div');
+      track.className = 'pz-bar-track';
+
+      const fill = document.createElement('div');
+      fill.className = 'pz-bar-fill';
+      fill.style.width = `${Math.max((value / maxValue) * 100, value > 0 ? 2 : 0)}%`;
+      track.appendChild(fill);
+
+      const count = document.createElement('div');
+      count.className = 'pz-bar-value';
+      count.textContent = String(value);
+
+      rowEl.append(label, track, count);
+      chart.appendChild(rowEl);
+    });
+
+    container.replaceChildren(chart);
+  }
+
+  function renderStatusDonut(rows, totalDocuments) {
+    const container = el('pz-status-chart');
+    container.className = '';
+
+    const statusMeta = {
+      draft:{ label:'초안', color:'#9AA5F5' },
+      in_progress:{ label:'진행 중', color:'#F0B45D' },
+      completed:{ label:'완료', color:'#63B78A' }
+    };
+
+    const normalized = ['draft','in_progress','completed'].map(key => {
+      const match = (rows || []).find(item => item.status === key);
+      return {
+        status:key,
+        label:statusMeta[key].label,
+        color:statusMeta[key].color,
+        count:Number(match?.count || 0)
+      };
+    });
+
+    const total = Number(totalDocuments || normalized.reduce((sum,item) => sum + item.count, 0));
+
+    if(total === 0) {
+      container.className = 'pz-chart-empty';
+      container.textContent = '표시할 상태 데이터가 없습니다.';
+      return;
+    }
+
+    let degreeCursor = 0;
+    const segments = normalized.map(item => {
+      const start = degreeCursor;
+      const degrees = (item.count / total) * 360;
+      degreeCursor += degrees;
+      return `${item.color} ${start}deg ${degreeCursor}deg`;
+    });
+
+    const layout = document.createElement('div');
+    layout.className = 'pz-status-layout';
+
+    const donut = document.createElement('div');
+    donut.className = 'pz-status-donut';
+    donut.style.background = `conic-gradient(${segments.join(',')})`;
+
+    const center = document.createElement('div');
+    center.className = 'pz-status-donut-center';
+
+    const centerValue = document.createElement('div');
+    centerValue.className = 'pz-status-donut-value';
+    centerValue.textContent = String(total);
+
+    const centerLabel = document.createElement('div');
+    centerLabel.className = 'pz-status-donut-label';
+    centerLabel.textContent = '전체 문서';
+
+    center.append(centerValue, centerLabel);
+    donut.appendChild(center);
+
+    const legend = document.createElement('div');
+    legend.className = 'pz-status-legend';
+
+    normalized.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'pz-status-legend-row';
+
+      const dot = document.createElement('span');
+      dot.className = 'pz-status-dot';
+      dot.style.background = item.color;
+
+      const label = document.createElement('span');
+      const percentage = total ? Math.round((item.count / total) * 100) : 0;
+      label.textContent = `${item.label} · ${percentage}%`;
+
+      const count = document.createElement('span');
+      count.className = 'pz-status-count';
+      count.textContent = `${item.count}건`;
+
+      row.append(dot, label, count);
+      legend.appendChild(row);
+    });
+
+    layout.append(donut, legend);
+    container.replaceChildren(layout);
+  }
+
+  function renderActivityLineChart(rows) {
+    const container = el('pz-activity-chart');
+    container.className = '';
+
+    if(!Array.isArray(rows) || rows.length === 0) {
+      container.className = 'pz-chart-empty';
+      container.textContent = '최근 활동 데이터가 없습니다.';
+      return;
+    }
+
+    const width = 760;
+    const height = 250;
+    const padding = { left:42, right:18, top:25, bottom:38 };
+    const values = rows.map(item => Number(item.count || 0));
+    const maxValue = Math.max(...values, 1);
+    const plotWidth = width - padding.left - padding.right;
+    const plotHeight = height - padding.top - padding.bottom;
+    const stepX = rows.length > 1 ? plotWidth / (rows.length - 1) : 0;
+
+    const points = rows.map((item, index) => {
+      const x = padding.left + (stepX * index);
+      const y = padding.top + plotHeight - ((Number(item.count || 0) / maxValue) * plotHeight);
+      return { x, y, value:Number(item.count || 0), label:formatAnalyticsDateLabel(item.date) };
+    });
+
+    const pointString = points.map(point => `${point.x},${point.y}`).join(' ');
+    const areaPath = [
+      `M ${points[0].x} ${padding.top + plotHeight}`,
+      ...points.map(point => `L ${point.x} ${point.y}`),
+      `L ${points[points.length - 1].x} ${padding.top + plotHeight}`,
+      'Z'
+    ].join(' ');
+
+    const gridLines = [0, 0.25, 0.5, 0.75, 1].map(ratio => {
+      const y = padding.top + plotHeight - (ratio * plotHeight);
+      const value = Math.round(maxValue * ratio);
+      return `
+        <line class="pz-chart-grid-line" x1="${padding.left}" y1="${y}" x2="${width-padding.right}" y2="${y}"></line>
+        <text class="pz-chart-axis-label" x="${padding.left-8}" y="${y+3}" text-anchor="end">${value}</text>
+      `;
+    }).join('');
+
+    const xLabels = points.map((point, index) => {
+      if(index % 2 !== 0 && index !== points.length - 1) return '';
+      return `<text class="pz-chart-axis-label" x="${point.x}" y="${height-14}" text-anchor="middle">${escapeHtml(point.label)}</text>`;
+    }).join('');
+
+    const circles = points.map(point => `
+      <circle class="pz-chart-point" cx="${point.x}" cy="${point.y}" r="4">
+        <title>${escapeHtml(point.label)} · ${point.value}건</title>
+      </circle>
+      ${point.value > 0 ? `<text class="pz-chart-point-value" x="${point.x}" y="${point.y-9}" text-anchor="middle">${point.value}</text>` : ''}
+    `).join('');
+
+    container.innerHTML = `
+      <svg class="pz-activity-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="최근 14일 저장 활동 선 그래프">
+        ${gridLines}
+        <path class="pz-chart-area" d="${areaPath}"></path>
+        <polyline class="pz-chart-line" points="${pointString}"></polyline>
+        ${circles}
+        ${xLabels}
+      </svg>
+    `;
+  }
+
+  function resetDashboardAnalytics(message = '데이터를 집계하는 중입니다.') {
+    ['pz-stage-chart','pz-status-chart','pz-activity-chart','pz-author-chart'].forEach(id => {
+      const target = el(id);
+      if(!target) return;
+      target.className = 'pz-chart-empty';
+      target.textContent = message;
+    });
+
+    ['pz-kpi-completion-rate','pz-kpi-average-records','pz-kpi-records-7d','pz-kpi-active-docs']
+      .forEach(id => {
+        const target = el(id);
+        if(target) target.textContent = '-';
+      });
+
+    const updated = el('pz-analytics-updated');
+    if(updated) updated.textContent = '분석 데이터 준비 중';
+  }
+
+  function renderDashboardAnalytics(payload) {
+    const summary = payload?.summary || {};
+
+    setAnalyticsKpi(
+      'pz-kpi-completion-rate',
+      Number(summary.completionRate || 0).toFixed(1),
+      '%'
+    );
+    setAnalyticsKpi(
+      'pz-kpi-average-records',
+      Number(summary.averageRecordsPerDocument || 0).toFixed(1),
+      '건'
+    );
+    setAnalyticsKpi('pz-kpi-records-7d', Number(summary.recordsLast7Days || 0), '건');
+    setAnalyticsKpi('pz-kpi-active-docs', Number(summary.activeDocumentsLast7Days || 0), '건');
+
+    renderHorizontalBarChart(
+      'pz-stage-chart',
+      payload.stageDistribution || [],
+      'label',
+      'count'
+    );
+    renderStatusDonut(payload.statusDistribution || [], summary.documentCount || 0);
+    renderActivityLineChart(payload.dailyActivity || []);
+    renderHorizontalBarChart(
+      'pz-author-chart',
+      payload.authorDistribution || [],
+      'author',
+      'count'
+    );
+
+    const updated = el('pz-analytics-updated');
+    if(updated) updated.textContent = `최종 집계: ${getTimestamp()}`;
+  }
+
+  async function refreshDashboardAnalytics() {
+    resetDashboardAnalytics();
+
+    try {
+      const analytics = await fetchDashboardAnalytics();
+      renderDashboardAnalytics(analytics);
+    } catch(error) {
+      const grid = el('pz-analytics-grid');
+      if(grid) {
+        grid.querySelectorAll('.pz-chart-empty').forEach(target => {
+          target.className = 'pz-analytics-error';
+          target.textContent = `분석 데이터 조회 실패: ${error.message}`;
+        });
+      }
+
+      const updated = el('pz-analytics-updated');
+      if(updated) updated.textContent = '분석 데이터 조회 실패';
+    }
+  }
+
   function normalizeDashboardDocument(item) {
     return {
       sessionId: item.sessionId || item.session_id,
@@ -3484,6 +3948,7 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
       updatedAt: item.updatedAt || item.updated_at || item.createdAt || item.created_at || '',
       summary: item.agendaSummary || item.agenda_summary || '저장된 안건 내용을 확인하세요.',
       highestStage: Number(item.currentStage || item.current_stage || 0),
+      status: item.status || (Boolean(item.hasReport ?? item.has_report) ? 'completed' : 'in_progress'),
       hasReport: Boolean(item.hasReport ?? item.has_report),
       recordCount: Number(item.recordCount || item.record_count || 0)
     };
@@ -3504,6 +3969,7 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
       el('pz-dashboard-author-count').textContent = String(payload.authorCount);
 
       renderDashboardCards();
+      await refreshDashboardAnalytics();
     } catch(error) {
       dashboardDocuments = [];
       el('pz-dashboard-document-count').textContent = '0';
@@ -3515,6 +3981,7 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
       failed.className = 'pz-dashboard-empty';
       failed.textContent = `공유 DB 조회 실패: ${error.message}`;
       grid.appendChild(failed);
+      resetDashboardAnalytics('문서 조회가 정상화되면 분석 그래프가 표시됩니다.');
     }
   }
 
