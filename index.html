@@ -105,6 +105,34 @@
   padding:8px 11px; background:#fff; font-family:'Noto Sans KR',sans-serif; font-size:12.5px;
 }
 #pz-root .pz-dashboard-search:focus{outline:none; border-color:var(--ai-500);}
+#pz-root .pz-dashboard-selected-count{
+  min-width:64px; text-align:center; font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px; color:var(--ink-500);
+}
+#pz-root .pz-dashboard-delete-btn{
+  appearance:none; border:1px solid #D7B1B1; border-radius:7px; padding:8px 12px;
+  background:#FFF7F7; color:#A23C3C; font-family:'Noto Sans KR',sans-serif;
+  font-size:12px; font-weight:800; cursor:pointer; white-space:nowrap;
+}
+#pz-root .pz-dashboard-delete-btn:hover:not(:disabled){
+  background:#F6E7E7; border-color:#C97F7F; color:#8D2929;
+}
+#pz-root .pz-dashboard-delete-btn:disabled{
+  background:var(--paper-0); border-color:var(--line-200);
+  color:var(--ink-300); cursor:not-allowed;
+}
+#pz-root .pz-decision-card.selected{
+  border-color:#6F7FE0; box-shadow:0 0 0 3px rgba(63,81,181,.10);
+}
+#pz-root .pz-decision-title-row{
+  display:flex; align-items:flex-start; gap:9px; margin-bottom:7px;
+}
+#pz-root .pz-decision-select{
+  width:17px; height:17px; margin:3px 0 0; accent-color:var(--ai-500);
+  cursor:pointer; flex:0 0 auto;
+}
+#pz-root .pz-decision-card-title{margin-bottom:0; flex:1; min-width:0;}
+
 #pz-root .pz-dashboard-grid{
   display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px;
 }
@@ -322,6 +350,26 @@
 #pz-root textarea.pz-input:focus{outline:none; border-color:var(--ai-500); background:var(--surface-0);}
 #pz-root .pz-btn{appearance:none; border:none; cursor:pointer; font-family:'Noto Sans KR',sans-serif; font-weight:700; font-size:13.5px; padding:10px 20px; border-radius:7px; background:var(--ink-900); color:#fff; transition:background .15s;}
 #pz-root .pz-btn:hover{background:var(--ai-500);}
+#pz-root .pz-save-draft-btn{
+  appearance:none; border:1px solid var(--ai-500); cursor:pointer;
+  font-family:'Noto Sans KR',sans-serif; font-weight:800; font-size:13.5px;
+  padding:9px 18px; border-radius:7px; background:#fff; color:var(--ai-500);
+  transition:background .15s,color .15s,border-color .15s;
+}
+#pz-root .pz-save-draft-btn:hover:not(:disabled){
+  background:var(--ai-050); border-color:#263AAF; color:#263AAF;
+}
+#pz-root .pz-save-draft-btn:disabled{
+  background:var(--line-100); border-color:var(--line-200);
+  color:var(--ink-300); cursor:not-allowed;
+}
+#pz-root .pz-save-status{
+  font-size:11.5px; font-weight:600; color:var(--ink-500);
+  min-width:92px; text-align:right;
+}
+#pz-root .pz-save-status.ok{color:var(--ok-500);}
+#pz-root .pz-save-status.error{color:#B23B3B;}
+
 #pz-root .pz-btn:disabled{background:var(--line-200); color:var(--ink-300); cursor:not-allowed;}
 #pz-root .pz-btn-row{display:flex; justify-content:flex-end; margin-top:12px; gap:10px; align-items:center;}
 #pz-root .pz-hint{font-size:12px; color:var(--ink-300); margin-right:auto;}
@@ -489,6 +537,8 @@
       <div class="pz-dashboard-toolbar">
         <div class="pz-dashboard-heading">의사결정 문서</div>
         <input type="search" class="pz-dashboard-search" id="pz-dashboard-search" placeholder="제목 또는 작성자 검색">
+        <span class="pz-dashboard-selected-count" id="pz-dashboard-selected-count">선택 0건</span>
+        <button type="button" class="pz-dashboard-delete-btn" id="pz-dashboard-delete" disabled>삭제</button>
       </div>
 
       <div class="pz-dashboard-grid" id="pz-dashboard-grid">
@@ -560,6 +610,8 @@
         <input type="file" id="pz-agenda-file" style="display:none;" accept=".txt,.csv,.json,.md">
       </label>
       <span class="pz-file-info" id="pz-agenda-file-name"></span>
+      <span class="pz-save-status" id="pz-draft-save-status"></span>
+      <button type="button" class="pz-save-draft-btn" id="pz-save-draft">💾 저장하기</button>
       <button class="pz-btn" id="pz-run-agenda">① 회의 준비 자동 산출</button>
     </div>
   </div>
@@ -1822,6 +1874,9 @@ ${categoryOutputFormat}`;
     if(target) {
       target.addEventListener('input', () => {
         updateDecisionTitle();
+        if(id === 'pz-agenda-text' || id === 'pz-author-name') {
+          setDraftSaveStatus('미저장 변경사항');
+        }
         if(id !== 'pz-author-name') updateStageResetButtons();
         if(id === 'pz-author-name') {
           try { localStorage.setItem('pz_author_name', target.value.trim()); } catch(e) {}
@@ -1836,6 +1891,87 @@ ${categoryOutputFormat}`;
   } catch(e) {}
   updateDecisionTitle();
   updateStageResetButtons();
+
+
+  function setDraftSaveStatus(message = '', type = '') {
+    const status = el('pz-draft-save-status');
+    if(!status) return;
+    status.textContent = message;
+    status.className = 'pz-save-status' + (type ? ` ${type}` : '');
+  }
+
+  function setDraftSaveButtonBusy(isBusy) {
+    const button = el('pz-save-draft');
+    if(!button) return;
+    button.disabled = isBusy;
+    button.textContent = isBusy ? '저장 중…' : '💾 저장하기';
+  }
+
+  async function saveDraftDecision() {
+    const agenda = el('pz-agenda-text').value.trim();
+    const authorName = getCurrentAuthorName();
+
+    if(!authorName) {
+      alert('작성자 이름을 입력해 주세요.');
+      el('pz-author-name').focus();
+      return;
+    }
+
+    if(!agenda) {
+      alert('주제 및 안건을 입력해 주세요.');
+      el('pz-agenda-text').focus();
+      return;
+    }
+
+    if(SHARED_DB_REQUIRED && !shouldUseExternalDb()) {
+      setDraftSaveStatus('공유 DB 연결 필요', 'error');
+      alert('공유 DB가 연결되어 있지 않습니다. DB API 설정과 연결 상태를 확인해 주세요.');
+      return;
+    }
+
+    setDraftSaveButtonBusy(true);
+    setDraftSaveStatus('저장 중');
+
+    try {
+      state.agenda = agenda;
+      state.authorName = authorName;
+      updateDecisionTitle();
+
+      const fileData = await getSelectedFileData('pz-agenda-file');
+      const sessionId = currentHistorySessionId || ensureHistorySession(agenda);
+
+      const saved = await saveHistoryRecord({
+        sessionId,
+        stage:1,
+        kind:'input',
+        type:'draft_save',
+        title:'신규 의사결정 문서 저장',
+        content:agenda,
+        fileName:fileData.fileName,
+        fileText:fileData.fileText || uploadedAgendaFileText,
+        agendaSummary:agenda,
+        decisionTitle:state.decisionTitle,
+        authorName
+      });
+
+      currentHistorySessionId = saved?.sessionId || sessionId;
+      currentHistoryAgenda = agenda;
+
+      setDraftSaveStatus('저장 완료', 'ok');
+
+      // 저장 직후 홈 대시보드에서 바로 조회되도록 이동 및 재조회
+      setView('home', true);
+      await renderHomeDashboard();
+    } catch(error) {
+      console.error('Draft save failed:', error);
+      setDraftSaveStatus('저장 실패', 'error');
+      alert('저장 실패: ' + error.message);
+    } finally {
+      setDraftSaveButtonBusy(false);
+    }
+  }
+
+  el('pz-save-draft').addEventListener('click', saveDraftDecision);
 
   // ---- STAGE 1 ----
   el('pz-run-agenda').addEventListener('click', async ()=>{
@@ -2827,6 +2963,80 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
 
 
   let dashboardDocuments = [];
+  const selectedDashboardSessions = new Set();
+
+  function updateDashboardDeleteState() {
+    const count = selectedDashboardSessions.size;
+    const label = el('pz-dashboard-selected-count');
+    const button = el('pz-dashboard-delete');
+
+    if(label) label.textContent = `선택 ${count}건`;
+    if(button) button.disabled = count === 0;
+  }
+
+  function toggleDashboardSelection(sessionId, checked) {
+    if(checked) selectedDashboardSessions.add(sessionId);
+    else selectedDashboardSessions.delete(sessionId);
+
+    updateDashboardDeleteState();
+
+    const card = document.querySelector(
+      `.pz-decision-card[data-session-id="${CSS.escape(sessionId)}"]`
+    );
+    if(card) card.classList.toggle('selected', checked);
+  }
+
+  async function deleteSelectedDashboardDocuments() {
+    const sessionIds = [...selectedDashboardSessions];
+
+    if(sessionIds.length === 0) {
+      alert('삭제할 문서를 선택해 주세요.');
+      return;
+    }
+
+    const deleteCode = window.prompt('삭제코드를 입력하시오');
+    if(deleteCode === null) return;
+
+    if(!deleteCode.trim()) {
+      alert('삭제코드를 입력해 주세요.');
+      return;
+    }
+
+    const button = el('pz-dashboard-delete');
+    button.disabled = true;
+    button.textContent = '삭제 중…';
+
+    try {
+      const result = await externalDbRequest('/api/documents/bulk-delete', {
+        method:'POST',
+        headers:{
+          'x-delete-code': deleteCode.trim()
+        },
+        body:JSON.stringify({ sessionIds })
+      });
+
+      selectedDashboardSessions.clear();
+      updateDashboardDeleteState();
+      await renderHomeDashboard();
+
+      alert(`${Number(result.deletedCount || 0)}개의 의사결정 문서가 삭제되었습니다.`);
+    } catch(error) {
+      const message = String(error.message || error);
+
+      if(
+        message.includes('401') ||
+        message.toLowerCase().includes('invalid delete code')
+      ) {
+        alert('삭제코드가 올바르지 않습니다.');
+      } else {
+        alert('문서 삭제 실패: ' + message);
+      }
+    } finally {
+      button.textContent = '삭제';
+      updateDashboardDeleteState();
+    }
+  }
+
 
   function setView(viewName, updateHash = true) {
     const home = el('pz-home-view');
@@ -2876,6 +3086,7 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     } catch(e) {}
 
     updateDecisionTitle();
+    setDraftSaveStatus('');
     setView('new', true);
     el('pz-agenda-text').focus();
   }
@@ -2949,6 +3160,12 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     const grid = el('pz-dashboard-grid');
     const search = (el('pz-dashboard-search').value || '').trim().toLowerCase();
 
+    const existingSessionIds = new Set(dashboardDocuments.map(doc => doc.sessionId));
+    [...selectedDashboardSessions].forEach(sessionId => {
+      if(!existingSessionIds.has(sessionId)) selectedDashboardSessions.delete(sessionId);
+    });
+    updateDashboardDeleteState();
+
     const filtered = dashboardDocuments.filter(doc => {
       if(!search) return true;
       return `${doc.title} ${doc.author}`.toLowerCase().includes(search);
@@ -2967,9 +3184,11 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     }
 
     filtered.forEach(doc => {
-      const card = document.createElement('button');
-      card.type = 'button';
+      const card = document.createElement('div');
       card.className = 'pz-decision-card';
+      card.dataset.sessionId = doc.sessionId;
+      card.tabIndex = 0;
+      card.setAttribute('role', 'button');
       card.setAttribute('aria-label', `${doc.title} 문서 열기`);
 
       const icon = document.createElement('div');
@@ -2980,9 +3199,20 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
       stage.className = 'pz-decision-card-stage';
       stage.textContent = getDashboardStageLabel(doc.highestStage, doc.hasReport);
 
+      const titleRow = document.createElement('div');
+      titleRow.className = 'pz-decision-title-row';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'pz-decision-select';
+      checkbox.checked = selectedDashboardSessions.has(doc.sessionId);
+      checkbox.setAttribute('aria-label', `${doc.title} 선택`);
+
       const title = document.createElement('div');
       title.className = 'pz-decision-card-title';
       title.textContent = doc.title;
+
+      titleRow.append(checkbox, title);
 
       const summary = document.createElement('div');
       summary.className = 'pz-decision-card-summary';
@@ -3004,8 +3234,31 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
       count.textContent = `🗂 저장 이력 ${doc.recordCount}건`;
 
       meta.append(author, date, count);
-      card.append(icon, stage, title, summary, meta);
-      card.addEventListener('click', () => openDecisionSession(doc.sessionId));
+      card.append(icon, stage, titleRow, summary, meta);
+
+      card.classList.toggle('selected', checkbox.checked);
+
+      checkbox.addEventListener('click', event => {
+        event.stopPropagation();
+      });
+
+      checkbox.addEventListener('change', event => {
+        event.stopPropagation();
+        toggleDashboardSelection(doc.sessionId, checkbox.checked);
+      });
+
+      card.addEventListener('click', event => {
+        if(event.target === checkbox) return;
+        openDecisionSession(doc.sessionId);
+      });
+
+      card.addEventListener('keydown', event => {
+        if(event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openDecisionSession(doc.sessionId);
+        }
+      });
+
       grid.appendChild(card);
     });
   }
@@ -3393,6 +3646,7 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
   });
 
   el('pz-dashboard-search').addEventListener('input', renderDashboardCards);
+  el('pz-dashboard-delete').addEventListener('click', deleteSelectedDashboardDocuments);
 
   window.addEventListener('hashchange', () => {
     routeFromHash();

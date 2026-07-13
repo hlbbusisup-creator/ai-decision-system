@@ -13,6 +13,7 @@ const PORT = Number(process.env.PORT || 3000);
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'https://hlbbusisup-creator.github.io';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
+const DELETE_CODE = process.env.DELETE_CODE || '';
 
 if (!DATABASE_URL) {
   throw new Error('DATABASE_URL is required.');
@@ -44,7 +45,7 @@ app.use(cors({
     return callback(new Error(`CORS origin not allowed: ${origin}`));
   },
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'x-admin-token']
+  allowedHeaders: ['Content-Type', 'x-admin-token', 'x-delete-code']
 }));
 
 app.use(express.json({ limit: '25mb' }));
@@ -58,6 +59,22 @@ function requireAdmin(req, res, next) {
 
   if (req.headers['x-admin-token'] !== ADMIN_TOKEN) {
     return res.status(401).json({ error: 'Invalid admin token.' });
+  }
+
+  next();
+}
+
+function requireDeleteCode(req, res, next) {
+  if (!DELETE_CODE) {
+    return res.status(503).json({
+      error: 'Delete code is not configured on the server.'
+    });
+  }
+
+  const suppliedCode = String(req.headers['x-delete-code'] || '');
+
+  if (suppliedCode !== DELETE_CODE) {
+    return res.status(401).json({ error: 'Invalid delete code.' });
   }
 
   next();
@@ -498,6 +515,46 @@ app.delete('/api/history/:id', requireAdmin, async (req, res) => {
     res.status(204).end();
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/documents/bulk-delete', requireDeleteCode, async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    const sessionIds = Array.isArray(req.body?.sessionIds)
+      ? [...new Set(req.body.sessionIds.map(value => safeString(value, 200)).filter(Boolean))]
+      : [];
+
+    if (sessionIds.length === 0) {
+      return res.status(400).json({ error: 'sessionIds must contain at least one document ID.' });
+    }
+
+    if (sessionIds.length > 200) {
+      return res.status(400).json({ error: 'A maximum of 200 documents can be deleted at once.' });
+    }
+
+    await client.query('BEGIN');
+
+    const result = await client.query(
+      `DELETE FROM decision_sessions
+       WHERE session_id = ANY($1::text[])
+       RETURNING session_id`,
+      [sessionIds]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({
+      deletedCount: result.rowCount,
+      deletedSessionIds: result.rows.map(row => row.session_id)
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('POST /api/documents/bulk-delete failed:', error);
+    res.status(500).json({ error: error.message });
+  } finally {
+    client.release();
   }
 });
 
