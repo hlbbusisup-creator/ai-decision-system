@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -14,6 +15,7 @@ const DATABASE_URL = process.env.DATABASE_URL || '';
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'https://hlbbusisup-creator.github.io';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
 const DELETE_CODE = process.env.DELETE_CODE || '';
+const DELETE_CODE_FALLBACK_HASH = '04f21e1fc82e36aa8346a4cb5a2db97a97dc2f800967e44e6b0950b63b29bd87';
 
 if (!DATABASE_URL) {
   throw new Error('DATABASE_URL is required.');
@@ -65,15 +67,17 @@ function requireAdmin(req, res, next) {
 }
 
 function requireDeleteCode(req, res, next) {
-  if (!DELETE_CODE) {
-    return res.status(503).json({
-      error: 'Delete code is not configured on the server.'
-    });
-  }
-
   const suppliedCode = String(req.headers['x-delete-code'] || '');
+  const suppliedHash = crypto
+    .createHash('sha256')
+    .update(suppliedCode, 'utf8')
+    .digest('hex');
 
-  if (suppliedCode !== DELETE_CODE) {
+  const isValid = DELETE_CODE
+    ? suppliedCode === DELETE_CODE
+    : suppliedHash === DELETE_CODE_FALLBACK_HASH;
+
+  if (!isValid) {
     return res.status(401).json({ error: 'Invalid delete code.' });
   }
 

@@ -191,3 +191,33 @@ inconsistent types deduced for parameter $5
 
 GitHub에 새 `backend/server.js`를 올리면 Render의 Auto Deploy가 실행됩니다.
 배포 완료 후 `/api/health`가 정상인지 확인하고 다시 저장합니다.
+
+
+## 삭제코드 미설정 503 오류 수정
+
+기존 오류:
+
+```text
+Delete code is not configured on the server.
+```
+
+원인:
+
+- Render 환경변수 `DELETE_CODE`가 설정되지 않은 상태에서 삭제 API를 호출함
+- 기존 서버는 환경변수가 없으면 삭제 기능을 503으로 차단함
+
+수정:
+
+- Render 환경변수가 없어도 지정 삭제코드의 SHA-256 검증값으로 처리
+- 삭제코드 평문은 서버 소스에 저장하지 않음
+- Render의 `DELETE_CODE` 환경변수는 선택사항으로 변경
+- 별도 환경변수를 설정하면 해당 값이 우선 적용됨
+
+현재 삭제코드:
+
+```text
+DpdlclDpfql
+```
+
+GitHub에 이 패키지를 반영하고 Render에서 최신 커밋을 재배포하면,
+추가 환경변수 설정 없이 삭제가 동작합니다.

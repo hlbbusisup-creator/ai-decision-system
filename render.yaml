@@ -17,7 +17,5 @@ services:
         sync: false
       - key: ADMIN_TOKEN
         generateValue: true
-      - key: DELETE_CODE
-        sync: false
       - key: PG_POOL_MAX
         value: "3"
