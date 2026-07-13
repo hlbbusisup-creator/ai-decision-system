@@ -1011,6 +1011,175 @@ body{margin:0;background:#f5f7fb;color:#172033;}
 #pz-root .pz-sidebar-action:hover{filter:brightness(1.08);}
 #pz-root .pz-sidebar-toggle{display:none;appearance:none;width:38px;height:38px;border:1px solid var(--modern-border);border-radius:10px;background:#fff;color:#344054;font-size:18px;cursor:pointer;}
 
+
+/* Workflow data status */
+#pz-root .pz-sidebar-link .pz-sidebar-data-state{
+  margin-left:auto; padding:3px 6px; border-radius:999px;
+  font-family:'IBM Plex Mono',monospace; font-size:7.5px; font-weight:800;
+  letter-spacing:.02em; white-space:nowrap;
+}
+#pz-root .pz-sidebar-link .pz-sidebar-data-state.filled{
+  background:#173d30; color:#75e0a7;
+}
+#pz-root .pz-sidebar-link .pz-sidebar-data-state.empty{
+  background:#27344a; color:#7f8ca4;
+}
+#pz-root .pz-sidebar-link.active .pz-sidebar-data-state.filled{
+  background:#dff7e8; color:#157347;
+}
+#pz-root .pz-sidebar-link.active .pz-sidebar-data-state.empty{
+  background:#394866; color:#c4cbd7;
+}
+#pz-root .pz-step{
+  position:relative;
+}
+#pz-root .pz-step-data-state{
+  display:inline-flex; align-items:center; justify-content:center;
+  margin-left:7px; padding:2px 6px; border-radius:999px;
+  font-family:'IBM Plex Mono',monospace; font-size:7.5px; font-weight:800;
+  line-height:1.3; white-space:nowrap;
+}
+#pz-root .pz-step-data-state.filled{
+  background:#dff7e8; color:#157347;
+}
+#pz-root .pz-step-data-state.empty{
+  background:#344054; color:#98a2b3;
+}
+#pz-root .pz-step.current .pz-step-data-state.filled,
+#pz-root .pz-step.done .pz-step-data-state.filled{
+  background:#e7f8ed; color:#157347;
+}
+
+/* Compact STAGE output cards */
+#pz-root .pz-output-card{
+  min-height:142px; cursor:pointer; position:relative;
+  transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+#pz-root .pz-output-card:hover{
+  transform:translateY(-2px); border-color:#aeb9e8!important;
+  box-shadow:0 10px 22px rgba(16,24,40,.09)!important;
+}
+#pz-root .pz-output-card:focus-visible{
+  outline:3px solid rgba(54,88,212,.18); outline-offset:2px;
+}
+#pz-root .pz-card-title .pz-summary-badge{
+  margin-left:auto; padding:3px 7px; border-radius:999px;
+  background:#eef1ff; color:#3658d4;
+  font-family:'IBM Plex Mono',monospace; font-size:8px; font-weight:800;
+}
+#pz-root .pz-card-title .pz-source-mini-badge{
+  padding:3px 7px; border-radius:999px;
+  background:#effaf3; color:#157347;
+  font-family:'IBM Plex Mono',monospace; font-size:8px; font-weight:800;
+}
+#pz-root .pz-card-summary{
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:4;
+  overflow:hidden; white-space:normal!important; cursor:pointer!important;
+  min-height:78px; color:#344054!important; font-size:12px!important; line-height:1.68!important;
+}
+#pz-root .pz-card-open-hint{
+  margin-top:auto; padding-top:10px; border-top:1px solid #eef0f4;
+  color:#667085; font-size:9.5px; font-weight:700;
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+}
+#pz-root .pz-card-open-hint strong{color:#3658d4;}
+#pz-root .pz-card-edit-badge{
+  color:#157347; font-size:8.5px; font-weight:800;
+}
+
+/* Full output edit modal */
+#pz-root .pz-output-modal{
+  display:none; position:fixed; inset:0; z-index:110;
+}
+#pz-root .pz-output-modal.open{display:block;}
+#pz-root .pz-output-modal-backdrop{
+  position:absolute; inset:0; background:rgba(16,24,40,.68); backdrop-filter:blur(3px);
+}
+#pz-root .pz-output-modal-panel{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:min(860px,calc(100vw - 36px)); max-height:90vh;
+  display:flex; flex-direction:column; overflow:hidden;
+  background:#fff; border:1px solid #dfe3eb; border-radius:18px;
+  box-shadow:0 32px 90px rgba(16,24,40,.34);
+}
+#pz-root .pz-output-modal-head{
+  display:flex; align-items:flex-start; gap:12px; padding:18px 20px;
+  background:#172033; color:#fff;
+}
+#pz-root .pz-output-modal-heading{flex:1; min-width:0;}
+#pz-root .pz-output-modal-stage{
+  display:inline-flex; padding:3px 7px; border-radius:999px;
+  background:#2b3c63; color:#aebdff;
+  font-family:'IBM Plex Mono',monospace; font-size:8.5px; font-weight:800;
+}
+#pz-root .pz-output-modal-title{
+  margin-top:7px; font-size:17px; line-height:1.35; font-weight:800;
+}
+#pz-root .pz-output-modal-desc{
+  margin-top:4px; color:#98a2b3; font-size:10.5px;
+}
+#pz-root .pz-output-modal-close{
+  appearance:none; width:34px; height:34px; border:1px solid #344054;
+  border-radius:9px; background:#1d2939; color:#fff; cursor:pointer; font-size:19px;
+}
+#pz-root .pz-output-modal-body{
+  padding:18px 20px; overflow:auto; background:#f8f9fc;
+}
+#pz-root .pz-output-edit-label{
+  display:flex; justify-content:space-between; gap:10px; align-items:center;
+  margin-bottom:7px; color:#344054; font-size:11px; font-weight:800;
+}
+#pz-root .pz-output-edit-label span{
+  color:#98a2b3; font-size:9.5px; font-weight:500;
+}
+#pz-root .pz-output-edit-area{
+  width:100%; min-height:330px; resize:vertical; padding:15px;
+  border:1px solid #cfd5df; border-radius:12px; background:#fff;
+  color:#1d2939; font-family:'Noto Sans KR',sans-serif;
+  font-size:12.5px; line-height:1.72;
+}
+#pz-root .pz-output-edit-area:focus{
+  outline:none; border-color:#3658d4; box-shadow:0 0 0 4px rgba(54,88,212,.1);
+}
+#pz-root .pz-output-source-panel{
+  display:none; margin-top:14px; padding:13px 14px;
+  border:1px solid #cfe7d8; border-radius:11px; background:#f3fbf6;
+}
+#pz-root .pz-output-source-panel.visible{display:block;}
+#pz-root .pz-output-source-title{
+  color:#157347; font-family:'IBM Plex Mono',monospace;
+  font-size:8.5px; font-weight:800; letter-spacing:.05em;
+}
+#pz-root .pz-output-source-content{
+  margin-top:7px; color:#475467; font-size:10.5px; line-height:1.65;
+  max-height:160px; overflow:auto;
+}
+#pz-root .pz-output-modal-status{
+  min-height:20px; margin-top:10px; font-size:10px; color:#667085;
+}
+#pz-root .pz-output-modal-status.ok{color:#157347;}
+#pz-root .pz-output-modal-status.error{color:#b42318;}
+#pz-root .pz-output-modal-foot{
+  display:flex; justify-content:flex-end; gap:8px; padding:13px 20px;
+  border-top:1px solid #e4e7ec; background:#fff;
+}
+#pz-root .pz-output-modal-btn{
+  appearance:none; min-height:40px; padding:8px 15px; border-radius:10px;
+  border:1px solid #d0d5dd; background:#fff; color:#344054;
+  font-family:'Noto Sans KR',sans-serif; font-size:11.5px; font-weight:800; cursor:pointer;
+}
+#pz-root .pz-output-modal-btn.primary{
+  border-color:#3658d4; background:#3658d4; color:#fff;
+}
+#pz-root .pz-output-modal-btn:disabled{opacity:.55; cursor:not-allowed;}
+@media(max-width:620px){
+  #pz-root .pz-output-modal-panel{width:calc(100vw - 18px); max-height:94vh;}
+  #pz-root .pz-output-modal-head,#pz-root .pz-output-modal-body,#pz-root .pz-output-modal-foot{
+    padding-left:14px; padding-right:14px;
+  }
+  #pz-root .pz-output-edit-area{min-height:270px;}
+}
+
 /* Editor header and utility */
 #pz-root .pz-header{
   position:sticky;top:0;z-index:30;padding:16px 20px;background:rgba(255,255,255,.92);
@@ -1270,10 +1439,10 @@ body{margin:0;background:#f5f7fb;color:#172033;}
       <button type="button" class="pz-sidebar-link" data-scroll-target="pz-agenda-section"><span class="pz-sidebar-icon">01</span><span>안건 입력</span></button>
       <button type="button" class="pz-sidebar-link" data-scroll-target="pz-framework"><span class="pz-sidebar-icon">05</span><span>핵심요소 설계</span></button>
       <div class="pz-sidebar-nav-label">WORKFLOW</div>
-      <button type="button" class="pz-sidebar-link" data-scroll-target="stage-1"><span class="pz-sidebar-icon">1</span><span>회의 준비</span></button>
-      <button type="button" class="pz-sidebar-link" data-scroll-target="stage-2"><span class="pz-sidebar-icon">2</span><span>회의 중</span></button>
-      <button type="button" class="pz-sidebar-link" data-scroll-target="stage-3"><span class="pz-sidebar-icon">3</span><span>의사결정 요약</span></button>
-      <button type="button" class="pz-sidebar-link" data-scroll-target="stage-4"><span class="pz-sidebar-icon">4</span><span>진행 현황</span></button>
+      <button type="button" class="pz-sidebar-link" data-scroll-target="stage-1"><span class="pz-sidebar-icon">1</span><span>회의 준비</span><span class="pz-sidebar-data-state empty" data-workflow-status="1">미입력</span></button>
+      <button type="button" class="pz-sidebar-link" data-scroll-target="stage-2"><span class="pz-sidebar-icon">2</span><span>회의 중</span><span class="pz-sidebar-data-state empty" data-workflow-status="2">미입력</span></button>
+      <button type="button" class="pz-sidebar-link" data-scroll-target="stage-3"><span class="pz-sidebar-icon">3</span><span>의사결정 요약</span><span class="pz-sidebar-data-state empty" data-workflow-status="3">미입력</span></button>
+      <button type="button" class="pz-sidebar-link" data-scroll-target="stage-4"><span class="pz-sidebar-icon">4</span><span>진행 현황</span><span class="pz-sidebar-data-state empty" data-workflow-status="4">미입력</span></button>
       <button type="button" class="pz-sidebar-link" data-scroll-target="pz-report-area"><span class="pz-sidebar-icon">R</span><span>최종 보고서</span></button>
     </nav>
 
@@ -1687,6 +1856,36 @@ body{margin:0;background:#f5f7fb;color:#172033;}
       </div>
       <div class="pz-history-list" id="pz-history-list">
         <div class="pz-history-empty">입력 이력을 불러오는 중입니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pz-output-modal" id="pz-output-modal" aria-hidden="true">
+    <div class="pz-output-modal-backdrop" id="pz-output-modal-backdrop"></div>
+    <div class="pz-output-modal-panel" role="dialog" aria-modal="true" aria-labelledby="pz-output-modal-title">
+      <div class="pz-output-modal-head">
+        <div class="pz-output-modal-heading">
+          <span class="pz-output-modal-stage" id="pz-output-modal-stage">STAGE 01</span>
+          <div class="pz-output-modal-title" id="pz-output-modal-title">산출 결과 상세</div>
+          <div class="pz-output-modal-desc">전체 내용을 확인하고 필요한 부분을 직접 수정할 수 있습니다.</div>
+        </div>
+        <button type="button" class="pz-output-modal-close" id="pz-output-modal-close" aria-label="닫기">×</button>
+      </div>
+      <div class="pz-output-modal-body">
+        <label class="pz-output-edit-label" for="pz-output-edit-area">
+          <strong>전체 내용</strong>
+          <span>수정 후 저장하면 새로운 이력으로 DB에 기록됩니다.</span>
+        </label>
+        <textarea class="pz-output-edit-area" id="pz-output-edit-area"></textarea>
+        <div class="pz-output-source-panel" id="pz-output-source-panel">
+          <div class="pz-output-source-title">VERIFIED SOURCE · 실제 원문 참조</div>
+          <div class="pz-output-source-content" id="pz-output-source-content"></div>
+        </div>
+        <div class="pz-output-modal-status" id="pz-output-modal-status"></div>
+      </div>
+      <div class="pz-output-modal-foot">
+        <button type="button" class="pz-output-modal-btn" id="pz-output-modal-cancel">닫기</button>
+        <button type="button" class="pz-output-modal-btn primary" id="pz-output-modal-save">수정 내용 저장</button>
       </div>
     </div>
   </div>
@@ -3108,6 +3307,7 @@ ${getFrameworkDraftSchema(requestedSections)}`;
     const reader = new FileReader();
     reader.onload = function(evt) {
       uploadedAgendaFileText = evt.target.result;
+      refreshWorkflowDataIndicators();
     };
     reader.readAsText(file);
   });
@@ -3119,6 +3319,7 @@ ${getFrameworkDraftSchema(requestedSections)}`;
     const reader = new FileReader();
     reader.onload = function(evt) {
       uploadedS2FileText = evt.target.result;
+      refreshWorkflowDataIndicators();
     };
     reader.readAsText(file);
   });
@@ -3135,12 +3336,67 @@ ${getFrameworkDraftSchema(requestedSections)}`;
   const STEPS = [
     {id:1,label:'회의 준비'},{id:2,label:'회의 중'},{id:3,label:'회의 종료 후'},{id:4,label:'지속 관리'}
   ];
+
+  function hasWorkflowStageData(stage) {
+    let outputExists = false;
+    try {
+      outputExists = Array.isArray(state?.[`s${stage}`]) && state[`s${stage}`].length > 0;
+    } catch(error) {
+      outputExists = false;
+    }
+
+    if(stage === 1) {
+      return Boolean(
+        (el('pz-agenda-text')?.value || '').trim() ||
+        uploadedAgendaFileText ||
+        outputExists
+      );
+    }
+    if(stage === 2) {
+      return Boolean(
+        (el('s2-input')?.value || '').trim() ||
+        uploadedS2FileText ||
+        outputExists
+      );
+    }
+    if(stage === 3) {
+      return outputExists;
+    }
+    if(stage === 4) {
+      return Boolean(
+        (el('s4-input')?.value || '').trim() ||
+        outputExists
+      );
+    }
+    return false;
+  }
+
+  function refreshWorkflowDataIndicators() {
+    for(let stage = 1; stage <= 4; stage++) {
+      const filled = hasWorkflowStageData(stage);
+      const label = filled ? '입력' : '미입력';
+
+      document.querySelectorAll(`[data-workflow-status="${stage}"]`).forEach(node => {
+        node.textContent = label;
+        node.classList.toggle('filled', filled);
+        node.classList.toggle('empty', !filled);
+      });
+
+      document.querySelectorAll(`#pz-pipeline .pz-step[data-goto="${stage}"] .pz-step-data-state`).forEach(node => {
+        node.textContent = label;
+        node.classList.toggle('filled', filled);
+        node.classList.toggle('empty', !filled);
+      });
+    }
+  }
+
   const pipeline = el('pz-pipeline');
   function renderPipeline(state){
     pipeline.innerHTML = STEPS.map(s=>{
       let st = state[s.id];
       let cls = st==='done' ? 'unlocked done' : (st==='current' ? 'unlocked current' : (st==='unlocked' ? 'unlocked' : ''));
-      return `<div class="pz-step ${cls}" data-goto="${s.id}"><span class="mono">STAGE ${String(s.id).padStart(2,'0')}</span><span class="label">${s.label}</span></div>`;
+      const filled = hasWorkflowStageData(s.id);
+      return `<div class="pz-step ${cls}" data-goto="${s.id}"><span class="mono">STAGE ${String(s.id).padStart(2,'0')}</span><span class="label">${s.label}</span><span class="pz-step-data-state ${filled ? 'filled' : 'empty'}">${filled ? '입력' : '미입력'}</span></div>`;
     }).join('');
     pipeline.querySelectorAll('[data-goto]').forEach(n=>{
       n.addEventListener('click', ()=>{
@@ -3148,6 +3404,7 @@ ${getFrameworkDraftSchema(requestedSections)}`;
         if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
       });
     });
+    refreshWorkflowDataIndicators();
   }
   const pipeState = {1:'locked',2:'locked',3:'locked',4:'locked'};
   renderPipeline(pipeState);
@@ -3913,14 +4170,290 @@ ${categoryOutputFormat}`;
     txtArea.addEventListener('click', (e) => e.stopPropagation());
   }
 
+  const STAGE_OUTPUT_FIELDS = {
+    1:[
+      {key:'business_data', title:'사업자료 분석', sourceKey:'business_data'},
+      {key:'competitor_analysis', title:'경쟁사 비교', sourceKey:'competitor_analysis'},
+      {key:'market_size', title:'시장 규모 추정', sourceKey:'market_size'},
+      {key:'risk_analysis', title:'리스크 시나리오', sourceKey:'risk_analysis'},
+      {key:'investment_scenario', title:'투자 분석', sourceKey:'investment_scenario'},
+      {key:'additional_category_content', title:null, sourceKey:'additional_category_content'}
+    ],
+    2:[
+      {key:'minutes_summary', title:'회의록 핵심 요약'},
+      {key:'opinion_classification', title:'논쟁 및 의견 분류'},
+      {key:'pros_cons', title:'구체적 찬반 논리'},
+      {key:'criteria_evaluation', title:'기준별 대안 평가'},
+      {key:'action_items', title:'Action Item (R&R)'}
+    ],
+    3:[
+      {key:'decision_summary', title:'최종 의사결정 결론'},
+      {key:'feasibility_check', title:'실행 가능성·제약 검증'},
+      {key:'owner_assignment', title:'실무 조직 지정'},
+      {key:'schedule', title:'마일스톤 일정'},
+      {key:'kpi', title:'핵심 관리 KPI'},
+      {key:'contingency_plan', title:'컨틴전시 플랜'},
+      {key:'next_agenda', title:'후속 안건 제언'}
+    ],
+    4:[
+      {key:'kpi_tracking', title:'KPI 달성도 현황'},
+      {key:'schedule_management', title:'마일스톤 리스크 추적'},
+      {key:'investment_status', title:'자본/투자 집행률'},
+      {key:'contract_status', title:'계약 건전성 분석'},
+      {key:'contingency_status', title:'Plan B 발동 조건'}
+    ]
+  };
+
+  const STAGE_OUTPUT_RECORD_META = {
+    1:{type:'stage1_preparation_revision', title:'STAGE 01 · 회의 준비 사용자 수정본'},
+    2:{type:'stage2_minutes_revision', title:'STAGE 02 · 회의 중 사용자 수정본'},
+    3:{type:'stage3_decision_revision', title:'STAGE 03 · 의사결정 요약 사용자 수정본'},
+    4:{type:'stage4_management_revision', title:'STAGE 04 · 진행 현황 사용자 수정본'}
+  };
+
+  let stageOutputModalContext = null;
+
+  function inferStageFromContainer(container, explicitStage = 0) {
+    if(Number(explicitStage)) return Number(explicitStage);
+    const match = String(container?.id || '').match(/^s([1-4])-history-container$/);
+    return match ? Number(match[1]) : 0;
+  }
+
+  function getStageOutputDefinitions(stage, result = {}) {
+    return (STAGE_OUTPUT_FIELDS[Number(stage)] || []).map(definition => {
+      if(Number(stage) === 1 && definition.key === 'additional_category_content') {
+        const category = String(result?.additional_category_title || '').trim();
+        return {
+          ...definition,
+          title:category ? `AI 선정 · ${category}` : 'AI 선정 · 필수 추가 분석'
+        };
+      }
+      return {...definition};
+    });
+  }
+
+  function resolveStageOutputFieldKey(stage, title, result = {}) {
+    const normalizedTitle = String(title || '').trim();
+    const matched = getStageOutputDefinitions(stage, result).find(definition =>
+      definition.title === normalizedTitle
+    );
+    if(matched) return matched.key;
+
+    if(Number(stage) === 1 && normalizedTitle.startsWith('AI 선정')) {
+      return 'additional_category_content';
+    }
+    return '';
+  }
+
+  function getStageOutputSource(stage, definition, result = {}) {
+    if(Number(stage) !== 1 || !definition?.sourceKey) return null;
+    const rawSource = result?.verified_sources?.[definition.sourceKey];
+    if(!rawSource) return null;
+    if(typeof rawSource === 'object') return rawSource;
+    return {text:String(rawSource)};
+  }
+
+  function buildStageOutputDisplay(stage, result = {}) {
+    return getStageOutputDefinitions(stage, result).map(definition => [
+      definition.title,
+      String(result?.[definition.key] || ''),
+      getStageOutputSource(stage, definition, result),
+      {fieldKey:definition.key}
+    ]);
+  }
+
+  function createStageOutputSummary(rawText) {
+    const text = String(rawText || '')
+      .replace(/\r/g, '')
+      .replace(/\*\*/g, '')
+      .replace(/`/g, '')
+      .trim();
+
+    if(!text) return '내용이 아직 작성되지 않았습니다.';
+
+    const lines = text
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean);
+
+    const priorityPatterns = [
+      /핵심\s*(결론|요약)/,
+      /최종\s*결론/,
+      /종합\s*(진단|요약)/,
+      /실행\s*가능성\s*판단/,
+      /담당\s*조직/,
+      /마일스톤/,
+      /평가\s*지표/,
+      /리스크\s*수준/,
+      /투자\s*집행\s*현황/,
+      /건전성\s*평가/,
+      /Plan\s*B\s*판단/i
+    ];
+
+    let selectedIndex = lines.findIndex(line =>
+      priorityPatterns.some(pattern => pattern.test(line))
+    );
+    if(selectedIndex < 0) selectedIndex = 0;
+
+    const selected = [];
+    if(lines[selectedIndex]) selected.push(lines[selectedIndex]);
+
+    for(let index = selectedIndex + 1; index < lines.length && selected.length < 2; index++) {
+      const candidate = lines[index]
+        .replace(/^[▶■◆]\s*/, '')
+        .replace(/^\d+[.)]\s*/, '')
+        .trim();
+      if(candidate && !candidate.startsWith('http')) selected.push(candidate);
+    }
+
+    let summary = selected.join(' · ').replace(/\s+/g, ' ').trim();
+    if(summary.length > 230) summary = `${summary.slice(0, 227).trim()}…`;
+    return summary;
+  }
+
+  function setStageOutputModalStatus(message = '', type = '') {
+    const target = el('pz-output-modal-status');
+    if(!target) return;
+    target.textContent = message;
+    target.className = 'pz-output-modal-status' + (type ? ` ${type}` : '');
+  }
+
+  function closeStageOutputModal() {
+    const modal = el('pz-output-modal');
+    if(!modal) return;
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    stageOutputModalContext = null;
+    setStageOutputModalStatus('');
+  }
+
+  function openStageOutputModal(context) {
+    const modal = el('pz-output-modal');
+    if(!modal) return;
+
+    stageOutputModalContext = context;
+    el('pz-output-modal-stage').textContent =
+      `STAGE ${String(context.stage || 0).padStart(2, '0')}`;
+    el('pz-output-modal-title').textContent = context.title || '산출 결과 상세';
+    el('pz-output-edit-area').value = String(context.body || '');
+
+    const sourcePanel = el('pz-output-source-panel');
+    const sourceContent = el('pz-output-source-content');
+    const sourceResult = context.sourceResult;
+
+    if(sourceResult && (sourceResult.text || sourceResult.error)) {
+      sourcePanel.classList.add('visible');
+      sourceContent.innerHTML = formatContent(
+        sourceResult.error
+          ? `출처 자동 연결 실패: ${sourceResult.error}`
+          : sourceResult.text
+      );
+    } else {
+      sourcePanel.classList.remove('visible');
+      sourceContent.innerHTML = '';
+    }
+
+    const canEdit = Boolean(context.stage && context.fieldKey);
+    el('pz-output-modal-save').disabled = !canEdit;
+    setStageOutputModalStatus(
+      canEdit
+        ? '수정 후 저장하면 기존 이력은 유지되고 새로운 수정 이력이 추가됩니다.'
+        : '이 항목은 필드 연결 정보를 찾을 수 없어 읽기 전용으로 표시됩니다.'
+    );
+
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    setTimeout(() => el('pz-output-edit-area')?.focus(), 30);
+  }
+
+  async function saveStageOutputModalEdit() {
+    const context = stageOutputModalContext;
+    if(!context?.stage || !context?.fieldKey) return;
+
+    const saveButton = el('pz-output-modal-save');
+    const newText = el('pz-output-edit-area').value.trim();
+    const stateKey = `s${context.stage}`;
+    const stageRecords = state?.[stateKey];
+
+    if(!Array.isArray(stageRecords) || stageRecords.length === 0) {
+      setStageOutputModalStatus('수정할 현재 STAGE 데이터가 없습니다. 이력을 먼저 불러와 주세요.', 'error');
+      return;
+    }
+
+    const latestResult = stageRecords[stageRecords.length - 1];
+    latestResult[context.fieldKey] = newText;
+
+    saveButton.disabled = true;
+    saveButton.textContent = '저장 중…';
+    setStageOutputModalStatus('수정 내용을 공유 DB에 저장하고 있습니다.');
+
+    try {
+      const display = buildStageOutputDisplay(context.stage, latestResult);
+      const recordMeta = STAGE_OUTPUT_RECORD_META[context.stage];
+
+      const saved = await saveStageHistoryRecordSafe({
+        stage:context.stage,
+        kind:'output',
+        type:recordMeta.type,
+        title:recordMeta.title,
+        content:`${context.title} 사용자 수정`,
+        data:latestResult,
+        display,
+        agendaSummary:state.agenda
+      });
+
+      context.cardBody.setAttribute('data-raw', newText);
+      context.cardBody.textContent = createStageOutputSummary(newText);
+
+      let editedBadge = context.card.querySelector('.pz-card-edit-badge');
+      if(!editedBadge) {
+        editedBadge = document.createElement('span');
+        editedBadge.className = 'pz-card-edit-badge';
+        context.card.querySelector('.pz-card-open-hint')?.appendChild(editedBadge);
+      }
+      editedBadge.textContent = `${getTimestamp()} 수정됨`;
+
+      context.body = newText;
+      markFrameworkSuitabilityReviewStale(
+        `STAGE ${String(context.stage).padStart(2, '0')} 산출 결과 수정`
+      );
+      updateDecisionTitle();
+      updateStageResetButtons();
+      refreshWorkflowDataIndicators();
+
+      setStageOutputModalStatus(
+        saved
+          ? '수정 내용이 공유 DB에 새 이력으로 저장되었습니다.'
+          : '공유 DB 저장에 실패했습니다. 로컬 백업 상태를 확인해 주세요.',
+        saved ? 'ok' : 'error'
+      );
+    } catch(error) {
+      setStageOutputModalStatus(`수정 저장 실패: ${error.message}`, 'error');
+    } finally {
+      saveButton.disabled = false;
+      saveButton.textContent = '수정 내용 저장';
+    }
+  }
+
+  el('pz-output-modal-close')?.addEventListener('click', closeStageOutputModal);
+  el('pz-output-modal-cancel')?.addEventListener('click', closeStageOutputModal);
+  el('pz-output-modal-backdrop')?.addEventListener('click', closeStageOutputModal);
+  el('pz-output-modal-save')?.addEventListener('click', saveStageOutputModalEdit);
+
   function appendCardsGroup(container, entries, options = {}){
     const group = document.createElement('div');
     group.className = 'pz-history-group';
-    
+
     const savedTime = options.createdAt
       ? formatHistoryTime(options.createdAt)
       : getTimestamp();
     const resultLabel = options.resultLabel || '분석 결과';
+    const stage = inferStageFromContainer(container, options.stage);
+    const recordData = options.recordData || (
+      stage && Array.isArray(state?.[`s${stage}`])
+        ? state[`s${stage}`][state[`s${stage}`].length - 1]
+        : null
+    ) || {};
 
     const timeLabel = document.createElement('div');
     timeLabel.className = 'pz-history-timestamp';
@@ -3929,66 +4462,86 @@ ${categoryOutputFormat}`;
 
     const cardsGrid = document.createElement('div');
     cardsGrid.className = 'pz-cards';
-    
-    entries.forEach(([title, body, sourceResult]) => {
+
+    entries.forEach((entry, entryIndex) => {
+      const [title, body, sourceResult, entryMeta] = entry;
+      const fieldKey =
+        entryMeta?.fieldKey ||
+        resolveStageOutputFieldKey(stage, title, recordData);
+
       const card = document.createElement('div');
-      card.className = 'pz-card';
+      card.className = 'pz-card pz-output-card';
+      card.tabIndex = 0;
+      card.setAttribute('role', 'button');
+      card.setAttribute('aria-label', `${title} 전체 내용 보기 및 수정`);
+      card.dataset.stage = String(stage || '');
+      card.dataset.fieldKey = fieldKey || '';
+      card.dataset.entryIndex = String(entryIndex);
 
       const cTitle = document.createElement('div');
       cTitle.className = 'pz-card-title';
-      cTitle.innerHTML = `<span class="t-text">${title}</span>`;
 
-      const cBody = document.createElement('div');
-      cBody.className = 'pz-card-body';
-      cBody.setAttribute('data-raw', body || '');
-      cBody.innerHTML = formatContent(body);
-
-      cBody.addEventListener('click', () => {
-        enableCardEditing(cBody, body || '');
-      });
-
-      card.appendChild(cTitle);
-      card.appendChild(cBody);
+      const titleText = document.createElement('span');
+      titleText.className = 't-text';
+      titleText.textContent = title;
+      cTitle.appendChild(titleText);
 
       if(sourceResult) {
-        const sourceBlock = document.createElement('div');
-        sourceBlock.className = 'pz-source-block';
-        sourceBlock.addEventListener('click', e => e.stopPropagation());
-
-        const sourceLabel = document.createElement('div');
-        sourceLabel.className = 'pz-source-label';
-        sourceLabel.textContent = 'VERIFIED SOURCE · 실제 원문 참조';
-        sourceBlock.appendChild(sourceLabel);
-
-        const sourceText = document.createElement('div');
-        sourceText.className = sourceResult.error ? 'pz-source-text pz-source-error' : 'pz-source-text';
-        sourceText.innerHTML = formatContent(
-          sourceResult.error
-            ? `출처 자동 연결 실패: ${sourceResult.error}`
-            : sourceResult.text
-        );
-        sourceBlock.appendChild(sourceText);
-
-        if(sourceResult.searchHtml) {
-          const attribution = document.createElement('div');
-          attribution.className = 'pz-search-attribution';
-          attribution.innerHTML = sourceResult.searchHtml;
-          sourceBlock.appendChild(attribution);
-        }
-
-        card.appendChild(sourceBlock);
+        const sourceBadge = document.createElement('span');
+        sourceBadge.className = 'pz-source-mini-badge';
+        sourceBadge.textContent = '출처 포함';
+        cTitle.appendChild(sourceBadge);
       }
 
+      const summaryBadge = document.createElement('span');
+      summaryBadge.className = 'pz-summary-badge';
+      summaryBadge.textContent = '요약';
+      cTitle.appendChild(summaryBadge);
+
+      const cBody = document.createElement('div');
+      cBody.className = 'pz-card-body pz-card-summary';
+      cBody.setAttribute('data-raw', body || '');
+      cBody.textContent = createStageOutputSummary(body);
+
+      const openHint = document.createElement('div');
+      openHint.className = 'pz-card-open-hint';
+      openHint.innerHTML = '<span>핵심 내용만 표시 중</span><strong>전체 보기 · 수정 →</strong>';
+
+      const openModal = () => {
+        openStageOutputModal({
+          stage,
+          title,
+          body:cBody.getAttribute('data-raw') || '',
+          sourceResult,
+          fieldKey,
+          card,
+          cardBody:cBody,
+          recordData
+        });
+      };
+
+      card.addEventListener('click', openModal);
+      card.addEventListener('keydown', event => {
+        if(event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openModal();
+        }
+      });
+
+      card.append(cTitle, cBody, openHint);
       cardsGrid.appendChild(card);
     });
 
     group.appendChild(cardsGrid);
     container.appendChild(group);
-    
+
+    refreshWorkflowDataIndicators();
+
     if(options.scroll !== false) {
       group.scrollIntoView({behavior:'smooth', block:'start'});
     }
   }
+
 
   document.querySelectorAll('.pz-review input[type=checkbox]').forEach(cb=>{
     cb.addEventListener('change', ()=>{
@@ -4055,6 +4608,7 @@ ${categoryOutputFormat}`;
         }
       }
     }
+    refreshWorkflowDataIndicators();
   }
 
   function resetReviewState(stage) {
@@ -4436,7 +4990,10 @@ ${categoryOutputFormat}`;
         if(id === 'pz-agenda-text' || id === 'pz-author-name') {
           setDraftSaveStatus('미저장 변경사항');
         }
-        if(id !== 'pz-author-name') updateStageResetButtons();
+        if(id !== 'pz-author-name') {
+          updateStageResetButtons();
+          refreshWorkflowDataIndicators();
+        }
         if(id === 'pz-author-name') {
           try { localStorage.setItem('pz_author_name', target.value.trim()); } catch(e) {}
         }
@@ -4688,7 +5245,7 @@ ${categoryOutputFormat}`;
         ['리스크 시나리오', r.risk_analysis, groundedSources.risk_analysis],
         ['투자 분석', r.investment_scenario, groundedSources.investment_scenario],
         [aiSelectedCategoryTitle, aiSelectedCategoryContent, groundedSources.additional_category_content],
-      ]);
+      ], {stage:1, recordData:r});
     }catch(e){
       hideSkeleton(el('s1-skeleton-holder'));
       el('s1-error').textContent = '산출 실패: '+e.message+' — 다시 시도해 주세요.';
@@ -4764,7 +5321,7 @@ ${categoryOutputFormat}`;
         ['구체적 찬반 논리', r.pros_cons],
         ['기준별 대안 평가', r.criteria_evaluation],
         ['Action Item (R&R)', r.action_items],
-      ]);
+      ], {stage:2, recordData:r});
     }catch(e){
       hideSkeleton(el('s2-skeleton-holder'));
       el('s2-error').textContent = '산출 실패: '+e.message+' — 다시 시도해 주세요.';
@@ -4846,7 +5403,7 @@ ${categoryOutputFormat}`;
         ['핵심 관리 KPI', r.kpi],
         ['컨틴전시 플랜', r.contingency_plan],
         ['후속 안건 제언', r.next_agenda],
-      ]);
+      ], {stage:3, recordData:r});
     }catch(e){
       hideSkeleton(el('s3-skeleton-holder'));
       el('s3-error').textContent = '산출 실패: '+e.message+' — 다시 시도해 주세요.';
@@ -4925,7 +5482,7 @@ ${categoryOutputFormat}`;
         ['자본/투자 집행률', r.investment_status],
         ['계약 건전성 분석', r.contract_status],
         ['Plan B 발동 조건', r.contingency_status],
-      ]);
+      ], {stage:4, recordData:r});
       
       setStageDone(4);
     }catch(e){
@@ -5538,6 +6095,8 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
           state[stateMap[stage]].push(extractStageResultData(item.data));
         }
         appendCardsGroup(el(containerMap[stage]), item.display, {
+          stage,
+          recordData:extractStageResultData(item.data || {}),
           createdAt:item.createdAt || item.created_at,
           resultLabel:'저장된 분석 결과'
         });
@@ -6631,6 +7190,8 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
 
           const container = el(`s${stage}-history-container`);
           appendCardsGroup(container, outputRecord.display, {
+            stage,
+            recordData:extractStageResultData(outputRecord.data || {}),
             createdAt:outputRecord.createdAt || outputRecord.created_at,
             resultLabel:'저장된 분석 결과',
             scroll:false
@@ -6736,6 +7297,10 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
   });
 
   document.addEventListener('keydown', event => {
+    if(event.key === 'Escape' && el('pz-output-modal')?.classList.contains('open')) {
+      closeStageOutputModal();
+      return;
+    }
     if(event.key === 'Escape' && el('pz-history-modal').classList.contains('open')) {
       closeHistoryModal();
     }
@@ -6892,11 +7457,11 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
   function getCurrentStageLabel(){
     const current = document.querySelector('#pz-pipeline .pz-step.current');
     if(current){
-      return current.textContent.replace(/\s+/g,' ').trim().replace(/^STAGE\s*\d+/i,'').trim() || '진행 중';
+      return current.querySelector('.label')?.textContent?.trim() || '진행 중';
     }
     const done = [...document.querySelectorAll('#pz-pipeline .pz-step.done')];
     if(done.length){
-      return done[done.length - 1].textContent.replace(/\s+/g,' ').trim().replace(/^STAGE\s*\d+/i,'').trim() || '검토 완료';
+      return done[done.length - 1].querySelector('.label')?.textContent?.trim() || '검토 완료';
     }
     return '초기';
   }
