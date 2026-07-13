@@ -1070,7 +1070,7 @@
         <span class="pz-framework-review-badge empty" id="pz-framework-review-badge">아직 미생성</span>
       </div>
       <div class="pz-framework-review-body" id="pz-framework-review-body">
-        ① 회의 준비 자동 산출을 실행하면 현재 5대 핵심요소의 적정성과 보완사항이 이 위치에 표시됩니다.
+        ① 회의 준비 응답과 동시에 적정성이 먼저 표시됩니다. 이후 각 STAGE 응답에 적정성 검토를 함께 포함하여 별도 AI 호출 없이 갱신합니다.
       </div>
       <div class="pz-framework-review-foot">
         <span id="pz-framework-review-meta">최근 분석 기록 없음</span>
@@ -3794,27 +3794,49 @@ ${categoryOutputFormat}`;
     clearStageThreeData();
   }
 
-  function clearStageOneData() {
-    state.agenda = '';
+  function clearStageOneData(options = {}) {
+    const preserveAgenda = Boolean(options.preserveAgenda);
+    const preserveAttachment = Boolean(options.preserveAttachment);
+    const preserveSession = Boolean(options.preserveSession);
+
+    const agendaText = preserveAgenda
+      ? (el('pz-agenda-text')?.value || state.agenda || '')
+      : '';
+    const savedAttachmentText = preserveAttachment ? uploadedAgendaFileText : '';
+    const savedAttachmentName = preserveAttachment
+      ? (el('pz-agenda-file-name')?.textContent || '')
+      : '';
+    const savedSessionId = preserveSession ? currentHistorySessionId : '';
+    const savedSessionAgenda = preserveSession ? currentHistoryAgenda : '';
+
+    state.agenda = agendaText;
     state.s1 = [];
     state.s2 = [];
     state.s3 = [];
     state.s4 = [];
 
-    el('pz-agenda-text').value = '';
+    el('pz-agenda-text').value = agendaText;
     el('s1-history-container').innerHTML = '';
     el('s1-skeleton-holder').innerHTML = '';
     el('s1-error').textContent = '';
     resetReviewState(1);
 
-    uploadedAgendaFileText = '';
+    uploadedAgendaFileText = savedAttachmentText;
     const agendaFile = el('pz-agenda-file');
-    if(agendaFile) agendaFile.value = '';
-    el('pz-agenda-file-name').textContent = '';
+    if(agendaFile && !preserveAttachment) agendaFile.value = '';
+    el('pz-agenda-file-name').textContent = savedAttachmentName;
 
     clearStageTwoData();
-    currentHistorySessionId = '';
-    currentHistoryAgenda = '';
+
+    if(preserveSession) {
+      currentHistorySessionId = savedSessionId;
+      currentHistoryAgenda = savedSessionAgenda || agendaText;
+    } else {
+      currentHistorySessionId = '';
+      currentHistoryAgenda = '';
+    }
+
+    updateDecisionTitle();
   }
 
   function resetStage(stage) {
@@ -3832,7 +3854,7 @@ ${categoryOutputFormat}`;
     };
 
     const message = stage === 1
-      ? 'STAGE 01을 초기화하면 현재 화면의 모든 단계 입력 및 산출 결과가 초기화됩니다. 외부 DB에 저장된 과거 이력은 삭제되지 않습니다. 계속하시겠습니까?'
+      ? 'STAGE 01을 초기화하면 1~4단계 산출 결과만 초기화됩니다. 주제 및 안건, 첨부자료, 5대 핵심요소와 현재 문서 세션은 유지되며 외부 DB의 과거 이력도 삭제되지 않습니다. 계속하시겠습니까?'
       : `STAGE ${String(stage).padStart(2, '0')} ${labels[stage]} 내용을 초기화하고 직전 STAGE로 돌아가시겠습니까? 외부 DB에 저장된 과거 이력은 삭제되지 않습니다.`;
 
     if(!confirm(message)) return;
@@ -3856,7 +3878,11 @@ ${categoryOutputFormat}`;
       lockStage(2);
       makeStageCurrent(1);
     } else if(stage === 1) {
-      clearStageOneData();
+      clearStageOneData({
+        preserveAgenda:true,
+        preserveAttachment:true,
+        preserveSession:true
+      });
       for(let n = 1; n <= 4; n++) {
         lockStage(n);
       }
@@ -4207,6 +4233,15 @@ ${categoryOutputFormat}`;
         }
       });
 
+      setFrameworkSuitabilityReview(
+        r.decision_framework_review || buildFrameworkSuitabilityFallback(1),
+        {
+          sourceStage:1,
+          sourceLabel:'STAGE 01 · 회의 준비',
+          status:r.decision_framework_review ? 'ai' : 'fallback'
+        }
+      );
+
       const aiSelectedCategoryTitle =
         (typeof r.additional_category_title === 'string' && r.additional_category_title.trim())
           ? `AI 선정 · ${r.additional_category_title.trim()}`
@@ -4239,13 +4274,6 @@ ${categoryOutputFormat}`;
           groundedSources[key]?.error ? '' : (groundedSources[key]?.text || '')
         ])
       );
-
-      await generateFrameworkSuitabilityReview({
-        sourceStage:1,
-        stageResult:r,
-        existingContent:r.decision_framework_review,
-        silent:true
-      });
 
       state.s1.push(r);
       updateStageResetButtons();
@@ -4311,17 +4339,21 @@ ${categoryOutputFormat}`;
 1. 반드시 【두괄식 구조】를 적용하여 첫 문장에 카드별 핵심 요약을 선언하세요.
 2. 각 카드 항목 하단에는 최소 [2개 이상]의 핵심 요약 내용, 분류된 의견 쟁점, 또는 R&R 액션 플랜이 기술되어야 합니다.
 3. 숫자 번호('1.', '2.')와 기호('■', '▶')를 복합적으로 사용하여 가독성을 강화하세요.
-4. 다른 설명 없이 JSON으로만 응답하세요.
+4. 최신 회의 결과와 변경된 5대 핵심요소를 함께 검토하여 framework_suitability_review에 7줄 이내의 적정성 진단을 작성하세요.
+5. 다른 설명 없이 JSON으로만 응답하세요.
 
-{"minutes_summary":"■ 핵심 요약: ...\\n1. ...\\n2. ...", "opinion_classification":"■ 핵심 요약: ...\\n1. ...\\n2. ...", "pros_cons":"■ 핵심 요약: ...\\n1. ...\\n2. ...", "criteria_evaluation":"■ 기준별 대안 평가: ...\\n1. 평가기준과 가중치에 따른 우선순위 ...\\n2. 낙관·최악 시나리오 비교 ...", "action_items":"■ 핵심 요약: ...\\n1. ...\\n2. ..."}`;
+{"minutes_summary":"■ 핵심 요약: ...\\n1. ...\\n2. ...", "opinion_classification":"■ 핵심 요약: ...\\n1. ...\\n2. ...", "pros_cons":"■ 핵심 요약: ...\\n1. ...\\n2. ...", "criteria_evaluation":"■ 기준별 대안 평가: ...\\n1. 평가기준과 가중치에 따른 우선순위 ...\\n2. 낙관·최악 시나리오 비교 ...", "action_items":"■ 핵심 요약: ...\\n1. ...\\n2. ...", "framework_suitability_review":"■ 종합 진단: 적정/조건부 적정/보완 필요 ...\\n▶ 완료 요소: ...\\n▶ 변경·추가 반영사항: ...\\n▶ 보완 요소: ...\\n▶ 다음 단계 권고: ..."}`;
       
       const r = await callGemini(prompt);
       state.s2.push(r);
-      await generateFrameworkSuitabilityReview({
-        sourceStage:2,
-        stageResult:r,
-        silent:true
-      });
+      setFrameworkSuitabilityReview(
+        r.framework_suitability_review || buildFrameworkSuitabilityFallback(2),
+        {
+          sourceStage:2,
+          sourceLabel:'STAGE 02 · 회의 중',
+          status:r.framework_suitability_review ? 'ai' : 'fallback'
+        }
+      );
       updateStageResetButtons();
       updateDecisionTitle();
 
@@ -4385,17 +4417,21 @@ ${categoryOutputFormat}`;
 1. 무조건 【두괄식 구조】로 첫 문장에 최종 실행 결론을 명시하세요.
 2. 각 지표 카드별로 최소 [2개 이상]의 구체적인 담당조직 업무, 세부 마일스톤 타임라인, 정량적 KPI 목표 수치 등이 강제 명시되어야 합니다.
 3. 번호 표기('1.', '2.')와 시각 기호('■', '▶')를 적극적으로 매칭하여 작성하세요.
-4. 다른 설명 없이 JSON으로만 응답하세요.
+4. 새로 작성된 실행력·자원 제약과 최신 결정 결과를 반영하여 framework_suitability_review에 7줄 이내의 적정성 진단을 작성하세요.
+5. 다른 설명 없이 JSON으로만 응답하세요.
 
-{"decision_summary":"■ 최종 결론: ...\\n1. ...\\n2. ...", "feasibility_check":"■ 실행 가능성 판단: ...\\n1. 예산·일정·인력·기술 검증 ...\\n2. 절대 준수조건 및 조건부 추진사항 ...", "owner_assignment":"■ 담당 조직: ...\\n1. ...\\n2. ...", "schedule":"■ 마일스톤: ...\\n1. ...\\n2. ...", "kpi":"■ 평가지표: ...\\n1. ...\\n2. ...", "contingency_plan":"■ Plan B: ...\\n1. 경고·중단·전환 조건 ...\\n2. 복구·대체 실행안 ...", "next_agenda":"■ 후속 안건: ...\\n1. ...\\n2. ..."}`;
+{"decision_summary":"■ 최종 결론: ...\\n1. ...\\n2. ...", "feasibility_check":"■ 실행 가능성 판단: ...\\n1. 예산·일정·인력·기술 검증 ...\\n2. 절대 준수조건 및 조건부 추진사항 ...", "owner_assignment":"■ 담당 조직: ...\\n1. ...\\n2. ...", "schedule":"■ 마일스톤: ...\\n1. ...\\n2. ...", "kpi":"■ 평가지표: ...\\n1. ...\\n2. ...", "contingency_plan":"■ Plan B: ...\\n1. 경고·중단·전환 조건 ...\\n2. 복구·대체 실행안 ...", "next_agenda":"■ 후속 안건: ...\\n1. ...\\n2. ...", "framework_suitability_review":"■ 종합 진단: 적정/조건부 적정/보완 필요 ...\\n▶ 완료 요소: ...\\n▶ 변경·추가 반영사항: ...\\n▶ 보완 요소: ...\\n▶ 다음 단계 권고: ..."}`;
       
       const r = await callGemini(prompt);
       state.s3.push(r);
-      await generateFrameworkSuitabilityReview({
-        sourceStage:3,
-        stageResult:r,
-        silent:true
-      });
+      setFrameworkSuitabilityReview(
+        r.framework_suitability_review || buildFrameworkSuitabilityFallback(3),
+        {
+          sourceStage:3,
+          sourceLabel:'STAGE 03 · 의사결정 요약',
+          status:r.framework_suitability_review ? 'ai' : 'fallback'
+        }
+      );
       updateStageResetButtons();
       updateDecisionTitle();
 
@@ -4464,17 +4500,21 @@ ${categoryOutputFormat}`;
 1. 【두괄식 구조】를 준수하여 첫 문장에 위험 등급 및 종합 리스크 진단을 선언하세요.
 2. 각 항목별로 최소 [2개 이상]의 명확한 리스크 관리 포인트 및 정량 분석 현황이 구조적으로 작성되어야 합니다.
 3. 본문에는 숫자 번호('1.', '2.')와 기호('■', '▶')를 사용하여 가독성 있게 작성하세요.
-4. 다른 설명 없이 JSON으로만 응답하세요.
+4. 새로 작성된 KPI·Plan B와 현재 진행 현황을 반영하여 framework_suitability_review에 7줄 이내의 적정성 진단을 작성하세요.
+5. 다른 설명 없이 JSON으로만 응답하세요.
 
-{"kpi_tracking":"■ 종합 진단: ...\\n1. ...\\n2. ...", "schedule_management":"■ 리스크 수준: ...\\n1. ...\\n2. ...", "investment_status":"■ 투자 집행 현황: ...\\n1. ...\\n2. ...", "contract_status":"■ 건전성 평가: ...\\n1. ...\\n2. ...", "contingency_status":"■ Plan B 판단: 유지/주의/발동 중 하나로 진단\\n1. 사전 정의된 경고·전환 조건 대비 현재 상태 ...\\n2. 즉시 조치 및 전환 권고 ..."}`;
+{"kpi_tracking":"■ 종합 진단: ...\\n1. ...\\n2. ...", "schedule_management":"■ 리스크 수준: ...\\n1. ...\\n2. ...", "investment_status":"■ 투자 집행 현황: ...\\n1. ...\\n2. ...", "contract_status":"■ 건전성 평가: ...\\n1. ...\\n2. ...", "contingency_status":"■ Plan B 판단: 유지/주의/발동 중 하나로 진단\\n1. 사전 정의된 경고·전환 조건 대비 현재 상태 ...\\n2. 즉시 조치 및 전환 권고 ...", "framework_suitability_review":"■ 종합 진단: 적정/조건부 적정/보완 필요 ...\\n▶ 완료 요소: ...\\n▶ 변경·추가 반영사항: ...\\n▶ 보완 요소: ...\\n▶ 다음 단계 권고: ..."}`;
       
       const r = await callGemini(prompt);
       state.s4.push(r);
-      await generateFrameworkSuitabilityReview({
-        sourceStage:4,
-        stageResult:r,
-        silent:true
-      });
+      setFrameworkSuitabilityReview(
+        r.framework_suitability_review || buildFrameworkSuitabilityFallback(4),
+        {
+          sourceStage:4,
+          sourceLabel:'STAGE 04 · 진행 현황',
+          status:r.framework_suitability_review ? 'ai' : 'fallback'
+        }
+      );
       updateStageResetButtons();
       updateDecisionTitle();
 
