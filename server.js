@@ -275,6 +275,8 @@ app.get('/api/health', async (req, res) => {
     res.json({
       ok: true,
       service: 'project-zero-shared-db-api',
+      serviceVersion: '2026-07-delete-code-unified-v1',
+      deleteCodeMode: 'unified-fixed-hash',
       database: 'postgresql',
       dbTime: result.rows[0].db_time,
       time: new Date().toISOString()
@@ -816,6 +818,14 @@ app.get('/api/export', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+app.post('/api/delete-code/verify', requireDeleteCode, (req, res) => {
+  res.json({
+    ok: true,
+    verified: true,
+    deleteCodeMode: 'unified-fixed-hash'
+  });
 });
 
 app.delete('/api/history/:id', requireDeleteCode, async (req, res) => {

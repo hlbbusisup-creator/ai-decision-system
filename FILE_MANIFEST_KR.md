@@ -263,3 +263,33 @@ DpdlclDpfql
 
 이번 변경은 `backend/server.js`를 포함하므로 GitHub 반영 후 Render에서
 최신 커밋을 반드시 재배포해야 합니다.
+
+
+## 삭제코드 배포 여부 확인
+
+이번 패키지에는 실제 삭제 없이 삭제코드를 검증하는 API를 추가했습니다.
+
+```text
+POST /api/delete-code/verify
+```
+
+정상 응답:
+
+```json
+{
+  "ok": true,
+  "verified": true,
+  "deleteCodeMode": "unified-fixed-hash"
+}
+```
+
+또한 `/api/health` 응답에 다음 배포 식별값이 표시됩니다.
+
+```json
+{
+  "serviceVersion": "2026-07-delete-code-unified-v1",
+  "deleteCodeMode": "unified-fixed-hash"
+}
+```
+
+이 값이 없으면 Render가 아직 이전 `backend/server.js`를 실행 중인 것입니다.
