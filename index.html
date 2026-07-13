@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Project Zero · 공유 의사결정 대시보드</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght=600;700;900&family=Noto+Sans+KR:wght=400;500;600;700&family=IBM+Plex+Mono:wght=500;600&display=swap');
@@ -875,6 +876,280 @@
   #pz-root .pz-step span.label{display:none;}
 }
 </style>
+
+<style id="pz-modern-ui-v2">
+:root{color-scheme:light;}
+html{scroll-behavior:smooth;background:#f5f7fb;}
+body{margin:0;background:#f5f7fb;color:#172033;}
+
+#pz-root{
+  --modern-bg:#f5f7fb;
+  --modern-surface:#ffffff;
+  --modern-surface-soft:#f8f9fc;
+  --modern-text:#172033;
+  --modern-muted:#667085;
+  --modern-subtle:#98a2b3;
+  --modern-border:#e4e7ec;
+  --modern-primary:#3658d4;
+  --modern-primary-hover:#2948bd;
+  --modern-primary-soft:#eef2ff;
+  --modern-success:#1f9d63;
+  --modern-warning:#c77b14;
+  --modern-danger:#c53b3b;
+  --modern-shadow:0 10px 30px rgba(16,24,40,.06);
+  --modern-shadow-sm:0 2px 10px rgba(16,24,40,.045);
+  max-width:none;
+  min-height:100vh;
+  padding:0;
+  margin:0;
+  background:var(--modern-bg);
+  color:var(--modern-text);
+  font-family:'Noto Sans KR',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  line-height:1.55;
+}
+#pz-root *{scrollbar-color:#cbd2df transparent;}
+#pz-root button,#pz-root input,#pz-root textarea,#pz-root select{font:inherit;}
+#pz-root button:focus-visible,#pz-root input:focus-visible,#pz-root textarea:focus-visible,#pz-root select:focus-visible{
+  outline:3px solid rgba(54,88,212,.2)!important;
+  outline-offset:2px;
+}
+
+/* Home */
+#pz-root .pz-home-view{min-height:100vh;background:var(--modern-bg);}
+#pz-root .pz-home-hero{
+  padding:44px max(28px,calc((100vw - 1280px)/2));
+  background:
+    radial-gradient(circle at 84% 10%,rgba(104,126,255,.16),transparent 34%),
+    linear-gradient(135deg,#ffffff 0%,#f8faff 62%,#f1f4ff 100%);
+  color:var(--modern-text);
+  border-bottom:1px solid var(--modern-border);
+}
+#pz-root .pz-home-eyebrow{color:var(--modern-primary);font-size:11px;font-weight:700;letter-spacing:.14em;margin-bottom:12px;}
+#pz-root .pz-home-title{font-family:'Noto Sans KR',sans-serif;font-size:34px;letter-spacing:-.035em;line-height:1.22;font-weight:800;}
+#pz-root .pz-home-sub{color:var(--modern-muted);font-size:14px;line-height:1.7;max-width:760px;margin-top:12px;}
+#pz-root .pz-home-actions{margin-top:24px;gap:10px;}
+#pz-root .pz-new-decision-btn,
+#pz-root .pz-home-secondary-btn{
+  min-height:42px;border-radius:10px;padding:10px 16px;font-size:12.5px;font-weight:700;box-shadow:none;
+}
+#pz-root .pz-new-decision-btn{background:var(--modern-primary);}
+#pz-root .pz-new-decision-btn:hover{background:var(--modern-primary-hover);transform:translateY(-1px);}
+#pz-root .pz-home-secondary-btn{background:#fff;color:#344054;border:1px solid var(--modern-border);}
+#pz-root .pz-home-secondary-btn:hover{background:#f8f9fc;border-color:#cdd3df;}
+#pz-root .pz-home-db-status{margin-left:auto;background:#fff;color:var(--modern-muted);border:1px solid var(--modern-border);border-radius:999px;padding:6px 10px;}
+#pz-root .pz-home-db-status.ok{background:#ecfdf3;color:#027a48;border-color:#abefc6;}
+#pz-root .pz-home-db-status.error{background:#fff1f1;color:#b42318;border-color:#fecdca;}
+#pz-root .pz-home-body{max-width:1280px;margin:0 auto;padding:28px 28px 72px;}
+#pz-root .pz-dashboard-summary{gap:14px;margin-bottom:26px;}
+#pz-root .pz-summary-tile{border:1px solid var(--modern-border);border-radius:14px;padding:18px 20px;box-shadow:var(--modern-shadow-sm);}
+#pz-root .pz-summary-label{font-size:11.5px;color:var(--modern-muted);font-weight:600;}
+#pz-root .pz-summary-value{font-family:'Noto Sans KR',sans-serif;font-size:27px;letter-spacing:-.03em;color:var(--modern-text);margin-top:5px;}
+#pz-root .pz-dashboard-toolbar{
+  position:sticky;top:0;z-index:10;background:rgba(245,247,251,.92);backdrop-filter:blur(14px);
+  padding:12px 0;margin-bottom:12px;border-bottom:1px solid rgba(228,231,236,.8);
+}
+#pz-root .pz-dashboard-heading{font-family:'Noto Sans KR',sans-serif;font-size:18px;letter-spacing:-.02em;}
+#pz-root .pz-dashboard-search{width:min(360px,100%);min-height:40px;border-color:var(--modern-border);border-radius:10px;padding:9px 13px;box-shadow:0 1px 2px rgba(16,24,40,.03);}
+#pz-root .pz-dashboard-search:focus{border-color:var(--modern-primary);box-shadow:0 0 0 3px rgba(54,88,212,.1);}
+#pz-root .pz-dashboard-delete-btn{min-height:40px;border-radius:10px;padding:9px 14px;}
+#pz-root .pz-dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
+#pz-root .pz-decision-card{
+  min-height:178px;border-color:var(--modern-border);border-radius:14px;padding:18px;
+  box-shadow:var(--modern-shadow-sm);transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
+}
+#pz-root .pz-decision-card:hover{transform:translateY(-2px);border-color:#b9c4ef;box-shadow:0 14px 34px rgba(16,24,40,.09);}
+#pz-root .pz-decision-icon{width:36px;height:36px;border-radius:10px;background:var(--modern-primary-soft);margin-bottom:10px;}
+#pz-root .pz-decision-card-stage{background:var(--modern-primary-soft);color:var(--modern-primary);border-radius:999px;padding:4px 8px;font-size:9.5px;}
+#pz-root .pz-decision-card-title{font-family:'Noto Sans KR',sans-serif;font-size:15px;letter-spacing:-.02em;line-height:1.48;}
+#pz-root .pz-decision-card-summary{color:var(--modern-muted);font-size:11.8px;line-height:1.65;-webkit-line-clamp:2;}
+#pz-root .pz-decision-card-meta{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;border-top-color:#edf0f4;font-size:10.5px;}
+#pz-root .pz-decision-card-meta-row{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#pz-root .pz-analytics-section{margin-top:34px;padding:28px;border:1px solid var(--modern-border);border-radius:18px;background:#fff;box-shadow:var(--modern-shadow-sm);}
+#pz-root .pz-analytics-title{font-family:'Noto Sans KR',sans-serif;font-size:19px;letter-spacing:-.02em;}
+#pz-root .pz-analytics-kpi,#pz-root .pz-analytics-card{border-color:var(--modern-border);border-radius:13px;background:var(--modern-surface-soft);}
+#pz-root .pz-analytics-card{min-height:245px;}
+
+/* Editor application shell */
+#pz-root .pz-editor-view{
+  min-height:100vh;
+  grid-template-columns:248px minmax(0,1fr);
+  align-items:start;
+  background:var(--modern-bg);
+}
+#pz-root .pz-editor-view[style*="display: block"],
+#pz-root .pz-editor-view[style*="display:block"]{display:grid!important;}
+#pz-root .pz-editor-view > :not(.pz-app-sidebar){grid-column:2;width:min(1160px,calc(100% - 48px));margin-left:auto;margin-right:auto;}
+#pz-root .pz-app-sidebar{
+  grid-column:1;grid-row:1 / span 30;position:sticky;top:0;height:100vh;z-index:40;
+  display:flex;flex-direction:column;padding:22px 16px;background:#101828;color:#d0d5dd;
+  border-right:1px solid #1d2939;overflow:auto;
+}
+#pz-root .pz-sidebar-brand{display:flex;align-items:center;gap:11px;padding:0 7px 18px;border-bottom:1px solid #253247;}
+#pz-root .pz-sidebar-mark{width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:linear-gradient(145deg,#5470e8,#324fca);color:#fff;font-weight:800;font-size:12px;box-shadow:0 7px 18px rgba(54,88,212,.28);}
+#pz-root .pz-sidebar-brand-name{color:#fff;font-size:14px;font-weight:800;letter-spacing:-.01em;}
+#pz-root .pz-sidebar-brand-sub{font-family:'IBM Plex Mono',monospace;color:#667085;font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;}
+#pz-root .pz-sidebar-document{margin:18px 5px 12px;padding:13px;border-radius:12px;background:#172033;border:1px solid #26334a;}
+#pz-root .pz-sidebar-document-label{font-size:9px;color:#7f8ca4;font-weight:700;letter-spacing:.06em;margin-bottom:7px;}
+#pz-root .pz-sidebar-document-title{font-size:12px;color:#f2f4f7;font-weight:700;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+#pz-root .pz-sidebar-document-meta{font-size:9.5px;color:#7f8ca4;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#pz-root .pz-sidebar-nav{display:grid;gap:3px;padding:4px 0 14px;}
+#pz-root .pz-sidebar-nav-label{padding:16px 10px 6px;color:#5d6b82;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.12em;}
+#pz-root .pz-sidebar-link{appearance:none;border:0;background:transparent;color:#98a2b3;display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border-radius:9px;text-align:left;font-size:11.5px;font-weight:600;cursor:pointer;transition:.14s;}
+#pz-root .pz-sidebar-link:hover{background:#182235;color:#e4e7ec;}
+#pz-root .pz-sidebar-link.active{background:#243459;color:#fff;box-shadow:inset 3px 0 0 #6f8cff;}
+#pz-root .pz-sidebar-icon{width:24px;height:24px;display:grid;place-items:center;border-radius:7px;background:#1d2939;color:#8ea3ff;font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:700;}
+#pz-root .pz-sidebar-link.active .pz-sidebar-icon{background:#3658d4;color:#fff;}
+#pz-root .pz-sidebar-status{margin-top:auto;padding:13px 10px;border-top:1px solid #253247;display:grid;gap:8px;}
+#pz-root .pz-sidebar-status-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:9.5px;color:#7f8ca4;}
+#pz-root .pz-sidebar-status-row strong{color:#d0d5dd;font-size:10px;}
+#pz-root .pz-sidebar-mini-track{height:5px;border-radius:999px;background:#27344a;overflow:hidden;}
+#pz-root .pz-sidebar-mini-track span{display:block;height:100%;width:0;background:linear-gradient(90deg,#6f8cff,#88a0ff);border-radius:inherit;transition:width .25s ease;}
+#pz-root .pz-sidebar-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:10px 6px 0;}
+#pz-root .pz-sidebar-action{appearance:none;border:1px solid #344054;border-radius:9px;background:#172033;color:#d0d5dd;padding:8px 7px;font-size:9.5px;font-weight:700;cursor:pointer;}
+#pz-root .pz-sidebar-action.primary{background:#3658d4;border-color:#3658d4;color:#fff;}
+#pz-root .pz-sidebar-action.ghost{grid-column:1/-1;background:transparent;color:#98a2b3;}
+#pz-root .pz-sidebar-action:hover{filter:brightness(1.08);}
+#pz-root .pz-sidebar-toggle{display:none;appearance:none;width:38px;height:38px;border:1px solid var(--modern-border);border-radius:10px;background:#fff;color:#344054;font-size:18px;cursor:pointer;}
+
+/* Editor header and utility */
+#pz-root .pz-header{
+  position:sticky;top:0;z-index:30;padding:16px 20px;background:rgba(255,255,255,.92);
+  backdrop-filter:blur(16px);border:1px solid var(--modern-border);border-top:0;border-radius:0 0 14px 14px;
+  box-shadow:0 6px 20px rgba(16,24,40,.04);
+}
+#pz-root .pz-editor-head-row{align-items:center;gap:12px;}
+#pz-root .pz-eyebrow{font-size:9.5px;color:var(--modern-primary);letter-spacing:.1em;margin-bottom:2px;}
+#pz-root .pz-title{font-family:'Noto Sans KR',sans-serif!important;font-size:22px!important;line-height:1.25!important;letter-spacing:-.035em;margin:0!important;}
+#pz-root .pz-editor-home-btn{min-height:38px;border-radius:10px;border-color:var(--modern-border);background:#fff;color:#475467;padding:8px 12px;}
+#pz-root .pz-config{
+  margin-top:16px;padding:12px 14px;background:#fff;border:1px solid var(--modern-border);border-radius:14px;
+  box-shadow:var(--modern-shadow-sm);gap:8px;
+}
+#pz-root .pz-config-label{color:var(--modern-muted);font-size:9px;}
+#pz-root input.pz-key-input{background:#f8f9fc;border:1px solid var(--modern-border);color:var(--modern-text);border-radius:9px;min-height:38px;max-width:390px;font-size:11.5px;}
+#pz-root .pz-config label.pz-save{color:var(--modern-muted);}
+#pz-root .pz-key-status,#pz-root .pz-ai-call-status,#pz-root .pz-db-status{border-radius:999px;padding:5px 9px;border:1px solid transparent;}
+#pz-root .pz-history-open{background:#fff;color:#344054;border:1px solid var(--modern-border);border-radius:9px;min-height:36px;}
+#pz-root .pz-config .pz-sub{width:100%;margin:0;padding-top:5px;border-top:1px solid #eef0f4;color:var(--modern-subtle);font-size:9.5px;}
+
+/* Main cards */
+#pz-root .pz-spectrum,#pz-root .pz-agenda,#pz-root .pz-framework,#pz-root .pz-stage,#pz-root .pz-report-section{
+  margin-top:16px!important;margin-bottom:0!important;padding:22px!important;background:#fff!important;
+  border:1px solid var(--modern-border)!important;border-radius:16px!important;box-shadow:var(--modern-shadow-sm)!important;
+}
+#pz-root .pz-spectrum{position:relative;}
+#pz-root .pz-spectrum-label{font-size:14px;font-weight:800;letter-spacing:-.01em;}
+#pz-root .pz-spectrum-desc{font-size:11.5px;line-height:1.65;color:var(--modern-muted);margin:7px 0 14px;}
+#pz-root .pz-spectrum-note{margin-top:14px;padding-top:12px;border-top:1px solid #eef0f4;font-size:10.5px;color:var(--modern-muted);}
+#pz-root .pz-decision-title-box{
+  background:linear-gradient(135deg,#172033 0%,#27375d 100%)!important;border:0!important;border-radius:14px!important;padding:20px!important;
+}
+#pz-root .pz-generated-title{font-family:'Noto Sans KR',sans-serif!important;font-size:22px!important;letter-spacing:-.035em!important;line-height:1.35!important;}
+#pz-root .pz-decision-title-label{font-size:9px!important;color:#8ea3ff!important;letter-spacing:.12em!important;}
+#pz-root .pz-author-row{margin-top:14px!important;border:1px solid var(--modern-border)!important;border-radius:12px!important;background:#f8f9fc!important;padding:10px 12px!important;}
+#pz-root .pz-author-input{background:#fff!important;border-color:var(--modern-border)!important;border-radius:9px!important;min-height:38px!important;}
+#pz-root .pz-agenda-label{font-size:13px;margin-top:16px;}
+#pz-root .pz-agenda-label .n{background:var(--modern-primary);border-radius:6px;}
+#pz-root textarea.pz-input,#pz-root .pz-framework-input,#pz-root .pz-framework-textarea,#pz-root .pz-framework-number{
+  border:1px solid var(--modern-border)!important;background:#fff!important;border-radius:11px!important;color:var(--modern-text)!important;
+  box-shadow:inset 0 1px 2px rgba(16,24,40,.02);
+}
+#pz-root textarea.pz-input:focus,#pz-root .pz-framework-input:focus,#pz-root .pz-framework-textarea:focus,#pz-root .pz-framework-number:focus{
+  border-color:var(--modern-primary)!important;box-shadow:0 0 0 3px rgba(54,88,212,.1)!important;
+}
+#pz-root .pz-btn,#pz-root .pz-save-draft-btn,#pz-root .pz-file-btn-label,#pz-root .pz-framework-action{
+  min-height:40px;border-radius:10px!important;font-size:12px!important;font-weight:700!important;
+}
+#pz-root .pz-btn{background:var(--modern-primary)!important;box-shadow:0 4px 10px rgba(54,88,212,.16);}
+#pz-root .pz-btn:hover{background:var(--modern-primary-hover)!important;transform:translateY(-1px);}
+#pz-root .pz-save-draft-btn{border-color:#b8c3f3!important;background:#fff!important;color:var(--modern-primary)!important;}
+#pz-root .pz-file-btn-label{background:#f8f9fc!important;border-color:var(--modern-border)!important;}
+#pz-root .pz-btn-row{gap:9px;flex-wrap:wrap;}
+#pz-root .pz-hint{font-size:10.5px;color:var(--modern-subtle);}
+
+/* Five elements */
+#pz-root .pz-framework{background:#fff!important;}
+#pz-root .pz-framework-title{font-family:'Noto Sans KR',sans-serif;font-size:20px;letter-spacing:-.03em;}
+#pz-root .pz-framework-eyebrow{color:var(--modern-primary);}
+#pz-root .pz-framework-desc{color:var(--modern-muted);font-size:11.5px;}
+#pz-root .pz-framework-readiness,#pz-root .pz-framework-review,#pz-root .pz-framework-panel{
+  border-color:var(--modern-border)!important;border-radius:13px!important;background:#f8f9fc!important;
+}
+#pz-root .pz-framework-flow{gap:10px;}
+#pz-root .pz-framework-step{min-height:98px;border-color:var(--modern-border);border-radius:12px;background:#fff;padding:12px;}
+#pz-root .pz-framework-step.active{border-color:#9fb0ef;box-shadow:0 0 0 3px rgba(54,88,212,.08);}
+#pz-root .pz-framework-step.complete{background:#f1fbf5;border-color:#a9dfc2;}
+#pz-root .pz-framework-step-title{font-size:11.5px;}
+#pz-root .pz-framework-missing{border-radius:9px;border-left-width:4px;}
+#pz-root .pz-scorecard-scroll{border-radius:12px;border-color:var(--modern-border);}
+
+/* Pipeline and stages */
+#pz-root .pz-pipeline{
+  top:72px;z-index:25;margin-top:16px!important;border-radius:14px!important;overflow:hidden;
+  background:#172033!important;border:1px solid #26334a;box-shadow:var(--modern-shadow-sm);
+}
+#pz-root .pz-step{padding:11px 9px;font-size:11px;}
+#pz-root .pz-stage{scroll-margin-top:148px;}
+#pz-root .pz-stage.locked{opacity:.58;filter:saturate(.7);}
+#pz-root .pz-stage-head{align-items:center;margin-bottom:8px;}
+#pz-root .pz-stage-num{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;background:var(--modern-primary-soft);color:var(--modern-primary);font-size:9px;}
+#pz-root .pz-stage-title{font-family:'Noto Sans KR',sans-serif;font-size:18px;letter-spacing:-.025em;}
+#pz-root .pz-stage-caption{font-size:11.5px;line-height:1.65;color:var(--modern-muted);}
+#pz-root .pz-stage-reset{border-radius:9px;padding:7px 10px;font-size:10.5px;}
+#pz-root .pz-cards{gap:12px;}
+#pz-root .pz-card{background:#f8f9fc;border-color:var(--modern-border);border-radius:12px;padding:16px;}
+#pz-root .pz-card-title{color:var(--modern-primary);}
+#pz-root .pz-card-body{color:#344054;font-size:12px;line-height:1.72;}
+#pz-root .pz-history-group{border-top-color:#dfe3eb;}
+#pz-root .pz-history-timestamp{background:var(--modern-primary-soft);color:var(--modern-primary);border-radius:999px;padding:4px 9px;font-size:9px;}
+#pz-root .pz-review{border-radius:11px;background:#f8f9fc;border-color:var(--modern-border);}
+#pz-root .pz-report-section{scroll-margin-top:148px;}
+#pz-root .pz-report-box{border-radius:13px!important;border-color:var(--modern-border)!important;background:#fff!important;box-shadow:none!important;}
+#pz-root .pz-footer{grid-column:2;width:min(1160px,calc(100% - 48px));margin:18px auto 70px;padding:20px 22px;border:1px solid var(--modern-border);border-radius:14px;background:#fff;color:var(--modern-muted);font-size:10.5px;}
+
+/* Modal */
+#pz-root .pz-history-backdrop{background:rgba(16,24,40,.58);backdrop-filter:blur(4px);}
+#pz-root .pz-history-panel{border-radius:18px!important;box-shadow:0 30px 90px rgba(16,24,40,.28)!important;overflow:hidden;}
+#pz-root .pz-history-head{background:#172033!important;}
+#pz-root .pz-history-item{border-radius:12px!important;border-color:var(--modern-border)!important;}
+
+@media(max-width:1100px){
+  #pz-root .pz-editor-view{grid-template-columns:210px minmax(0,1fr);}
+  #pz-root .pz-app-sidebar{padding-left:12px;padding-right:12px;}
+  #pz-root .pz-editor-view > :not(.pz-app-sidebar){width:min(100% - 32px,1040px);}
+}
+@media(max-width:840px){
+  #pz-root .pz-editor-view[style*="display: block"],#pz-root .pz-editor-view[style*="display:block"]{display:block!important;}
+  #pz-root .pz-editor-view > :not(.pz-app-sidebar){width:calc(100% - 24px);margin-left:auto;margin-right:auto;}
+  #pz-root .pz-app-sidebar{position:fixed;left:0;top:0;width:250px;height:100vh;transform:translateX(-102%);transition:transform .2s ease;box-shadow:20px 0 50px rgba(16,24,40,.24);}
+  #pz-root .pz-app-sidebar.open{transform:translateX(0);}
+  #pz-root .pz-sidebar-toggle{display:grid;place-items:center;flex:0 0 auto;}
+  #pz-root .pz-header{top:0;}
+  #pz-root .pz-pipeline{top:72px;overflow-x:auto;}
+  #pz-root .pz-step{min-width:122px;}
+  #pz-root .pz-footer{width:calc(100% - 24px);margin-left:auto;margin-right:auto;}
+  #pz-root .pz-dashboard-grid{grid-template-columns:1fr;}
+  #pz-root .pz-decision-card-meta{grid-template-columns:1fr;}
+  #pz-root .pz-home-db-status{margin-left:0;}
+}
+@media(max-width:640px){
+  #pz-root .pz-home-hero{padding:32px 20px;}
+  #pz-root .pz-home-title{font-size:28px;}
+  #pz-root .pz-home-body{padding:20px 14px 56px;}
+  #pz-root .pz-dashboard-summary{grid-template-columns:1fr 1fr;}
+  #pz-root .pz-dashboard-summary .pz-summary-tile:first-child{grid-column:1/-1;}
+  #pz-root .pz-analytics-section{padding:18px;}
+  #pz-root .pz-editor-view > :not(.pz-app-sidebar){width:calc(100% - 16px);}
+  #pz-root .pz-header,#pz-root .pz-spectrum,#pz-root .pz-agenda,#pz-root .pz-framework,#pz-root .pz-stage,#pz-root .pz-report-section{padding:17px!important;border-radius:13px!important;}
+  #pz-root .pz-config{padding:11px;}
+  #pz-root input.pz-key-input{max-width:none;width:100%;flex-basis:100%;}
+  #pz-root .pz-cards{grid-template-columns:1fr;}
+  #pz-root .pz-btn-row{justify-content:stretch;}
+  #pz-root .pz-btn-row .pz-btn,#pz-root .pz-btn-row .pz-save-draft-btn{flex:1;}
+  #pz-root .pz-framework-flow{grid-template-columns:1fr 1fr;}
+}
+</style>
+
 </head>
 <body>
 
@@ -924,7 +1199,7 @@
         <div class="pz-analytics-head">
           <div>
             <div class="pz-analytics-title" id="pz-analytics-title">의사결정 운영 분석</div>
-            <div class="pz-analytics-sub">공유 DB의 문서 진행 단계, 완료 현황, 작성자별 등록 건수와 최근 저장 활동을 집계합니다.</div>
+            <div class="pz-analytics-sub">공유 DB의 문서 진행 단계, 완료 현황과 작성자별 등록 건수를 한눈에 확인합니다.</div>
           </div>
           <div class="pz-analytics-sub" id="pz-analytics-updated">분석 데이터 준비 중</div>
         </div>
@@ -975,8 +1250,50 @@
   </section>
 
   <div class="pz-view pz-editor-view" id="pz-editor-view">
-  <div class="pz-header">
+  <aside class="pz-app-sidebar" id="pz-app-sidebar" aria-label="의사결정 작업공간 탐색">
+    <div class="pz-sidebar-brand">
+      <div class="pz-sidebar-mark">PZ</div>
+      <div>
+        <div class="pz-sidebar-brand-name">Project Zero</div>
+        <div class="pz-sidebar-brand-sub">Decision Workspace</div>
+      </div>
+    </div>
+
+    <div class="pz-sidebar-document">
+      <div class="pz-sidebar-document-label">현재 의사결정</div>
+      <div class="pz-sidebar-document-title" id="pz-sidebar-document-title">신규 의사결정</div>
+      <div class="pz-sidebar-document-meta" id="pz-sidebar-document-meta">작성자 미입력</div>
+    </div>
+
+    <nav class="pz-sidebar-nav">
+      <button type="button" class="pz-sidebar-link active" data-scroll-target="pz-editor-overview"><span class="pz-sidebar-icon">⌂</span><span>개요</span></button>
+      <button type="button" class="pz-sidebar-link" data-scroll-target="pz-agenda-section"><span class="pz-sidebar-icon">01</span><span>안건 입력</span></button>
+      <button type="button" class="pz-sidebar-link" data-scroll-target="pz-framework"><span class="pz-sidebar-icon">05</span><span>핵심요소 설계</span></button>
+      <div class="pz-sidebar-nav-label">WORKFLOW</div>
+      <button type="button" class="pz-sidebar-link" data-scroll-target="stage-1"><span class="pz-sidebar-icon">1</span><span>회의 준비</span></button>
+      <button type="button" class="pz-sidebar-link" data-scroll-target="stage-2"><span class="pz-sidebar-icon">2</span><span>회의 중</span></button>
+      <button type="button" class="pz-sidebar-link" data-scroll-target="stage-3"><span class="pz-sidebar-icon">3</span><span>의사결정 요약</span></button>
+      <button type="button" class="pz-sidebar-link" data-scroll-target="stage-4"><span class="pz-sidebar-icon">4</span><span>진행 현황</span></button>
+      <button type="button" class="pz-sidebar-link" data-scroll-target="pz-report-area"><span class="pz-sidebar-icon">R</span><span>최종 보고서</span></button>
+    </nav>
+
+    <div class="pz-sidebar-status">
+      <div class="pz-sidebar-status-row"><span>의사결정 준비도</span><strong id="pz-sidebar-readiness">0%</strong></div>
+      <div class="pz-sidebar-mini-track"><span id="pz-sidebar-readiness-bar"></span></div>
+      <div class="pz-sidebar-status-row"><span>현재 단계</span><strong id="pz-sidebar-current-stage">초기</strong></div>
+      <div class="pz-sidebar-status-row"><span>공유 DB</span><strong id="pz-sidebar-db-status">확인 중</strong></div>
+    </div>
+
+    <div class="pz-sidebar-actions">
+      <button type="button" class="pz-sidebar-action primary" id="pz-sidebar-save">저장하기</button>
+      <button type="button" class="pz-sidebar-action" id="pz-sidebar-history">전체 이력</button>
+      <button type="button" class="pz-sidebar-action ghost" id="pz-sidebar-home">대시보드로 이동</button>
+    </div>
+  </aside>
+
+  <div class="pz-header" id="pz-editor-overview">
     <div class="pz-editor-head-row">
+      <button type="button" class="pz-sidebar-toggle" id="pz-sidebar-toggle" aria-label="작업공간 메뉴 열기">☰</button>
       <div>
         <div class="pz-eyebrow">Project Zero · AI 의사결정 시범도입</div>
         <h1 class="pz-title serif">AI 기반 의사결정 체계</h1>
@@ -985,7 +1302,7 @@
     </div>
   </div>
 
-  <div class="pz-config">
+  <div class="pz-config" id="pz-ai-settings">
     <span class="pz-config-label">GEMINI API KEY</span>
     <input type="password" class="pz-key-input" id="pz-api-key" value="AQ.Ab8RN6KzWeBN-x9bETmgxgGMfai--GX5uJ-KiyxnfVWQ0XNtGA" placeholder="필요 시 API Key를 수정하세요." autocomplete="off">
     <label class="pz-save"><input type="checkbox" id="pz-key-save"> 이 브라우저에 저장</label>
@@ -996,7 +1313,7 @@
     <p class="pz-sub"><b>공개 배포 보안:</b> 사용자별 Gemini API 키를 입력하세요. 공유 DB는 시스템에 고정된 API로 자동 연결됩니다.</p>
   </div>
 
-  <div class="pz-spectrum">
+  <div class="pz-spectrum" id="pz-ai-governance">
     <div class="pz-spectrum-label">이 시스템의 AI 위임 수준</div>
     <div class="pz-spectrum-desc">
       <span class="pz-copy-line">가트너 인간-AI 위임 프레임워크 7단계 중, 본 체계는 <b style="color:var(--ai-500)">2단계(자문)~3단계(권장)</b>에 위치합니다.</span>
@@ -1009,7 +1326,7 @@
 
 
 
-  <div class="pz-agenda">
+  <div class="pz-agenda" id="pz-agenda-section">
     <div class="pz-decision-title-box">
       <div class="pz-decision-title-label">AUTO GENERATED DECISION TITLE</div>
       <div class="pz-generated-title empty" id="pz-generated-title">주제 및 안건을 입력하면 제목이 자동 생성됩니다.</div>
@@ -6525,5 +6842,106 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
 
 })();
 </script>
+
+<script id="pz-modern-ui-script">
+(() => {
+  const byId = id => document.getElementById(id);
+  const sidebar = byId('pz-app-sidebar');
+  const sidebarToggle = byId('pz-sidebar-toggle');
+  const sidebarLinks = [...document.querySelectorAll('.pz-sidebar-link[data-scroll-target]')];
+
+  function closeSidebarOnMobile(){
+    if(window.matchMedia('(max-width: 840px)').matches){
+      sidebar?.classList.remove('open');
+    }
+  }
+
+  sidebarToggle?.addEventListener('click', () => {
+    sidebar?.classList.toggle('open');
+  });
+
+  sidebarLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      const target = byId(link.dataset.scrollTarget);
+      target?.scrollIntoView({behavior:'smooth', block:'start'});
+      closeSidebarOnMobile();
+    });
+  });
+
+  byId('pz-sidebar-save')?.addEventListener('click', () => byId('pz-save-draft')?.click());
+  byId('pz-sidebar-history')?.addEventListener('click', () => byId('pz-open-history')?.click());
+  byId('pz-sidebar-home')?.addEventListener('click', () => byId('pz-go-home')?.click());
+
+  const observedSections = sidebarLinks
+    .map(link => byId(link.dataset.scrollTarget))
+    .filter(Boolean);
+
+  if('IntersectionObserver' in window){
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries
+        .filter(entry => entry.isIntersecting)
+        .sort((a,b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if(!visible) return;
+      sidebarLinks.forEach(link => {
+        link.classList.toggle('active', link.dataset.scrollTarget === visible.target.id);
+      });
+    }, {rootMargin:'-18% 0px -68% 0px', threshold:[0,.08,.2]});
+    observedSections.forEach(section => observer.observe(section));
+  }
+
+  function getCurrentStageLabel(){
+    const current = document.querySelector('#pz-pipeline .pz-step.current');
+    if(current){
+      return current.textContent.replace(/\s+/g,' ').trim().replace(/^STAGE\s*\d+/i,'').trim() || '진행 중';
+    }
+    const done = [...document.querySelectorAll('#pz-pipeline .pz-step.done')];
+    if(done.length){
+      return done[done.length - 1].textContent.replace(/\s+/g,' ').trim().replace(/^STAGE\s*\d+/i,'').trim() || '검토 완료';
+    }
+    return '초기';
+  }
+
+  function updateSidebarContext(){
+    const generatedTitle = byId('pz-generated-title')?.textContent?.trim();
+    const author = byId('pz-author-name')?.value?.trim();
+    const readinessText = byId('pz-framework-readiness-value')?.textContent?.trim() || '0%';
+    const readiness = Math.max(0, Math.min(100, parseInt(readinessText,10) || 0));
+    const dbText = byId('pz-db-status')?.textContent?.trim() || '확인 중';
+
+    if(byId('pz-sidebar-document-title')){
+      byId('pz-sidebar-document-title').textContent = generatedTitle && !generatedTitle.includes('자동 생성') && !generatedTitle.includes('입력하면')
+        ? generatedTitle
+        : '신규 의사결정';
+    }
+    if(byId('pz-sidebar-document-meta')){
+      byId('pz-sidebar-document-meta').textContent = author || '작성자 미입력';
+    }
+    if(byId('pz-sidebar-readiness')) byId('pz-sidebar-readiness').textContent = `${readiness}%`;
+    if(byId('pz-sidebar-readiness-bar')) byId('pz-sidebar-readiness-bar').style.width = `${readiness}%`;
+    if(byId('pz-sidebar-current-stage')) byId('pz-sidebar-current-stage').textContent = getCurrentStageLabel();
+    if(byId('pz-sidebar-db-status')){
+      byId('pz-sidebar-db-status').textContent = dbText.replace('공유 DB','').trim() || '연결됨';
+      byId('pz-sidebar-db-status').style.color = byId('pz-db-status')?.classList.contains('error') ? '#fda29b' : '#75e0a7';
+    }
+  }
+
+  const contextTargets = [
+    byId('pz-generated-title'),
+    byId('pz-framework-readiness-value'),
+    byId('pz-db-status'),
+    byId('pz-pipeline')
+  ].filter(Boolean);
+  const contextObserver = new MutationObserver(updateSidebarContext);
+  contextTargets.forEach(target => contextObserver.observe(target,{subtree:true,childList:true,characterData:true,attributes:true}));
+  byId('pz-author-name')?.addEventListener('input', updateSidebarContext);
+  window.addEventListener('hashchange', () => setTimeout(updateSidebarContext,100));
+  window.addEventListener('resize', () => {
+    if(!window.matchMedia('(max-width: 840px)').matches) sidebar?.classList.remove('open');
+  });
+
+  updateSidebarContext();
+})();
+</script>
+
 </body>
 </html>
