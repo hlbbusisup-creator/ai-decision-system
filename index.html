@@ -987,11 +987,8 @@
     <span class="pz-key-status missing" id="pz-key-status">키 미입력</span>
     <span class="pz-ai-call-status" id="pz-ai-call-status">AI 준비됨</span>
     <button type="button" class="pz-history-open" id="pz-open-history">🗂 입력 이력 <span id="pz-history-count">0</span></button>
-    <span class="pz-db-status" id="pz-db-status">DB 준비 중</span>
-    <span class="pz-config-label">DB API</span>
-    <input type="text" class="pz-key-input" id="pz-db-api-url" value="" placeholder="공유 DB API HTTPS 주소" autocomplete="off">
-    <label class="pz-save"><input type="checkbox" id="pz-use-external-db" checked> 공유 DB 사용</label>
-    <p class="pz-sub"><b>공개 배포 보안:</b> 사용자별 Gemini API 키를 입력하세요. 공유 DB는 config.js의 HTTPS API를 사용합니다.</p>
+    <span class="pz-db-status" id="pz-db-status">공유 DB 연결 확인 중</span>
+    <p class="pz-sub"><b>공개 배포 보안:</b> 사용자별 Gemini API 키를 입력하세요. 공유 DB는 시스템에 고정된 API로 자동 연결됩니다.</p>
   </div>
 
   <div class="pz-spectrum">
@@ -1371,8 +1368,10 @@
 <script>
 (function(){
   const APP_CONFIG = window.PROJECT_ZERO_CONFIG || {};
-  const DEFAULT_SHARED_DB_API_URL = String(APP_CONFIG.API_BASE_URL || '').replace(/\/+$/, '');
-  const SHARED_DB_REQUIRED = APP_CONFIG.SHARED_DB_REQUIRED !== false;
+  const FIXED_SHARED_DB_API_URL = String(
+    APP_CONFIG.API_BASE_URL || 'https://hlbbusisup-ai-decision-api.onrender.com'
+  ).trim().replace(/\/+$/, '');
+  const SHARED_DB_REQUIRED = true;
   const AGENDA_DEFAULT = ``;
 
   const el = id => document.getElementById(id);
@@ -4730,12 +4729,12 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
   }
 
   function getDbApiUrl() {
-    return (el('pz-db-api-url')?.value || '').trim().replace(/\/+$/, '');
+    return FIXED_SHARED_DB_API_URL;
   }
 
   function shouldUseExternalDb() {
     const url = getDbApiUrl();
-    if(!el('pz-use-external-db')?.checked || !url) return false;
+    if(!url) return false;
 
     if(window.location.protocol === 'https:' && url.startsWith('http://')) {
       return false;
@@ -4787,7 +4786,6 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     const configuredUrl = getDbApiUrl();
 
     if(
-      el('pz-use-external-db')?.checked &&
       window.location.protocol === 'https:' &&
       configuredUrl.startsWith('http://')
     ) {
@@ -4796,10 +4794,7 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     }
 
     if(!shouldUseExternalDb()) {
-      updateHistoryDbStatus(
-        SHARED_DB_REQUIRED ? '공유 DB 설정 필요' : '로컬 DB 사용',
-        SHARED_DB_REQUIRED ? 'error' : 'ok'
-      );
+      updateHistoryDbStatus('고정 DB API 설정 오류', 'error');
       return false;
     }
 
@@ -6416,16 +6411,6 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     }
   });
 
-  el('pz-db-api-url').addEventListener('input', () => {
-    try { localStorage.setItem('pz_external_db_api_url', el('pz-db-api-url').value.trim()); } catch(e){}
-  });
-
-  el('pz-use-external-db').addEventListener('change', async () => {
-    try { localStorage.setItem('pz_use_external_db', el('pz-use-external-db').checked ? 'Y' : 'N'); } catch(e){}
-    await checkExternalDbHealth();
-    await refreshHistoryCount();
-  });
-
   document.addEventListener('keydown', event => {
     if(event.key === 'Escape' && el('pz-history-modal').classList.contains('open')) {
       closeHistoryModal();
@@ -6512,19 +6497,12 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     routeFromHash();
   });
 
-  // 초기 DB 설정 로드 및 연결 확인
+  // 공유 DB API는 config.js의 고정값을 사용합니다.
+  // 과거 버전에서 저장한 사용자별 DB 주소·사용 여부는 더 이상 적용하지 않습니다.
   try {
-    const savedApiUrl = localStorage.getItem('pz_external_db_api_url');
-    el('pz-db-api-url').value = savedApiUrl || DEFAULT_SHARED_DB_API_URL;
-
-    const savedUseExternal = localStorage.getItem('pz_use_external_db');
-    el('pz-use-external-db').checked = savedUseExternal
-      ? savedUseExternal === 'Y'
-      : true;
-  } catch(e) {
-    el('pz-db-api-url').value = DEFAULT_SHARED_DB_API_URL;
-    el('pz-use-external-db').checked = true;
-  }
+    localStorage.removeItem('pz_external_db_api_url');
+    localStorage.removeItem('pz_use_external_db');
+  } catch(e) {}
 
   checkExternalDbHealth()
     .then(async () => {
