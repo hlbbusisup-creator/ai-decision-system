@@ -43,6 +43,128 @@
 #pz-root .serif{font-family:'Noto Serif KR',serif;}
 #pz-root .mono{font-family:'IBM Plex Mono',monospace; letter-spacing:.01em;}
 
+
+/* ---------- Home / decision dashboard ---------- */
+#pz-root .pz-view{width:100%;}
+#pz-root .pz-home-view{min-height:100vh; background:var(--paper-0);}
+#pz-root .pz-editor-view{display:none;}
+#pz-root .pz-home-hero{
+  padding:42px 30px 32px; background:var(--ink-900); color:#fff;
+  border-bottom:1px solid #2F3645;
+}
+#pz-root .pz-home-eyebrow{
+  font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.14em;
+  color:#9CA7FF; margin-bottom:10px;
+}
+#pz-root .pz-home-title{
+  margin:0; font-family:'Noto Serif KR',serif; font-size:30px; line-height:1.3; font-weight:900;
+}
+#pz-root .pz-home-sub{
+  margin:10px 0 0; color:#AEB5C4; font-size:13.5px; max-width:700px;
+}
+#pz-root .pz-home-actions{
+  display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-top:22px;
+}
+#pz-root .pz-new-decision-btn{
+  appearance:none; border:none; border-radius:8px; padding:11px 18px;
+  background:var(--ai-500); color:#fff; font-family:'Noto Sans KR',sans-serif;
+  font-size:13px; font-weight:800; cursor:pointer;
+}
+#pz-root .pz-new-decision-btn:hover{background:#4A5EE0;}
+#pz-root .pz-home-secondary-btn{
+  appearance:none; border:1px solid #465066; border-radius:8px; padding:10px 14px;
+  background:#222834; color:#E9EBEF; font-family:'Noto Sans KR',sans-serif;
+  font-size:12px; font-weight:700; cursor:pointer;
+}
+#pz-root .pz-home-secondary-btn:hover{background:#2D3544;}
+#pz-root .pz-home-db-status{
+  margin-left:auto; padding:5px 9px; border-radius:5px; font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px; background:#2A303D; color:#AEB5C4;
+}
+#pz-root .pz-home-db-status.ok{background:#1E3B2C; color:#6FCF97;}
+#pz-root .pz-home-db-status.error{background:#442727; color:#F09A9A;}
+#pz-root .pz-home-body{padding:26px 28px 54px;}
+#pz-root .pz-dashboard-summary{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px;
+}
+#pz-root .pz-summary-tile{
+  border:1px solid var(--line-200); background:#fff; border-radius:9px; padding:14px 15px;
+}
+#pz-root .pz-summary-label{font-size:11px; color:var(--ink-500); margin-bottom:4px;}
+#pz-root .pz-summary-value{
+  font-family:'IBM Plex Mono',monospace; font-size:19px; font-weight:700; color:var(--ink-900);
+}
+#pz-root .pz-dashboard-toolbar{
+  display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;
+}
+#pz-root .pz-dashboard-heading{
+  font-family:'Noto Serif KR',serif; font-size:18px; font-weight:900; margin-right:auto;
+}
+#pz-root .pz-dashboard-search{
+  width:min(300px,100%); border:1px solid var(--line-200); border-radius:7px;
+  padding:8px 11px; background:#fff; font-family:'Noto Sans KR',sans-serif; font-size:12.5px;
+}
+#pz-root .pz-dashboard-search:focus{outline:none; border-color:var(--ai-500);}
+#pz-root .pz-dashboard-grid{
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px;
+}
+#pz-root .pz-decision-card{
+  appearance:none; width:100%; text-align:left; border:1px solid var(--line-200);
+  border-radius:11px; background:#fff; padding:16px; cursor:pointer; min-height:190px;
+  display:flex; flex-direction:column; transition:transform .15s, box-shadow .15s, border-color .15s;
+}
+#pz-root .pz-decision-card:hover{
+  transform:translateY(-2px); border-color:#AFB7E9; box-shadow:0 10px 28px rgba(31,39,78,.10);
+}
+#pz-root .pz-decision-card:focus{outline:2px solid var(--ai-500); outline-offset:2px;}
+#pz-root .pz-decision-icon{
+  width:38px; height:38px; display:flex; align-items:center; justify-content:center;
+  border-radius:9px; background:var(--ai-100); font-size:19px; margin-bottom:12px;
+}
+#pz-root .pz-decision-card-title{
+  font-family:'Noto Serif KR',serif; font-size:14.5px; font-weight:900;
+  color:var(--ink-900); line-height:1.45; margin-bottom:7px;
+  overflow-wrap:anywhere; word-break:keep-all;
+}
+#pz-root .pz-decision-card-summary{
+  font-size:11.8px; line-height:1.55; color:var(--ink-500); margin-bottom:13px;
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+}
+#pz-root .pz-decision-card-meta{
+  margin-top:auto; padding-top:11px; border-top:1px solid var(--line-100);
+  display:grid; gap:4px; font-size:11px; color:var(--ink-500);
+}
+#pz-root .pz-decision-card-meta-row{display:flex; gap:6px; align-items:center;}
+#pz-root .pz-decision-card-stage{
+  display:inline-flex; align-items:center; width:max-content; padding:3px 7px; border-radius:4px;
+  background:var(--ai-050); color:var(--ai-500); font-family:'IBM Plex Mono',monospace;
+  font-size:10px; font-weight:700; margin-bottom:8px;
+}
+#pz-root .pz-dashboard-empty{
+  grid-column:1/-1; padding:55px 20px; text-align:center; background:#fff;
+  border:1px dashed var(--line-200); border-radius:11px; color:var(--ink-300); font-size:13px;
+}
+#pz-root .pz-dashboard-loading{
+  grid-column:1/-1; padding:45px 20px; text-align:center; color:var(--ai-500); font-size:13px;
+}
+#pz-root .pz-editor-home-btn{
+  margin-left:auto; appearance:none; border:1px solid var(--line-200); border-radius:7px;
+  padding:7px 11px; background:#fff; color:var(--ink-700); font-family:'Noto Sans KR',sans-serif;
+  font-size:11.5px; font-weight:700; cursor:pointer;
+}
+#pz-root .pz-editor-home-btn:hover{background:var(--paper-0);}
+#pz-root .pz-editor-head-row{display:flex; align-items:flex-start; gap:12px;}
+
+@media(max-width:800px){
+  #pz-root .pz-dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:640px){
+  #pz-root .pz-dashboard-grid{grid-template-columns:1fr;}
+  #pz-root .pz-dashboard-summary{grid-template-columns:1fr;}
+  #pz-root .pz-home-db-status{margin-left:0;}
+  #pz-root .pz-editor-head-row{align-items:center;}
+}
+
 /* ---------- Header ---------- */
 #pz-root .pz-header{padding:40px 28px 28px; border-bottom:1px solid var(--line-200); background:var(--surface-0);}
 #pz-root .pz-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.14em; color:var(--ai-500); text-transform:uppercase; margin-bottom:10px; display:flex; gap:10px; align-items:center;}
@@ -60,6 +182,79 @@
 #pz-root .pz-key-status{font-size:11px; font-family:'IBM Plex Mono',monospace; padding:4px 9px; border-radius:4px; white-space:nowrap;}
 #pz-root .pz-key-status.ok{background:#1E3B2C; color:#6FCF97;}
 #pz-root .pz-key-status.missing{background:#3B2A1E; color:#E0A560;}
+
+
+/* ---------- Input history DB ---------- */
+#pz-root .pz-history-open{
+  appearance:none; border:1px solid #4B5367; background:#252B38; color:#E9EBEF;
+  border-radius:6px; padding:7px 11px; font-family:'Noto Sans KR',sans-serif;
+  font-size:11.5px; font-weight:700; cursor:pointer; white-space:nowrap;
+}
+#pz-root .pz-history-open:hover{background:#30384A; border-color:#65708A;}
+#pz-root .pz-db-status{
+  font-size:10.5px; font-family:'IBM Plex Mono',monospace; padding:4px 8px;
+  border-radius:4px; white-space:nowrap; background:#2A303D; color:#AEB5C4;
+}
+#pz-root .pz-db-status.ok{background:#1E3B2C; color:#6FCF97;}
+#pz-root .pz-db-status.error{background:#442727; color:#F09A9A;}
+#pz-root .pz-history-modal{display:none; position:fixed; inset:0; z-index:80;}
+#pz-root .pz-history-modal.open{display:block;}
+#pz-root .pz-history-backdrop{position:absolute; inset:0; background:rgba(12,15,22,.62);}
+#pz-root .pz-history-panel{
+  position:absolute; top:5vh; right:max(20px, calc((100vw - 980px)/2)); width:min(720px, calc(100vw - 40px));
+  max-height:90vh; display:flex; flex-direction:column; background:#fff; border:1px solid var(--line-200);
+  border-radius:12px; box-shadow:0 24px 70px rgba(0,0,0,.26); overflow:hidden;
+}
+#pz-root .pz-history-head{display:flex; align-items:center; gap:12px; padding:18px 20px; background:var(--ink-900); color:#fff;}
+#pz-root .pz-history-head-copy{flex:1; min-width:0;}
+#pz-root .pz-history-title{font-size:16px; font-weight:800;}
+#pz-root .pz-history-desc{font-size:11.5px; color:#9BA1AF; margin-top:2px;}
+#pz-root .pz-history-close{
+  width:32px; height:32px; border:1px solid #454D60; border-radius:6px; background:#252B38;
+  color:#fff; cursor:pointer; font-size:19px; line-height:1;
+}
+#pz-root .pz-history-toolbar{
+  display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:1px solid var(--line-200);
+  background:var(--paper-0); flex-wrap:wrap;
+}
+#pz-root .pz-history-filter{
+  border:1px solid var(--line-200); border-radius:6px; padding:7px 10px; background:#fff;
+  font-family:'Noto Sans KR',sans-serif; font-size:12px; color:var(--ink-700);
+}
+#pz-root .pz-history-tool-btn{
+  border:1px solid var(--line-200); border-radius:6px; padding:7px 10px; background:#fff;
+  font-family:'Noto Sans KR',sans-serif; font-size:11.5px; font-weight:600; color:var(--ink-700); cursor:pointer;
+}
+#pz-root .pz-history-tool-btn.danger{margin-left:auto; color:#B23B3B; border-color:#E7CACA;}
+#pz-root .pz-history-list{padding:14px 16px 18px; overflow:auto; background:#fff;}
+#pz-root .pz-history-empty{padding:44px 20px; text-align:center; color:var(--ink-300); font-size:13px;}
+#pz-root .pz-history-item{
+  border:1px solid var(--line-200); border-radius:9px; padding:13px 14px; margin-bottom:10px;
+  background:var(--paper-0);
+}
+#pz-root .pz-history-item-head{display:flex; align-items:center; gap:8px; margin-bottom:7px; flex-wrap:wrap;}
+#pz-root .pz-history-stage{
+  font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; padding:3px 7px;
+  border-radius:4px; background:var(--ai-100); color:var(--ai-500);
+}
+#pz-root .pz-history-time{font-size:11px; color:var(--ink-500);}
+#pz-root .pz-history-session{font-size:10px; color:var(--ink-300); font-family:'IBM Plex Mono',monospace;}
+#pz-root .pz-history-file{font-size:11px; color:var(--ok-500); font-weight:600; margin-bottom:6px;}
+#pz-root .pz-history-content{
+  font-size:12.5px; color:var(--ink-700); white-space:pre-wrap; line-height:1.55;
+  max-height:116px; overflow:hidden; overflow-wrap:anywhere; word-break:break-word;
+}
+#pz-root .pz-history-actions{display:flex; justify-content:flex-end; gap:6px; margin-top:10px;}
+#pz-root .pz-history-action{
+  border:none; border-radius:5px; padding:6px 10px; font-family:'Noto Sans KR',sans-serif;
+  font-size:11.5px; font-weight:700; cursor:pointer;
+}
+#pz-root .pz-history-action.load{background:var(--ai-500); color:#fff;}
+#pz-root .pz-history-action.delete{background:#F6E7E7; color:#B23B3B;}
+@media(max-width:640px){
+  #pz-root .pz-history-panel{top:2vh; right:10px; width:calc(100vw - 20px); max-height:96vh;}
+  #pz-root .pz-history-tool-btn.danger{margin-left:0;}
+}
 
 /* ---------- Delegation spectrum ---------- */
 #pz-root .pz-spectrum{padding:26px 28px 30px; background:var(--surface-0); border-bottom:1px solid var(--line-200);}
@@ -79,6 +274,46 @@
 #pz-root .pz-spectrum-note{font-size:12px; color:var(--ink-500); margin-top:14px; padding-top:14px; border-top:1px dashed var(--line-200);}
 #pz-root .pz-spectrum-note b{color:var(--human-500);}
 
+
+/* ---------- Decision title / author ---------- */
+#pz-root .pz-decision-title-box{
+  margin:0 0 14px; padding:16px 18px; background:var(--ink-900);
+  border-radius:10px; color:#fff; border:1px solid #2F3645;
+}
+#pz-root .pz-decision-title-label{
+  font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.08em;
+  color:#9BA1AF; margin-bottom:6px; text-transform:uppercase;
+}
+#pz-root .pz-generated-title{
+  font-family:'Noto Serif KR',serif; font-size:20px; line-height:1.35; font-weight:900;
+  color:#fff; overflow-wrap:anywhere; word-break:keep-all;
+}
+#pz-root .pz-generated-title.empty{color:#9BA1AF; font-family:'Noto Sans KR',sans-serif; font-size:13px; font-weight:600;}
+#pz-root .pz-title-meta{
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:9px;
+  font-size:11.5px; color:#AEB5C4;
+}
+#pz-root .pz-title-meta span{
+  display:inline-flex; align-items:center; gap:4px; padding:3px 7px; border-radius:4px;
+  background:#252B38; border:1px solid #343C4E;
+}
+#pz-root .pz-author-row{
+  display:flex; align-items:center; gap:10px; margin:0 0 16px; padding:12px 14px;
+  border:1px solid var(--line-200); border-radius:9px; background:var(--paper-0); flex-wrap:wrap;
+}
+#pz-root .pz-author-label{
+  font-size:12.5px; font-weight:800; color:var(--ink-700); white-space:nowrap;
+}
+#pz-root .pz-author-label .n{
+  font-family:'IBM Plex Mono',monospace; font-size:10.5px; background:var(--ink-900); color:#fff;
+  padding:2px 6px; border-radius:3px; margin-right:6px;
+}
+#pz-root .pz-author-input{
+  flex:1; min-width:180px; border:1px solid var(--line-200); border-radius:7px;
+  padding:8px 11px; font-family:'Noto Sans KR',sans-serif; font-size:13px; color:var(--ink-700);
+  background:#fff;
+}
+#pz-root .pz-author-input:focus{outline:none; border-color:var(--ai-500);}
 /* ---------- Agenda input ---------- */
 #pz-root .pz-agenda{padding:26px 28px; background:var(--surface-0); border-bottom:1px solid var(--line-200);}
 #pz-root .pz-agenda-label{font-size:13px; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:8px;}
@@ -104,6 +339,30 @@
 #pz-root .pz-step.done{color:#fff; border-color:var(--ok-500);}
 #pz-root .pz-step.done .mono{color:var(--ok-500);}
 #pz-root .pz-step.current{color:#fff; border-color:var(--ai-500); background:rgba(58,79,207,.18);}
+
+
+/* ---------- Sequential stage reset ---------- */
+#pz-root .pz-stage-head{flex-wrap:wrap;}
+#pz-root .pz-stage-reset{
+  appearance:none; margin-left:auto; border:1px solid #D4B4B4; border-radius:6px;
+  padding:6px 10px; background:#FFF7F7; color:#A23C3C;
+  font-family:'Noto Sans KR',sans-serif; font-size:11.5px; font-weight:700;
+  cursor:pointer; transition:.15s; white-space:nowrap;
+}
+#pz-root .pz-stage-reset:hover:not(:disabled){
+  background:#F6E7E7; border-color:#C98585; color:#8F2929;
+}
+#pz-root .pz-stage-reset:disabled{
+  background:var(--paper-0); border-color:var(--line-200); color:var(--ink-300);
+  cursor:not-allowed; opacity:.62;
+}
+#pz-root .pz-stage-reset.ready{
+  box-shadow:0 0 0 3px rgba(178,59,59,.08);
+}
+#pz-root .pz-reset-guide{
+  width:100%; margin-top:2px; font-size:10.5px; color:var(--ink-300);
+  text-align:right;
+}
 
 /* ---------- Stage panel ---------- */
 #pz-root .pz-stage{padding:30px 28px; background:var(--surface-0); border-bottom:1px solid var(--line-200);}
@@ -198,9 +457,55 @@
 
 <div id="pz-root">
 
+<section class="pz-view pz-home-view" id="pz-home-view">
+    <div class="pz-home-hero">
+      <div class="pz-home-eyebrow">PROJECT ZERO · DECISION WORKSPACE</div>
+      <h1 class="pz-home-title">AI 기반 의사결정 대시보드</h1>
+      <p class="pz-home-sub">신규 안건을 생성하거나 외부 DB에 저장된 기존 의사결정 문서를 선택하여 단계별 입력·산출 결과를 이어서 확인할 수 있습니다.</p>
+      <div class="pz-home-actions">
+        <button type="button" class="pz-new-decision-btn" id="pz-new-decision">＋ 신규 생성</button>
+        <button type="button" class="pz-home-secondary-btn" id="pz-refresh-dashboard">↻ 대시보드 새로고침</button>
+        <button type="button" class="pz-home-secondary-btn" id="pz-home-open-history">🗂 전체 이력</button>
+        <span class="pz-home-db-status" id="pz-home-db-status">DB 연결 확인 중</span>
+      </div>
+    </div>
+
+    <div class="pz-home-body">
+      <div class="pz-dashboard-summary">
+        <div class="pz-summary-tile">
+          <div class="pz-summary-label">등록된 의사결정 문서</div>
+          <div class="pz-summary-value" id="pz-dashboard-document-count">0</div>
+        </div>
+        <div class="pz-summary-tile">
+          <div class="pz-summary-label">전체 저장 이력</div>
+          <div class="pz-summary-value" id="pz-dashboard-record-count">0</div>
+        </div>
+        <div class="pz-summary-tile">
+          <div class="pz-summary-label">작성자 수</div>
+          <div class="pz-summary-value" id="pz-dashboard-author-count">0</div>
+        </div>
+      </div>
+
+      <div class="pz-dashboard-toolbar">
+        <div class="pz-dashboard-heading">의사결정 문서</div>
+        <input type="search" class="pz-dashboard-search" id="pz-dashboard-search" placeholder="제목 또는 작성자 검색">
+      </div>
+
+      <div class="pz-dashboard-grid" id="pz-dashboard-grid">
+        <div class="pz-dashboard-loading">저장된 문서를 불러오는 중입니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="pz-view pz-editor-view" id="pz-editor-view">
   <div class="pz-header">
-    <div class="pz-eyebrow">Project Zero · AI 의사결정 시범도입</div>
-    <h1 class="pz-title serif">AI 기반 의사결정 체계</h1>    
+    <div class="pz-editor-head-row">
+      <div>
+        <div class="pz-eyebrow">Project Zero · AI 의사결정 시범도입</div>
+        <h1 class="pz-title serif">AI 기반 의사결정 체계</h1>
+      </div>
+      <button type="button" class="pz-editor-home-btn" id="pz-go-home">← 홈으로</button>
+    </div>
   </div>
 
   <div class="pz-config">
@@ -208,6 +513,11 @@
     <input type="password" class="pz-key-input" id="pz-api-key" value="AQ.Ab8RN6KzWeBN-x9bETmgxgGMfai--GX5uJ-KiyxnfVWQ0XNtGA" placeholder="필요 시 API Key를 수정하세요." autocomplete="off">
     <label class="pz-save"><input type="checkbox" id="pz-key-save"> 이 브라우저에 저장</label>
     <span class="pz-key-status missing" id="pz-key-status">키 미입력</span>
+    <button type="button" class="pz-history-open" id="pz-open-history">🗂 입력 이력 <span id="pz-history-count">0</span></button>
+    <span class="pz-db-status" id="pz-db-status">DB 준비 중</span>
+    <span class="pz-config-label">DB API</span>
+    <input type="text" class="pz-key-input" id="pz-db-api-url" value="http://localhost:3000" placeholder="예: https://project-zero-db.company.com" autocomplete="off">
+    <label class="pz-save"><input type="checkbox" id="pz-use-external-db" checked> 공유 DB 사용</label>
     <p class="pz-sub"><b>https://aistudio.google.com/api-keys</b> 에서 API 키를 발급 받으세요.</p>
   </div>
 
@@ -220,6 +530,20 @@
   </div>
 
   <div class="pz-agenda">
+    <div class="pz-decision-title-box">
+      <div class="pz-decision-title-label">AUTO GENERATED DECISION TITLE</div>
+      <div class="pz-generated-title empty" id="pz-generated-title">주제 및 안건을 입력하면 제목이 자동 생성됩니다.</div>
+      <div class="pz-title-meta">
+        <span id="pz-title-source">입력 데이터 대기</span>
+        <span id="pz-title-updated">제목 미생성</span>
+      </div>
+    </div>
+
+    <div class="pz-author-row">
+      <label class="pz-author-label" for="pz-author-name"><span class="n">AUTHOR</span>작성자 이름</label>
+      <input type="text" class="pz-author-input" id="pz-author-name" placeholder="예) OOO 과장">
+    </div>
+
     <div class="pz-agenda-label"><span class="n">INPUT</span> 주제 및 안건 입력</div>
     <p class="pz-sub">자유롭게 입력 가능하며 구체적인 내용을 기입 할 수록 데이터의 정확도가 증가합니다.</p>
     <textarea class="pz-input" id="pz-agenda-text" placeholder="예)     
@@ -243,8 +567,8 @@
   <div class="pz-pipeline" id="pz-pipeline"></div>
 
   <div class="pz-stage locked" id="stage-1">
-    <div class="pz-stage-head"><span class="pz-stage-num mono">STAGE 01</span><span class="pz-stage-title">회의 준비</span></div>
-    <p class="pz-stage-caption">실제 기사·공식 보고서·통계 등 Google Search로 확인된 참조 자료의 원문 링크를 근거로 5개 기본 분석과 AI 선정 필수 분석 1개를 생성합니다.</p>
+    <div class="pz-stage-head"><span class="pz-stage-num mono">STAGE 01</span><span class="pz-stage-title">회의 준비</span><button type="button" class="pz-stage-reset" id="s1-reset" data-reset-stage="1" disabled title="현재 작성 중인 마지막 STAGE만 초기화할 수 있습니다.">↺ STAGE 01 초기화</button><div class="pz-reset-guide" id="s1-reset-guide"></div></div>
+    <p class="pz-stage-caption">실제 기사·공식 보고서·통계 등 Google Search로 참조 자료를 통합 검증하고, 원문 확인에 실패한 카테고리만 1회 보완 재검색하여 원문 링크를 연결합니다.</p>
     
     <div id="s1-history-container"></div>
     <div id="s1-skeleton-holder"></div>
@@ -257,7 +581,7 @@
   </div>
 
   <div class="pz-stage locked" id="stage-2">
-    <div class="pz-stage-head"><span class="pz-stage-num mono">STAGE 02</span><span class="pz-stage-title">회의 중</span></div>
+    <div class="pz-stage-head"><span class="pz-stage-num mono">STAGE 02</span><span class="pz-stage-title">회의 중</span><button type="button" class="pz-stage-reset" id="s2-reset" data-reset-stage="2" disabled title="현재 작성 중인 마지막 STAGE만 초기화할 수 있습니다.">↺ STAGE 02 초기화</button><div class="pz-reset-guide" id="s2-reset-guide"></div></div>
     <p class="pz-stage-caption">회의에서 오간 발언·메모를 붙여넣으면, AI가 회의록 요약·의견 분류·찬반 논리·Action Item을 정리합니다.</p>
     <div class="pz-stage-body">
       <div class="pz-agenda-label"><span class="n">INPUT</span> 회의 중 발언 · 메모 </div>
@@ -282,7 +606,7 @@
   </div>
 
   <div class="pz-stage locked" id="stage-3">
-    <div class="pz-stage-head"><span class="pz-stage-num mono">STAGE 03</span><span class="pz-stage-title">회의 종료 후</span></div>
+    <div class="pz-stage-head"><span class="pz-stage-num mono">STAGE 03</span><span class="pz-stage-title">회의 종료 후</span><button type="button" class="pz-stage-reset" id="s3-reset" data-reset-stage="3" disabled title="현재 작성 중인 마지막 STAGE만 초기화할 수 있습니다.">↺ STAGE 03 초기화</button><div class="pz-reset-guide" id="s3-reset-guide"></div></div>
     <p class="pz-stage-caption">1·2단계 산출물을 바탕으로 최종 의사결정 요약, 담당자·일정·KPI, 후속 회의 Agenda를 자동 생성합니다.</p>
     <div class="pz-btn-row" style="margin-top:0;">
       <span class="pz-hint">1·2단계 내용을 그대로 이어받아 산출합니다.</span>
@@ -298,7 +622,7 @@
   </div>
 
   <div class="pz-stage locked" id="stage-4">
-    <div class="pz-stage-head"><span class="pz-stage-num mono">STAGE 04</span><span class="pz-stage-title">지속 관리</span></div>
+    <div class="pz-stage-head"><span class="pz-stage-num mono">STAGE 04</span><span class="pz-stage-title">지속 관리</span><button type="button" class="pz-stage-reset" id="s4-reset" data-reset-stage="4" disabled title="현재 작성 중인 마지막 STAGE만 초기화할 수 있습니다.">↺ STAGE 04 초기화</button><div class="pz-reset-guide" id="s4-reset-guide"></div></div>
     <p class="pz-stage-caption">계약·투자·일정 진행 현황 데이터를 붙여넣으면, AI가 KPI·일정·투자·계약 진행상황을 자동 업데이트합니다.</p>
     <div class="pz-stage-body">
       <div class="pz-agenda-label"><span class="n">INPUT</span> 진행 현황 데이터 (붙여넣기)</div>
@@ -327,8 +651,38 @@
 
   <div class="pz-footer">
     <b>설계 근거.</b> AI 위임 수준 구분은 가트너 «의사결정 증강을 위한 인간-AI 위임 프레임워크»(2024)의 7단계 모델을 참고해 구성했습니다.<br><br>
-    <b>독립 실행 안내.</b> 이 파일은 다운로드해서 로컬 브라우저에서 단독으로 사용하도록 만들어졌습니다. 상단에 본인의 Google Gemini API 키(aistudio.google.com에서 발급)를 입력해야 각 단계 버튼이 동작합니다. 키는 브라우저 밖으로 전송되지 않고 이 페이지 안에서만 사용되며, "이 브라우저에 저장"을 체크하면 로컬 저장소(localStorage)에 남아 다음에 다시 입력하지 않아도 됩니다.
+    <b>독립 실행 안내.</b> 이 파일은 다운로드해서 로컬 브라우저에서 단독으로 사용하도록 만들어졌습니다. 상단에 본인의 Google Gemini API 키(aistudio.google.com에서 발급)를 입력해야 각 단계 버튼이 동작합니다. 키는 브라우저 밖으로 전송되지 않고 이 페이지 안에서만 사용되며, "이 브라우저에 저장"을 체크하면 로컬 저장소(localStorage)에 남아 다음에 다시 입력하지 않아도 됩니다.<br><br><b>입력 이력 DB.</b> 안건, 회의 중 입력, 진행 현황 입력 및 각 STAGE 산출 결과는 DB API 서버를 통해 외부 DB에 저장할 수 있습니다. 공유 DB 사용 시 같은 DB API에 접속한 사용자는 동일한 이력을 조회·불러오기 할 수 있습니다. DB API에 연결되지 않는 경우 브라우저 IndexedDB를 보조 저장소로 사용합니다.
   </div>
+  </div>
+
+  <div class="pz-history-modal" id="pz-history-modal" aria-hidden="true">
+    <div class="pz-history-backdrop" id="pz-history-backdrop"></div>
+    <div class="pz-history-panel" role="dialog" aria-modal="true" aria-labelledby="pz-history-title">
+      <div class="pz-history-head">
+        <div class="pz-history-head-copy">
+          <div class="pz-history-title" id="pz-history-title">의사결정 이력 관리</div>
+          <div class="pz-history-desc">입력 데이터와 각 STAGE 산출 결과를 외부 DB에 저장하고 여러 사용자가 공유 조회합니다.</div>
+        </div>
+        <button type="button" class="pz-history-close" id="pz-close-history" aria-label="닫기">×</button>
+      </div>
+      <div class="pz-history-toolbar">
+        <select class="pz-history-filter" id="pz-history-filter">
+          <option value="all">전체 단계</option>
+          <option value="1">STAGE 01 · 회의 준비</option>
+          <option value="2">STAGE 02 · 회의 중</option>
+          <option value="3">STAGE 03 · 회의 종료 후</option>
+          <option value="4">STAGE 04 · 지속 관리</option>
+          <option value="5">REPORT · 종합 보고서</option>
+        </select>
+        <button type="button" class="pz-history-tool-btn" id="pz-history-refresh">새로고침</button>
+        <button type="button" class="pz-history-tool-btn danger" id="pz-history-clear">전체 삭제</button>
+      </div>
+      <div class="pz-history-list" id="pz-history-list">
+        <div class="pz-history-empty">입력 이력을 불러오는 중입니다.</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -441,6 +795,7 @@
     el('stage-'+n).classList.remove('locked');
     pipeState[n] = 'current';
     renderPipeline(pipeState);
+    updateStageResetButtons();
   }
   function setStageDone(n){
     pipeState[n] = 'done';
@@ -448,6 +803,7 @@
     if(n === 4) {
       el('pz-report-area').style.display = 'block';
     }
+    updateStageResetButtons();
   }
 
   async function callGemini(promptText, isJson = true){
@@ -501,9 +857,13 @@
         </div>
       </div>`;
     holder.scrollIntoView({behavior:'smooth', block:'end'});
+    updateStageResetButtons();
   }
 
-  function hideSkeleton(holder) { holder.innerHTML = ''; }
+  function hideSkeleton(holder) {
+    holder.innerHTML = '';
+    updateStageResetButtons();
+  }
 
   function getTimestamp() {
     const d = new Date();
@@ -635,16 +995,24 @@
     return score;
   }
 
-  function attachOneOriginalLinkPerSource(textValue, candidate) {
+  function attachOneOriginalLinkPerSource(textValue, candidate, allowedChunkIndexes = null) {
     const rawText = String(textValue || '').trim();
     const metadata = candidate?.groundingMetadata;
-    const chunks = (metadata?.groundingChunks || [])
-      .filter(chunk => chunk?.web?.uri)
-      .filter((chunk, index, arr) =>
-        arr.findIndex(item => item.web.uri === chunk.web.uri) === index
-      );
+    const allChunks = metadata?.groundingChunks || [];
 
-    if(!rawText || chunks.length === 0) return rawText;
+    const selectedChunks = Array.isArray(allowedChunkIndexes) && allowedChunkIndexes.length > 0
+      ? allowedChunkIndexes
+          .map(index => ({ index, chunk: allChunks[index] }))
+          .filter(item => item.chunk?.web?.uri)
+      : allChunks
+          .map((chunk, index) => ({ index, chunk }))
+          .filter(item => item.chunk?.web?.uri);
+
+    const uniqueChunks = selectedChunks.filter((item, index, arr) =>
+      arr.findIndex(other => other.chunk.web.uri === item.chunk.web.uri) === index
+    );
+
+    if(!rawText || uniqueChunks.length === 0) return '';
 
     // '• 자료명:' 단위로 실제 출력된 출처 항목을 분리
     const sourceEntryPattern = /(^|\n)(•\s*자료명:[\s\S]*?)(?=\n\s*•\s*자료명:|$)/g;
@@ -653,50 +1021,82 @@
 
     while((match = sourceEntryPattern.exec(rawText)) !== null) {
       entries.push({
-        full: match[0],
-        prefix: match[1] || '',
         body: match[2].trim()
       });
     }
 
-    // 자료명 형식이 아닌 예외 응답은 첫 번째 Grounding 원문만 연결
-    if(entries.length === 0) {
-      return `${rawText} [1](${chunks[0].web.uri})`;
-    }
+    if(entries.length === 0) return '';
 
-    const unusedChunkIndexes = new Set(chunks.map((_, index) => index));
+    const unusedChunkIndexes = new Set(uniqueChunks.map((_, index) => index));
     const linkedEntries = [];
 
     for(let sourceIndex = 0; sourceIndex < entries.length; sourceIndex++) {
-      // 확인 가능한 Grounding URI 수보다 자료명이 많은 경우,
-      // 링크 없는 자료명을 남기지 않고 해당 미검증 항목은 출력에서 제외
       if(unusedChunkIndexes.size === 0) break;
 
       const entry = entries[sourceIndex];
-      let bestChunkIndex = null;
+      let bestLocalIndex = null;
       let bestScore = -1;
 
-      unusedChunkIndexes.forEach(chunkIndex => {
-        const score = scoreSourceChunk(entry.body, chunks[chunkIndex]);
+      unusedChunkIndexes.forEach(localIndex => {
+        const score = scoreSourceChunk(entry.body, uniqueChunks[localIndex].chunk);
         if(score > bestScore) {
           bestScore = score;
-          bestChunkIndex = chunkIndex;
+          bestLocalIndex = localIndex;
         }
       });
 
-      if(bestChunkIndex === null) break;
+      if(bestLocalIndex === null) break;
 
-      unusedChunkIndexes.delete(bestChunkIndex);
+      unusedChunkIndexes.delete(bestLocalIndex);
       const originalNumber = linkedEntries.length + 1;
-      const uri = chunks[bestChunkIndex].web.uri;
+      const uri = uniqueChunks[bestLocalIndex].chunk.web.uri;
 
-      // 각 자료명 항목의 끝에 정확히 하나의 원문 링크를 1:1로 부여
+      // 화면 형식 유지: 자료명/발행처/관련성 다음 줄에 원문 링크 1:1 부여
       linkedEntries.push(
         `${entry.body}\n  [${originalNumber}](${uri})`
       );
     }
 
     return linkedEntries.join('\n\n');
+  }
+
+  function getGroundingChunkIndexesForRange(candidate, startIndex, endIndex) {
+    const supports = candidate?.groundingMetadata?.groundingSupports || [];
+    const indexes = new Set();
+
+    supports.forEach(support => {
+      const supportStart = support?.segment?.startIndex ?? 0;
+      const supportEnd = support?.segment?.endIndex ?? 0;
+      const overlaps = supportEnd > startIndex && supportStart < endIndex;
+
+      if(overlaps) {
+        (support.groundingChunkIndices || []).forEach(index => indexes.add(index));
+      }
+    });
+
+    return [...indexes];
+  }
+
+  function parseGroundedCategorySections(rawText) {
+    const sections = {};
+    const pattern = /\[\[CATEGORY:([a-z_]+)\]\]\s*([\s\S]*?)(?=\n?\[\[CATEGORY:|$)/g;
+    let match;
+
+    while((match = pattern.exec(rawText)) !== null) {
+      const key = match[1];
+      const body = match[2].trim();
+      const bodyOffset = match[0].indexOf(match[2]);
+      const startIndex = match.index + Math.max(bodyOffset, 0);
+      const endIndex = startIndex + match[2].length;
+
+      sections[key] = {
+        text: body,
+        startIndex,
+        endIndex
+      };
+    }
+
+    return sections;
   }
 
   async function callGeminiGroundedSource(promptText) {
@@ -741,40 +1141,205 @@
     }
 
     return {
-      text: attachOneOriginalLinkPerSource(rawText, candidate),
+      rawText,
+      candidate,
       searchHtml: metadata?.searchEntryPoint?.renderedContent || ''
     };
   }
 
-  async function getStage1SourceEvidence(agenda, categoryTitle, categoryBody) {
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function getRetryDelayMs(errorMessage) {
+    const message = String(errorMessage || '');
+    const match = message.match(/retry in\s+([0-9.]+)s/i);
+    if(!match) return 1200;
+
+    const seconds = Number(match[1]);
+    if(!Number.isFinite(seconds)) return 1200;
+
+    // API가 안내한 대기시간보다 약간 여유를 둠. 최대 20초까지만 대기.
+    return Math.min(Math.ceil(seconds * 1000) + 700, 20000);
+  }
+
+  async function getStage1SourceEvidenceBatch(agenda, sourceTargets, isRetry = false) {
+    const categoryInput = sourceTargets.map(([key, title, body]) => `
+[[INPUT:${key}]]
+카테고리명: ${title}
+분석 내용:
+"""${body}"""
+`).join('\n');
+
+    const categoryOutputFormat = sourceTargets.map(([key]) => `
+[[CATEGORY:${key}]]
+• 자료명: [실제 기사·보고서·공식 문서 제목]
+  발행처: [기관·기업·언론사명]
+  관련성: [현재 분석을 어떤 사실 또는 지표로 확인할 수 있는지 한 문장]
+`).join('\n');
+
+    const retryRules = isRetry ? `
+[★ 보완 재검색 지침 ★]
+1. 이 요청에 포함된 카테고리는 1차 통합 검색에서 원문 연결에 실패한 항목들입니다.
+2. 분석 전체를 한 문서가 모두 증명해야 한다고 판단하지 마세요.
+3. 해당 카테고리의 핵심 주장, 핵심 수치, 핵심 사례 중 가장 중요한 내용을 직접 확인할 수 있는 원문을 우선 찾으세요.
+4. 하나의 자료가 전체 분석을 모두 뒷받침하지 못하더라도, 분석의 핵심 근거를 직접 확인할 수 있으면 유효한 원문으로 선정하세요.
+5. 검색 범위를 넓혀 공식 기관, 기업 공식 발표, 신뢰도 높은 언론, 산업·시장 조사기관 자료까지 확인하세요.
+6. 이전에 찾지 못했다는 이유만으로 '검증 가능한 원문 없음'을 반복하지 말고, 표현과 검색 관점을 바꾸어 다시 조사하세요.
+` : '';
+
     const prompt = `당신은 의사결정 자료의 출처 검증 전담 리서처입니다.
-Google Search를 사용하여 아래 분석 내용을 직접 확인할 수 있는 【실제로 존재하는 원문 자료】를 1~2개만 선정하세요.
+Google Search를 사용하여 아래 분석 카테고리를 한 번에 검증하세요.
 
 [안건]
 """${agenda}"""
 
-[분석 카테고리]
-${categoryTitle}
+[카테고리별 분석 내용]
+${categoryInput}
 
-[분석 내용]
-"""${categoryBody}"""
+${retryRules}
 
-[필수 기준]
-1. 실제 뉴스 기사, 공식 기관 보고서, 정부·공공기관 통계, 기업 공식 발표, 학술·산업 보고서처럼 구체적인 원문 내용이 존재하는 자료만 사용하세요.
-2. 검색어, 검색 문장, '검색해 보세요' 같은 안내는 출력하지 마세요.
-3. URL을 직접 작성하거나 추측하지 마세요. Google Search Grounding으로 확인된 자료만 근거로 사용하세요.
-4. 분석과 직접 관련 없는 자료는 제외하세요.
-5. 가능하면 공식 기관·기업 원문 또는 신뢰도 높은 언론·조사기관 자료를 우선하세요.
-6. 출력은 아래 형식만 사용하세요. 제목은 원문 자료의 실제 제목을 최대한 정확히 작성하세요.
-7. 서로 다른 자료를 2개 제시하는 경우 실제로 Google Search Grounding에서 각각 확인된 서로 다른 원문 자료만 사용하세요. 하나의 원문을 두 개의 자료명으로 나누어 작성하지 마세요.
+[핵심 수행 원칙]
+1. 각 카테고리별로 해당 분석 내용을 확인할 수 있는 【실제로 존재하는 원문 자료】를 1~2개 선정하세요.
+2. 실제 뉴스 기사, 공식 기관 보고서, 정부·공공기관 통계, 기업 공식 발표, 학술·산업 보고서처럼 구체적인 원문 내용이 존재하는 자료만 사용하세요.
+3. 검색어, 검색 문장, '검색해 보세요' 같은 안내는 출력하지 마세요.
+4. URL을 직접 작성하거나 추측하지 마세요. Google Search Grounding으로 실제 확인된 자료만 사용하세요.
+5. 분석과 직접 관련 없는 자료는 제외하세요.
+6. 가능하면 공식 기관·기업 원문 또는 신뢰도 높은 언론·조사기관 자료를 우선하세요.
+7. 서로 다른 자료를 2개 제시할 경우 실제로 각각 확인된 서로 다른 원문 자료를 사용하세요.
+8. 입력된 카테고리를 서로 합치지 말고 반드시 아래 CATEGORY 마커를 정확히 1회씩, 입력된 순서대로 출력하세요.
+9. 각 CATEGORY 아래에는 기존 화면 형식을 유지하기 위해 반드시 '• 자료명:', '발행처:', '관련성:' 형식만 사용하세요.
+10. 자료명은 실제 원문 제목을 최대한 정확히 작성하세요.
+11. 충분히 재검색했음에도 검증 가능한 원문이 전혀 없을 때만 해당 CATEGORY 아래에 정확히 '검증 가능한 원문 없음'이라고 작성하세요.
+12. 다른 서론·결론·설명·마크다운 코드블록은 출력하지 마세요.
 
-• 자료명: [실제 기사·보고서·공식 문서 제목]
-  발행처: [기관·기업·언론사명]
-  관련성: [현재 분석을 어떤 사실 또는 지표로 확인할 수 있는지 한 문장]
+[출력 형식 — 마커와 키를 변경하지 마세요]
+${categoryOutputFormat}`;
 
-필요한 경우 두 번째 자료를 같은 형식으로 이어서 작성하세요.`;
+    const grounded = await callGeminiGroundedSource(prompt);
+    const sections = parseGroundedCategorySections(grounded.rawText);
+    const results = {};
 
-    return await callGeminiGroundedSource(prompt);
+    sourceTargets.forEach(([key]) => {
+      const section = sections[key];
+
+      if(!section) {
+        results[key] = {
+          text: '',
+          searchHtml: '',
+          error: `통합 출처 응답에서 ${key} 카테고리 구분값을 찾지 못했습니다.`
+        };
+        return;
+      }
+
+      if(section.text.includes('검증 가능한 원문 없음')) {
+        results[key] = {
+          text: '',
+          searchHtml: '',
+          error: '해당 분석과 직접 연결되는 검증 가능한 원문을 찾지 못했습니다.'
+        };
+        return;
+      }
+
+      const categoryChunkIndexes = getGroundingChunkIndexesForRange(
+        grounded.candidate,
+        section.startIndex,
+        section.endIndex
+      );
+
+      const linkedText = attachOneOriginalLinkPerSource(
+        section.text,
+        grounded.candidate,
+        categoryChunkIndexes
+      );
+
+      if(!linkedText) {
+        results[key] = {
+          text: '',
+          searchHtml: '',
+          error: '해당 카테고리의 자료명과 Grounding 원문을 1:1로 연결하지 못했습니다.'
+        };
+        return;
+      }
+
+      results[key] = {
+        text: linkedText,
+        searchHtml: '',
+        error: ''
+      };
+    });
+
+    // Search Suggestions는 한 번의 Grounding 응답당 첫 정상 카테고리에만 표시
+    const firstSuccessfulKey = sourceTargets
+      .map(([key]) => key)
+      .find(key => results[key] && !results[key].error);
+
+    if(firstSuccessfulKey) {
+      results[firstSuccessfulKey].searchHtml = grounded.searchHtml;
+    }
+
+    return results;
+  }
+
+  async function getStage1AllSourceEvidence(agenda, sourceTargets) {
+    // 1차: 6개 카테고리 통합 Grounding
+    let results;
+
+    try {
+      results = await getStage1SourceEvidenceBatch(agenda, sourceTargets, false);
+    } catch(initialError) {
+      // 통합 호출 자체가 실패한 경우 모든 카테고리를 실패 상태로 두고
+      // 아래 보완 재검색 1회 대상으로 넘김
+      results = Object.fromEntries(
+        sourceTargets.map(([key]) => [
+          key,
+          { text:'', searchHtml:'', error: initialError.message }
+        ])
+      );
+
+      const waitMs = getRetryDelayMs(initialError.message);
+      await sleep(waitMs);
+    }
+
+    // 2차 Grounding 대상: 1차에서 실패한 카테고리만 추출
+    const failedTargets = sourceTargets.filter(
+      ([key]) => !results[key] || results[key].error
+    );
+
+    if(failedTargets.length === 0) {
+      return results;
+    }
+
+    try {
+      // 실패 카테고리들을 다시 하나로 묶어 Grounding 1회만 추가 수행
+      const retryResults = await getStage1SourceEvidenceBatch(
+        agenda,
+        failedTargets,
+        true
+      );
+
+      failedTargets.forEach(([key]) => {
+        const retryValue = retryResults[key];
+
+        // 재검색 성공 시 1차 실패 결과를 성공 결과로 교체
+        if(retryValue && !retryValue.error) {
+          results[key] = retryValue;
+        } else if(retryValue) {
+          // 재검색도 실패한 경우 최종 실패 사유만 유지
+          results[key] = retryValue;
+        }
+      });
+    } catch(retryError) {
+      failedTargets.forEach(([key]) => {
+        results[key] = {
+          text: '',
+          searchHtml: '',
+          error: `보완 재검색 실패: ${retryError.message}`
+        };
+      });
+    }
+
+    return results;
   }
 
   function enableCardEditing(bodyElement, originalRawText) {
@@ -901,16 +1466,379 @@ ${categoryTitle}
         setStageDone(stage);
         if(stage+1<=4) setStageUnlocked(stage+1);
       }
+      updateStageResetButtons();
     });
   });
 
-  let state = { agenda:'', s1:[], s2:[], s3:[], s4:[] };
+  let state = { agenda:'', decisionTitle:'', authorName:'', s1:[], s2:[], s3:[], s4:[] };
+
+
+  function isStageBusy(stage) {
+    const holder = el(`s${stage}-skeleton-holder`);
+    return !!holder && holder.children.length > 0;
+  }
+
+  function getLatestActiveStage() {
+    // 파이프라인상 열렸거나 완료된 가장 높은 단계를 현재 작성 단계로 판단
+    for(let stage = 4; stage >= 1; stage--) {
+      if(pipeState[stage] && pipeState[stage] !== 'locked') {
+        return stage;
+      }
+    }
+
+    // 최초 안건 작성 중에는 STAGE 01만 초기화 가능
+    if((el('pz-agenda-text')?.value || '').trim() || state.s1.length > 0) {
+      return 1;
+    }
+
+    return 0;
+  }
+
+  function updateStageResetButtons() {
+    const activeStage = getLatestActiveStage();
+
+    for(let stage = 1; stage <= 4; stage++) {
+      const button = el(`s${stage}-reset`);
+      const guide = el(`s${stage}-reset-guide`);
+      if(!button) continue;
+
+      const isActive = stage === activeStage;
+      const busy = isStageBusy(stage);
+      button.disabled = !isActive || busy;
+      button.classList.toggle('ready', isActive && !busy);
+
+      if(guide) {
+        if(isActive && busy) {
+          guide.textContent = 'AI 산출 중에는 초기화할 수 없습니다.';
+        } else if(isActive) {
+          guide.textContent = '현재 마지막 작성 단계입니다. 초기화하면 직전 STAGE로 돌아갑니다.';
+        } else if(activeStage > stage) {
+          guide.textContent = `STAGE ${String(activeStage).padStart(2, '0')}부터 순서대로 초기화해야 합니다.`;
+        } else {
+          guide.textContent = '';
+        }
+      }
+    }
+  }
+
+  function resetReviewState(stage) {
+    const review = el(`s${stage}-review`);
+    if(!review) return;
+
+    const checkbox = review.querySelector('input[type=checkbox]');
+    if(checkbox) checkbox.checked = false;
+    review.classList.remove('checked');
+
+    const tag = review.querySelector('.pz-review-tag');
+    if(tag) tag.textContent = '확인 대기';
+  }
+
+  function lockStage(stage) {
+    const panel = el(`stage-${stage}`);
+    if(panel) panel.classList.add('locked');
+    pipeState[stage] = 'locked';
+  }
+
+  function makeStageCurrent(stage) {
+    const panel = el(`stage-${stage}`);
+    if(panel) panel.classList.remove('locked');
+    pipeState[stage] = 'current';
+  }
+
+  function clearReportArea() {
+    const area = el('pz-report-area');
+    const output = el('pz-report-output');
+    const skeleton = el('pz-report-skeleton-holder');
+
+    if(area) area.style.display = 'none';
+    if(output) {
+      output.innerHTML = '';
+      output.style.display = 'none';
+    }
+    if(skeleton) skeleton.innerHTML = '';
+  }
+
+  function clearStageFourData() {
+    state.s4 = [];
+    el('s4-input').value = '';
+    el('s4-history-container').innerHTML = '';
+    el('s4-skeleton-holder').innerHTML = '';
+    const error = el('s4-error');
+    if(error) error.textContent = '';
+    clearReportArea();
+  }
+
+  function clearStageThreeData() {
+    state.s3 = [];
+    el('s3-history-container').innerHTML = '';
+    el('s3-skeleton-holder').innerHTML = '';
+    el('s3-error').textContent = '';
+    resetReviewState(3);
+    clearStageFourData();
+  }
+
+  function clearStageTwoData() {
+    state.s2 = [];
+    el('s2-input').value = '';
+    el('s2-history-container').innerHTML = '';
+    el('s2-skeleton-holder').innerHTML = '';
+    el('s2-error').textContent = '';
+    resetReviewState(2);
+
+    uploadedS2FileText = '';
+    const s2File = el('s2-file');
+    if(s2File) s2File.value = '';
+    el('s2-file-name').textContent = '';
+
+    clearStageThreeData();
+  }
+
+  function clearStageOneData() {
+    state.agenda = '';
+    state.s1 = [];
+    state.s2 = [];
+    state.s3 = [];
+    state.s4 = [];
+
+    el('pz-agenda-text').value = '';
+    el('s1-history-container').innerHTML = '';
+    el('s1-skeleton-holder').innerHTML = '';
+    el('s1-error').textContent = '';
+    resetReviewState(1);
+
+    uploadedAgendaFileText = '';
+    const agendaFile = el('pz-agenda-file');
+    if(agendaFile) agendaFile.value = '';
+    el('pz-agenda-file-name').textContent = '';
+
+    clearStageTwoData();
+    currentHistorySessionId = '';
+    currentHistoryAgenda = '';
+  }
+
+  function resetStage(stage) {
+    const activeStage = getLatestActiveStage();
+    if(stage !== activeStage || isStageBusy(stage)) {
+      updateStageResetButtons();
+      return;
+    }
+
+    const labels = {
+      1:'회의 준비',
+      2:'회의 중',
+      3:'회의 종료 후',
+      4:'지속 관리'
+    };
+
+    const message = stage === 1
+      ? 'STAGE 01을 초기화하면 현재 화면의 모든 단계 입력 및 산출 결과가 초기화됩니다. 외부 DB에 저장된 과거 이력은 삭제되지 않습니다. 계속하시겠습니까?'
+      : `STAGE ${String(stage).padStart(2, '0')} ${labels[stage]} 내용을 초기화하고 직전 STAGE로 돌아가시겠습니까? 외부 DB에 저장된 과거 이력은 삭제되지 않습니다.`;
+
+    if(!confirm(message)) return;
+
+    if(stage === 4) {
+      clearStageFourData();
+      resetReviewState(3);
+      lockStage(4);
+      makeStageCurrent(3);
+    } else if(stage === 3) {
+      clearStageThreeData();
+      resetReviewState(2);
+      lockStage(4);
+      lockStage(3);
+      makeStageCurrent(2);
+    } else if(stage === 2) {
+      clearStageTwoData();
+      resetReviewState(1);
+      lockStage(4);
+      lockStage(3);
+      lockStage(2);
+      makeStageCurrent(1);
+    } else if(stage === 1) {
+      clearStageOneData();
+      for(let n = 1; n <= 4; n++) {
+        lockStage(n);
+      }
+    }
+
+    renderPipeline(pipeState);
+    updateDecisionTitle();
+    updateStageResetButtons();
+
+    const targetStage = stage > 1 ? stage - 1 : 1;
+    const target = el(`stage-${targetStage}`) || el('pz-agenda-text');
+    if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  document.querySelectorAll('.pz-stage-reset').forEach(button => {
+    button.addEventListener('click', () => {
+      resetStage(Number(button.dataset.resetStage));
+    });
+  });
+
+
+
+  function normalizeTitleText(value) {
+    return String(value || '')
+      .replace(/\[[^\]]+\]\s*[:：]?/g, ' ')
+      .replace(/[■▶◆•]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function extractAgendaTopic(agenda) {
+    const value = String(agenda || '').trim();
+    if(!value) return '';
+
+    const topicPatterns = [
+      /\[?\s*핵심\s*주제\s*\]?\s*[:：]\s*([^\n]+)/i,
+      /\[?\s*주제\s*\]?\s*[:：]\s*([^\n]+)/i,
+      /\[?\s*안건\s*\]?\s*[:：]\s*([^\n]+)/i
+    ];
+
+    for(const pattern of topicPatterns) {
+      const match = value.match(pattern);
+      if(match && match[1]) return normalizeTitleText(match[1]);
+    }
+
+    return normalizeTitleText(value.split('\n').find(line => line.trim().length > 0) || value);
+  }
+
+  function collectDecisionTitleSource() {
+    const agenda = el('pz-agenda-text')?.value || state.agenda || '';
+    const meetingNotes = el('s2-input')?.value || '';
+    const progress = el('s4-input')?.value || '';
+
+    const latestS1 = state.s1.length ? JSON.stringify(state.s1[state.s1.length - 1]) : '';
+    const latestS2 = state.s2.length ? JSON.stringify(state.s2[state.s2.length - 1]) : '';
+    const latestS3 = state.s3.length ? JSON.stringify(state.s3[state.s3.length - 1]) : '';
+    const latestS4 = state.s4.length ? JSON.stringify(state.s4[state.s4.length - 1]) : '';
+
+    return {
+      agenda,
+      meetingNotes,
+      progress,
+      outputs: [latestS1, latestS2, latestS3, latestS4].filter(Boolean).join('\n')
+    };
+  }
+
+  function createDecisionTitle() {
+    const source = collectDecisionTitleSource();
+    const topic = extractAgendaTopic(source.agenda);
+    const material = normalizeTitleText([
+      source.agenda,
+      source.meetingNotes,
+      source.progress,
+      source.outputs
+    ].join(' '));
+
+    if(!topic && !material) {
+      return '';
+    }
+
+    let title = topic || material;
+
+    const decisionKeywords = [
+      ['도입', '도입 검토'],
+      ['전환', '전환 검토'],
+      ['구축', '구축 추진'],
+      ['투자', '투자 검토'],
+      ['계약', '계약 검토'],
+      ['라이선스', '라이선스 운영'],
+      ['유지보수', '유지보수 운영'],
+      ['AI', 'AI 적용'],
+      ['보안', '보안 검토'],
+      ['리스크', '리스크 점검'],
+      ['일정', '일정 관리'],
+      ['KPI', 'KPI 관리']
+    ];
+
+    let suffix = '의사결정 검토';
+    for(const [keyword, label] of decisionKeywords) {
+      if(material.includes(keyword)) {
+        suffix = label;
+        break;
+      }
+    }
+
+    title = title
+      .replace(/^(핵심\s*주제|주제|안건)\s*[:：]\s*/i, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if(title.length > 34) {
+      title = title.slice(0, 34).replace(/\s+\S*$/, '').trim() || title.slice(0, 34).trim();
+    }
+
+    if(!/(검토|추진|운영|관리|구축|도입|전환|결정|보고)$/.test(title)) {
+      title = `${title} ${suffix}`;
+    }
+
+    return title;
+  }
+
+  function updateDecisionTitle() {
+    const title = createDecisionTitle();
+    const titleEl = el('pz-generated-title');
+    const sourceEl = el('pz-title-source');
+    const updatedEl = el('pz-title-updated');
+
+    state.decisionTitle = title;
+    state.authorName = (el('pz-author-name')?.value || '').trim();
+
+    if(!title) {
+      titleEl.textContent = '주제 및 안건을 입력하면 제목이 자동 생성됩니다.';
+      titleEl.classList.add('empty');
+      sourceEl.textContent = '입력 데이터 대기';
+      updatedEl.textContent = '제목 미생성';
+      return;
+    }
+
+    const source = collectDecisionTitleSource();
+    const sourceLabels = [];
+    if(source.agenda.trim()) sourceLabels.push('안건');
+    if(source.meetingNotes.trim()) sourceLabels.push('회의 입력');
+    if(source.progress.trim()) sourceLabels.push('진행 현황');
+    if(source.outputs.trim()) sourceLabels.push('AI 산출 결과');
+
+    titleEl.textContent = title;
+    titleEl.classList.remove('empty');
+    sourceEl.textContent = `반영 데이터: ${sourceLabels.join(' · ')}`;
+    updatedEl.textContent = `최종 갱신: ${getTimestamp()}`;
+  }
+
+  function getCurrentAuthorName() {
+    return (el('pz-author-name')?.value || '').trim();
+  }
+
+
+
+  ['pz-agenda-text', 's2-input', 's4-input', 'pz-author-name'].forEach(id => {
+    const target = el(id);
+    if(target) {
+      target.addEventListener('input', () => {
+        updateDecisionTitle();
+        if(id !== 'pz-author-name') updateStageResetButtons();
+        if(id === 'pz-author-name') {
+          try { localStorage.setItem('pz_author_name', target.value.trim()); } catch(e) {}
+        }
+      });
+    }
+  });
+
+  try {
+    const savedAuthorName = localStorage.getItem('pz_author_name');
+    if(savedAuthorName) el('pz-author-name').value = savedAuthorName;
+  } catch(e) {}
+  updateDecisionTitle();
+  updateStageResetButtons();
 
   // ---- STAGE 1 ----
   el('pz-run-agenda').addEventListener('click', async ()=>{
     const agenda = el('pz-agenda-text').value.trim();
     if(!agenda) return;
     state.agenda = agenda;
+    updateDecisionTitle();
     
     setStageUnlocked(1);
     el('s1-error').textContent='';
@@ -993,23 +1921,41 @@ ${categoryTitle}
         ['additional_category_content', aiSelectedCategoryTitle, aiSelectedCategoryContent]
       ];
 
-      const sourceResults = await Promise.all(
-        sourceTargets.map(async ([key, title, body]) => {
-          try {
-            const result = await getStage1SourceEvidence(combinedAgenda, title, body);
-            return [key, result];
-          } catch(sourceError) {
-            return [key, { text:'', searchHtml:'', error: sourceError.message }];
-          }
-        })
+      // 1차 통합 Grounding 후 실패 카테고리가 있을 때만
+      // 실패 항목들을 묶어 보완 Grounding 1회를 추가 수행
+      const groundedSources = await getStage1AllSourceEvidence(
+        combinedAgenda,
+        sourceTargets
       );
 
-      const groundedSources = Object.fromEntries(sourceResults);
       r.verified_sources = Object.fromEntries(
-        sourceResults.map(([key, value]) => [key, value.error ? '' : value.text])
+        sourceTargets.map(([key]) => [
+          key,
+          groundedSources[key]?.error ? '' : (groundedSources[key]?.text || '')
+        ])
       );
 
       state.s1.push(r);
+      updateStageResetButtons();
+      updateDecisionTitle();
+
+      saveStageHistoryRecordSafe({
+        stage: 1,
+        kind: 'output',
+        type: 'stage1_preparation',
+        title: 'STAGE 01 · 회의 준비 산출 결과',
+        content: '회의 준비 산출 결과',
+        data: r,
+        display: [
+          ['사업자료 분석', r.business_data, groundedSources.business_data],
+          ['경쟁사 비교', r.competitor_analysis, groundedSources.competitor_analysis],
+          ['시장 규모 추정', r.market_size, groundedSources.market_size],
+          ['리스크 시나리오', r.risk_analysis, groundedSources.risk_analysis],
+          ['투자 분석', r.investment_scenario, groundedSources.investment_scenario],
+          [aiSelectedCategoryTitle, aiSelectedCategoryContent, groundedSources.additional_category_content]
+        ],
+        agendaSummary: state.agenda
+      });
       hideSkeleton(el('s1-skeleton-holder'));
 
       appendCardsGroup(el('s1-history-container'), [
@@ -1058,6 +2004,24 @@ ${categoryTitle}
       
       const r = await callGemini(prompt);
       state.s2.push(r);
+      updateStageResetButtons();
+      updateDecisionTitle();
+
+      saveStageHistoryRecordSafe({
+        stage: 2,
+        kind: 'output',
+        type: 'stage2_minutes',
+        title: 'STAGE 02 · 회의 중 산출 결과',
+        content: '회의록 핵심 요약 / 의견 분류 / 찬반 논리 / Action Item',
+        data: r,
+        display: [
+          ['회의록 핵심 요약', r.minutes_summary],
+          ['논쟁 및 의견 분류', r.opinion_classification],
+          ['구체적 찬반 논리', r.pros_cons],
+          ['Action Item (R&R)', r.action_items]
+        ],
+        agendaSummary: state.agenda
+      });
       hideSkeleton(el('s2-skeleton-holder'));
       
       appendCardsGroup(el('s2-history-container'), [
@@ -1097,6 +2061,25 @@ ${categoryTitle}
       
       const r = await callGemini(prompt);
       state.s3.push(r);
+      updateStageResetButtons();
+      updateDecisionTitle();
+
+      saveStageHistoryRecordSafe({
+        stage: 3,
+        kind: 'output',
+        type: 'stage3_decision',
+        title: 'STAGE 03 · 회의 종료 후 산출 결과',
+        content: '최종 의사결정 / 담당 조직 / 일정 / KPI / 후속 안건',
+        data: r,
+        display: [
+          ['최종 의사결정 결론', r.decision_summary],
+          ['실무 조직 지정', r.owner_assignment],
+          ['마일스톤 일정', r.schedule],
+          ['핵심 관리 KPI', r.kpi],
+          ['후속 안건 제언', r.next_agenda]
+        ],
+        agendaSummary: state.agenda
+      });
       hideSkeleton(el('s3-skeleton-holder'));
       
       appendCardsGroup(el('s3-history-container'), [
@@ -1137,6 +2120,24 @@ ${categoryTitle}
       
       const r = await callGemini(prompt);
       state.s4.push(r);
+      updateStageResetButtons();
+      updateDecisionTitle();
+
+      saveStageHistoryRecordSafe({
+        stage: 4,
+        kind: 'output',
+        type: 'stage4_management',
+        title: 'STAGE 04 · 지속 관리 산출 결과',
+        content: 'KPI 달성도 / 일정 리스크 / 투자 집행 / 계약 건전성',
+        data: r,
+        display: [
+          ['KPI 달성도 현황', r.kpi_tracking],
+          ['마일스톤 리스크 추적', r.schedule_management],
+          ['자본/투자 집행률', r.investment_status],
+          ['계약 건전성 분석', r.contract_status]
+        ],
+        agendaSummary: state.agenda
+      });
       hideSkeleton(el('s4-skeleton-holder'));
       
       appendCardsGroup(el('s4-history-container'), [
@@ -1187,6 +2188,17 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
 5. 1단계 검증 출처의 인용 링크 표기([숫자](URL))가 데이터에 포함되어 있다면 URL과 인용 번호를 변형하지 말고 그대로 유지하여 출력하세요.`;
 
       const reportText = await callGemini(prompt, false);
+      updateDecisionTitle();
+      saveStageHistoryRecordSafe({
+        stage: 5,
+        kind: 'report',
+        type: 'final_report',
+        title: 'REPORT · 최종 종합 보고서',
+        content: reportText,
+        data: { reportText },
+        display: reportText,
+        agendaSummary: state.agenda
+      });
       skeletonHolder.innerHTML = '';
       
       reportOutput.innerHTML = formatContent(reportText);
@@ -1197,6 +2209,1092 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
       alert('보고서 생성 실패: ' + e.message);
     }
   });
+
+
+  // ---- External DB + Local fallback history management ----
+  const HISTORY_DB_NAME = 'PZDecisionHistoryDB';
+  const HISTORY_DB_VERSION = 2;
+  const HISTORY_STORE_NAME = 'inputHistory';
+  let historyDbPromise = null;
+  let currentHistorySessionId = '';
+  let currentHistoryAgenda = '';
+
+  function makeHistoryId(prefix = 'hist') {
+    if(window.crypto && typeof window.crypto.randomUUID === 'function') {
+      return `${prefix}_${window.crypto.randomUUID()}`;
+    }
+    return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  function ensureHistorySession(agenda) {
+    const normalizedAgenda = String(agenda || '').trim();
+    if(!currentHistorySessionId || currentHistoryAgenda !== normalizedAgenda) {
+      currentHistorySessionId = makeHistoryId('session');
+      currentHistoryAgenda = normalizedAgenda;
+    }
+    return currentHistorySessionId;
+  }
+
+  function getDbApiUrl() {
+    return (el('pz-db-api-url')?.value || '').trim().replace(/\/+$/, '');
+  }
+
+  function shouldUseExternalDb() {
+    return !!el('pz-use-external-db')?.checked && !!getDbApiUrl();
+  }
+
+  function updateHistoryDbStatus(message, type = '') {
+    const status = el('pz-db-status');
+    if(status) {
+      status.textContent = message;
+      status.className = 'pz-db-status' + (type ? ` ${type}` : '');
+    }
+
+    const homeStatus = el('pz-home-db-status');
+    if(homeStatus) {
+      homeStatus.textContent = message;
+      homeStatus.className = 'pz-home-db-status' + (type ? ` ${type}` : '');
+    }
+  }
+
+  async function externalDbRequest(path, options = {}) {
+    const baseUrl = getDbApiUrl();
+    if(!baseUrl) throw new Error('DB API URL이 비어 있습니다.');
+
+    const response = await fetch(`${baseUrl}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      }
+    });
+
+    if(!response.ok) {
+      let message = `외부 DB API 오류 (${response.status})`;
+      try {
+        const body = await response.json();
+        if(body.error) message += ` — ${body.error}`;
+      } catch(e) {}
+      throw new Error(message);
+    }
+
+    if(response.status === 204) return null;
+    return await response.json();
+  }
+
+  async function checkExternalDbHealth() {
+    if(!shouldUseExternalDb()) {
+      updateHistoryDbStatus('로컬 DB 사용', 'ok');
+      return false;
+    }
+
+    try {
+      await externalDbRequest('/api/health', { method:'GET' });
+      updateHistoryDbStatus('공유 DB 연결됨', 'ok');
+      return true;
+    } catch(error) {
+      console.warn('External DB health check failed:', error);
+      updateHistoryDbStatus('공유 DB 연결 실패', 'error');
+      return false;
+    }
+  }
+
+  function openHistoryDB() {
+    if(historyDbPromise) return historyDbPromise;
+
+    historyDbPromise = new Promise((resolve, reject) => {
+      if(!('indexedDB' in window)) {
+        reject(new Error('이 브라우저는 IndexedDB를 지원하지 않습니다.'));
+        return;
+      }
+
+      const request = indexedDB.open(HISTORY_DB_NAME, HISTORY_DB_VERSION);
+
+      request.onupgradeneeded = event => {
+        const db = event.target.result;
+        let store;
+
+        if(!db.objectStoreNames.contains(HISTORY_STORE_NAME)) {
+          store = db.createObjectStore(HISTORY_STORE_NAME, { keyPath:'id' });
+        } else {
+          store = event.target.transaction.objectStore(HISTORY_STORE_NAME);
+        }
+
+        ['createdAt', 'stage', 'sessionId', 'kind'].forEach(indexName => {
+          if(!store.indexNames.contains(indexName)) {
+            store.createIndex(indexName, indexName, { unique:false });
+          }
+        });
+      };
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('로컬 입력 이력 DB를 열지 못했습니다.'));
+      request.onblocked = () => reject(new Error('로컬 입력 이력 DB 업데이트가 다른 탭에 의해 차단되었습니다.'));
+    });
+
+    return historyDbPromise;
+  }
+
+  async function getSelectedFileData(inputId) {
+    const input = el(inputId);
+    const file = input?.files?.[0];
+    if(!file) return { fileName:'', fileText:'' };
+
+    try {
+      return {
+        fileName: file.name || '',
+        fileText: await file.text()
+      };
+    } catch(error) {
+      return {
+        fileName: file.name || '',
+        fileText: ''
+      };
+    }
+  }
+
+  async function saveLocalHistoryRecord(item) {
+    const db = await openHistoryDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(HISTORY_STORE_NAME, 'readwrite');
+      tx.objectStore(HISTORY_STORE_NAME).put(item);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error || new Error('로컬 이력을 저장하지 못했습니다.'));
+      tx.onabort = () => reject(tx.error || new Error('로컬 이력 저장이 중단되었습니다.'));
+    });
+  }
+
+  async function saveHistoryRecord(record) {
+    const sessionId = record.sessionId || currentHistorySessionId || makeHistoryId('session');
+    const item = {
+      id: record.id || makeHistoryId(),
+      sessionId,
+      stage: Number(record.stage),
+      kind: record.kind || 'input',
+      type: record.type || 'input',
+      title: String(record.title || ''),
+      content: String(record.content || ''),
+      fileName: String(record.fileName || ''),
+      fileText: String(record.fileText || ''),
+      agendaSummary: String(record.agendaSummary || state?.agenda || '').slice(0, 500),
+      decisionTitle: String(record.decisionTitle || state?.decisionTitle || createDecisionTitle() || '').slice(0, 200),
+      authorName: String(record.authorName || getCurrentAuthorName() || '').slice(0, 100),
+      data: record.data || null,
+      display: record.display || null,
+      createdAt: record.createdAt || new Date().toISOString()
+    };
+
+    if(shouldUseExternalDb()) {
+      const saved = await externalDbRequest('/api/history', {
+        method:'POST',
+        body: JSON.stringify(item)
+      });
+      updateHistoryDbStatus('공유 DB 저장 완료', 'ok');
+      await refreshHistoryCount();
+      return saved;
+    }
+
+    await saveLocalHistoryRecord(item);
+    updateHistoryDbStatus('로컬 DB 저장 완료', 'ok');
+    await refreshHistoryCount();
+    return item;
+  }
+
+  async function saveHistoryRecordSafe(record) {
+    try {
+      return await saveHistoryRecord(record);
+    } catch(error) {
+      console.warn('History save failed:', error);
+      updateHistoryDbStatus('공유 DB 저장 실패', 'error');
+
+      // 외부 DB 장애 시 브라우저 로컬 DB에도 백업 저장
+      try {
+        const fallback = {
+          id: makeHistoryId('local_backup'),
+          sessionId: record.sessionId || currentHistorySessionId || makeHistoryId('session'),
+          stage: Number(record.stage),
+          kind: record.kind || 'input',
+          type: record.type || 'input',
+          title: String(record.title || ''),
+          content: String(record.content || ''),
+          fileName: String(record.fileName || ''),
+          fileText: String(record.fileText || ''),
+          agendaSummary: String(record.agendaSummary || state?.agenda || '').slice(0, 500),
+          decisionTitle: String(record.decisionTitle || state?.decisionTitle || createDecisionTitle() || '').slice(0, 200),
+          authorName: String(record.authorName || getCurrentAuthorName() || '').slice(0, 100),
+          data: record.data || null,
+          display: record.display || null,
+          createdAt: new Date().toISOString()
+        };
+        await saveLocalHistoryRecord(fallback);
+        await refreshHistoryCount();
+      } catch(e) {
+        console.warn('Local backup also failed:', e);
+      }
+
+      return null;
+    }
+  }
+
+  async function saveStageHistoryRecordSafe(record) {
+    return await saveHistoryRecordSafe({
+      sessionId: currentHistorySessionId || ensureHistorySession(state?.agenda || el('pz-agenda-text').value.trim()),
+      ...record
+    });
+  }
+
+  async function getLocalHistoryRecords(stageFilter = 'all') {
+    const db = await openHistoryDB();
+
+    const records = await new Promise((resolve, reject) => {
+      const tx = db.transaction(HISTORY_STORE_NAME, 'readonly');
+      const request = tx.objectStore(HISTORY_STORE_NAME).getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error || new Error('로컬 이력을 조회하지 못했습니다.'));
+    });
+
+    return records
+      .filter(item => stageFilter === 'all' || String(item.stage) === String(stageFilter))
+      .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  }
+
+  async function getHistoryRecords(stageFilter = 'all') {
+    if(shouldUseExternalDb()) {
+      const params = new URLSearchParams();
+      if(stageFilter !== 'all') params.set('stage', stageFilter);
+      const payload = await externalDbRequest(`/api/history?${params.toString()}`, { method:'GET' });
+      return payload.records || [];
+    }
+
+    return await getLocalHistoryRecords(stageFilter);
+  }
+
+  async function deleteLocalHistoryRecord(id) {
+    const db = await openHistoryDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(HISTORY_STORE_NAME, 'readwrite');
+      tx.objectStore(HISTORY_STORE_NAME).delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error || new Error('로컬 이력을 삭제하지 못했습니다.'));
+    });
+  }
+
+  async function deleteHistoryRecord(id) {
+    if(shouldUseExternalDb()) {
+      await externalDbRequest(`/api/history/${encodeURIComponent(id)}`, { method:'DELETE' });
+    } else {
+      await deleteLocalHistoryRecord(id);
+    }
+    await refreshHistoryCount();
+  }
+
+  async function clearLocalHistoryRecords() {
+    const db = await openHistoryDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(HISTORY_STORE_NAME, 'readwrite');
+      tx.objectStore(HISTORY_STORE_NAME).clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error || new Error('로컬 이력을 전체 삭제하지 못했습니다.'));
+    });
+  }
+
+  async function clearAllHistoryRecords() {
+    if(shouldUseExternalDb()) {
+      await externalDbRequest('/api/history', { method:'DELETE' });
+    } else {
+      await clearLocalHistoryRecords();
+    }
+    await refreshHistoryCount();
+  }
+
+  function getHistoryStageLabel(stage) {
+    const labels = {
+      1:'STAGE 01 · 회의 준비',
+      2:'STAGE 02 · 회의 중',
+      3:'STAGE 03 · 회의 종료 후',
+      4:'STAGE 04 · 지속 관리',
+      5:'REPORT · 종합 보고서'
+    };
+    return labels[Number(stage)] || `STAGE ${String(stage).padStart(2, '0')}`;
+  }
+
+  function getHistoryKindLabel(kind) {
+    if(kind === 'output') return '산출 결과';
+    if(kind === 'report') return '종합 보고서';
+    return '입력 데이터';
+  }
+
+  function formatHistoryTime(value) {
+    const date = new Date(value);
+    if(Number.isNaN(date.getTime())) return value || '';
+    return date.toLocaleString('ko-KR', {
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit'
+    });
+  }
+
+  async function refreshHistoryCount() {
+    try {
+      const records = await getHistoryRecords('all');
+      el('pz-history-count').textContent = String(records.length);
+      updateHistoryDbStatus(shouldUseExternalDb() ? '공유 DB 연결됨' : '로컬 DB 연결됨', 'ok');
+    } catch(error) {
+      console.warn('History count refresh failed:', error);
+      updateHistoryDbStatus(shouldUseExternalDb() ? '공유 DB 연결 실패' : '로컬 DB 연결 실패', 'error');
+    }
+  }
+
+  function closeHistoryModal() {
+    const modal = el('pz-history-modal');
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  function loadHistoryRecord(item) {
+    currentHistorySessionId = item.sessionId || currentHistorySessionId;
+    if(item.authorName) {
+      el('pz-author-name').value = item.authorName;
+      state.authorName = item.authorName;
+    }
+    if(item.decisionTitle) {
+      state.decisionTitle = item.decisionTitle;
+      el('pz-generated-title').textContent = item.decisionTitle;
+      el('pz-generated-title').classList.remove('empty');
+      el('pz-title-source').textContent = 'DB 이력 제목';
+      el('pz-title-updated').textContent = `이력 생성: ${formatHistoryTime(item.createdAt || item.created_at)}`;
+    }
+
+    if(item.kind === 'input') {
+      if(Number(item.stage) === 1) {
+        el('pz-agenda-text').value = item.content || '';
+        currentHistoryAgenda = item.content || '';
+        uploadedAgendaFileText = item.fileText || '';
+        el('pz-agenda-file-name').textContent = item.fileName ? `📄 ${item.fileName} DB 이력 로드` : '';
+        updateDecisionTitle();
+        updateStageResetButtons();
+        closeHistoryModal();
+        el('pz-agenda-text').scrollIntoView({behavior:'smooth', block:'center'});
+        el('pz-agenda-text').focus();
+        return;
+      }
+
+      if(Number(item.stage) === 2) {
+        el('s2-input').value = item.content || '';
+        uploadedS2FileText = item.fileText || '';
+        el('s2-file-name').textContent = item.fileName ? `📄 ${item.fileName} DB 이력 로드` : '';
+        updateDecisionTitle();
+        updateStageResetButtons();
+        closeHistoryModal();
+        el('s2-input').scrollIntoView({behavior:'smooth', block:'center'});
+        el('s2-input').focus();
+        return;
+      }
+
+      if(Number(item.stage) === 4) {
+        el('s4-input').value = item.content || '';
+        updateDecisionTitle();
+        updateStageResetButtons();
+        closeHistoryModal();
+        el('s4-input').scrollIntoView({behavior:'smooth', block:'center'});
+        el('s4-input').focus();
+        return;
+      }
+    }
+
+    if(item.kind === 'output' && Array.isArray(item.display)) {
+      const stage = Number(item.stage);
+      const containerMap = {
+        1:'s1-history-container',
+        2:'s2-history-container',
+        3:'s3-history-container',
+        4:'s4-history-container'
+      };
+      const stateMap = {
+        1:'s1',
+        2:'s2',
+        3:'s3',
+        4:'s4'
+      };
+
+      if(containerMap[stage]) {
+        setStageUnlocked(stage);
+        if(item.data && state[stateMap[stage]]) {
+          state[stateMap[stage]].push(item.data);
+        }
+        appendCardsGroup(el(containerMap[stage]), item.display);
+        updateDecisionTitle();
+        updateStageResetButtons();
+        closeHistoryModal();
+        el('stage-' + stage).scrollIntoView({behavior:'smooth', block:'start'});
+        return;
+      }
+    }
+
+    if(item.kind === 'report') {
+      el('pz-report-area').style.display = 'block';
+      const reportOutput = el('pz-report-output');
+      const reportText = item.content || item.data?.reportText || '';
+      reportOutput.innerHTML = formatContent(reportText);
+      reportOutput.style.display = 'block';
+      closeHistoryModal();
+      reportOutput.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+  }
+
+  function createHistoryPreview(item) {
+    if(item.kind === 'input') return item.content || '(입력 텍스트 없음)';
+    if(item.kind === 'report') return item.content || item.title || '(종합 보고서)';
+    if(item.kind === 'output') {
+      if(Array.isArray(item.display)) {
+        return item.display
+          .map(entry => `◆ ${entry[0]}\n${entry[1] || ''}`)
+          .join('\n\n');
+      }
+      return item.title || '(산출 결과)';
+    }
+    return item.content || item.title || '';
+  }
+
+  async function renderInputHistoryRecords() {
+    const list = el('pz-history-list');
+    const filter = el('pz-history-filter').value;
+    list.innerHTML = '<div class="pz-history-empty">의사결정 이력을 불러오는 중입니다.</div>';
+
+    try {
+      const records = await getHistoryRecords(filter);
+
+      if(records.length === 0) {
+        list.innerHTML = '<div class="pz-history-empty">저장된 이력이 없습니다.</div>';
+        return;
+      }
+
+      list.innerHTML = '';
+
+      records.forEach(item => {
+        const wrap = document.createElement('div');
+        wrap.className = 'pz-history-item';
+
+        const head = document.createElement('div');
+        head.className = 'pz-history-item-head';
+
+        const stage = document.createElement('span');
+        stage.className = 'pz-history-stage';
+        stage.textContent = getHistoryStageLabel(item.stage);
+
+        const kind = document.createElement('span');
+        kind.className = 'pz-history-stage';
+        kind.textContent = getHistoryKindLabel(item.kind);
+
+        const time = document.createElement('span');
+        time.className = 'pz-history-time';
+        time.textContent = formatHistoryTime(item.createdAt || item.created_at);
+
+        const session = document.createElement('span');
+        session.className = 'pz-history-session';
+        session.textContent = item.sessionId ? `SESSION ${String(item.sessionId).slice(-8)}` : '';
+
+        head.append(stage, kind, time, session);
+        wrap.appendChild(head);
+
+        if(item.decisionTitle || item.authorName) {
+          const metaLine = document.createElement('div');
+          metaLine.className = 'pz-history-file';
+          metaLine.textContent = [
+            item.decisionTitle ? `제목: ${item.decisionTitle}` : '',
+            item.authorName ? `작성자: ${item.authorName}` : ''
+          ].filter(Boolean).join(' · ');
+          wrap.appendChild(metaLine);
+        }
+
+        if(item.fileName) {
+          const fileInfo = document.createElement('div');
+          fileInfo.className = 'pz-history-file';
+          fileInfo.textContent = `📄 첨부 데이터 포함 · ${item.fileName}`;
+          wrap.appendChild(fileInfo);
+        }
+
+        const content = document.createElement('div');
+        content.className = 'pz-history-content';
+        content.textContent = createHistoryPreview(item);
+        wrap.appendChild(content);
+
+        const actions = document.createElement('div');
+        actions.className = 'pz-history-actions';
+
+        const loadBtn = document.createElement('button');
+        loadBtn.type = 'button';
+        loadBtn.className = 'pz-history-action load';
+        loadBtn.textContent = item.kind === 'input' ? '입력 불러오기' : '결과 불러오기';
+        loadBtn.addEventListener('click', () => loadHistoryRecord(item));
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'pz-history-action delete';
+        deleteBtn.textContent = '삭제';
+        deleteBtn.addEventListener('click', async () => {
+          if(!confirm('선택한 이력을 삭제하시겠습니까?')) return;
+          try {
+            await deleteHistoryRecord(item.id);
+            await renderInputHistoryRecords();
+          } catch(error) {
+            alert('이력 삭제 실패: ' + error.message);
+          }
+        });
+
+        actions.append(loadBtn, deleteBtn);
+        wrap.appendChild(actions);
+        list.appendChild(wrap);
+      });
+    } catch(error) {
+      list.innerHTML = '';
+      const failed = document.createElement('div');
+      failed.className = 'pz-history-empty';
+      failed.textContent = '이력 조회 실패: ' + error.message;
+      list.appendChild(failed);
+      updateHistoryDbStatus(shouldUseExternalDb() ? '공유 DB 연결 실패' : '로컬 DB 연결 실패', 'error');
+    }
+  }
+
+
+  let dashboardDocuments = [];
+
+  function setView(viewName, updateHash = true) {
+    const home = el('pz-home-view');
+    const editor = el('pz-editor-view');
+
+    if(viewName === 'home') {
+      home.style.display = 'block';
+      editor.style.display = 'none';
+      if(updateHash) history.replaceState(null, '', '#home');
+      window.scrollTo({ top:0, behavior:'smooth' });
+      return;
+    }
+
+    home.style.display = 'none';
+    editor.style.display = 'block';
+    if(updateHash && viewName === 'new') history.replaceState(null, '', '#new');
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }
+
+  function clearWorkspaceForNavigation() {
+    clearStageOneData();
+    state.decisionTitle = '';
+    state.authorName = '';
+
+    el('pz-author-name').value = '';
+    el('pz-generated-title').textContent = '주제 및 안건을 입력하면 제목이 자동 생성됩니다.';
+    el('pz-generated-title').classList.add('empty');
+    el('pz-title-source').textContent = '입력 데이터 대기';
+    el('pz-title-updated').textContent = '제목 미생성';
+
+    for(let stage = 1; stage <= 4; stage++) {
+      lockStage(stage);
+      resetReviewState(stage);
+    }
+
+    clearReportArea();
+    renderPipeline(pipeState);
+    updateStageResetButtons();
+  }
+
+  function startNewDecision() {
+    clearWorkspaceForNavigation();
+
+    try {
+      const savedAuthorName = localStorage.getItem('pz_author_name');
+      if(savedAuthorName) el('pz-author-name').value = savedAuthorName;
+    } catch(e) {}
+
+    updateDecisionTitle();
+    setView('new', true);
+    el('pz-agenda-text').focus();
+  }
+
+  function getDashboardStageLabel(stage, hasReport = false) {
+    if(hasReport) return 'REPORT 완료';
+    const labels = {
+      1:'STAGE 01',
+      2:'STAGE 02',
+      3:'STAGE 03',
+      4:'STAGE 04'
+    };
+    return labels[Number(stage)] || '신규';
+  }
+
+  function getDashboardIcon(stage, hasReport = false) {
+    if(hasReport) return '📊';
+    const icons = {
+      1:'🧭',
+      2:'🗣️',
+      3:'✅',
+      4:'📈'
+    };
+    return icons[Number(stage)] || '📁';
+  }
+
+  function summarizeDashboardRecords(records) {
+    const grouped = new Map();
+
+    records.forEach(record => {
+      const sessionId = record.sessionId || record.session_id;
+      if(!sessionId) return;
+
+      if(!grouped.has(sessionId)) grouped.set(sessionId, []);
+      grouped.get(sessionId).push(record);
+    });
+
+    return [...grouped.entries()].map(([sessionId, items]) => {
+      const sorted = [...items].sort((a, b) =>
+        String(b.createdAt || b.created_at || '').localeCompare(
+          String(a.createdAt || a.created_at || '')
+        )
+      );
+
+      const latest = sorted[0] || {};
+      const titleRecord = sorted.find(item => item.decisionTitle || item.decision_title);
+      const authorRecord = sorted.find(item => item.authorName || item.author_name);
+      const agendaRecord = sorted.find(item => Number(item.stage) === 1 && item.kind === 'input');
+      const hasReport = sorted.some(item => Number(item.stage) === 5 || item.kind === 'report');
+      const highestStage = sorted.reduce((max, item) => {
+        const stage = Number(item.stage);
+        return stage >= 1 && stage <= 4 ? Math.max(max, stage) : max;
+      }, 0);
+
+      return {
+        sessionId,
+        title: titleRecord?.decisionTitle || titleRecord?.decision_title ||
+          agendaRecord?.agendaSummary || agendaRecord?.agenda_summary ||
+          agendaRecord?.content || '제목 미정',
+        author: authorRecord?.authorName || authorRecord?.author_name || '작성자 미입력',
+        updatedAt: latest.createdAt || latest.created_at || '',
+        summary: agendaRecord?.content || latest.content || '저장된 안건 내용을 확인하세요.',
+        highestStage,
+        hasReport,
+        recordCount: sorted.length
+      };
+    }).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+  }
+
+  function renderDashboardCards() {
+    const grid = el('pz-dashboard-grid');
+    const search = (el('pz-dashboard-search').value || '').trim().toLowerCase();
+
+    const filtered = dashboardDocuments.filter(doc => {
+      if(!search) return true;
+      return `${doc.title} ${doc.author}`.toLowerCase().includes(search);
+    });
+
+    grid.innerHTML = '';
+
+    if(filtered.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'pz-dashboard-empty';
+      empty.textContent = search
+        ? '검색 조건에 맞는 의사결정 문서가 없습니다.'
+        : '저장된 의사결정 문서가 없습니다. 신규 생성을 눌러 첫 문서를 작성하세요.';
+      grid.appendChild(empty);
+      return;
+    }
+
+    filtered.forEach(doc => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'pz-decision-card';
+      card.setAttribute('aria-label', `${doc.title} 문서 열기`);
+
+      const icon = document.createElement('div');
+      icon.className = 'pz-decision-icon';
+      icon.textContent = getDashboardIcon(doc.highestStage, doc.hasReport);
+
+      const stage = document.createElement('div');
+      stage.className = 'pz-decision-card-stage';
+      stage.textContent = getDashboardStageLabel(doc.highestStage, doc.hasReport);
+
+      const title = document.createElement('div');
+      title.className = 'pz-decision-card-title';
+      title.textContent = doc.title;
+
+      const summary = document.createElement('div');
+      summary.className = 'pz-decision-card-summary';
+      summary.textContent = doc.summary;
+
+      const meta = document.createElement('div');
+      meta.className = 'pz-decision-card-meta';
+
+      const author = document.createElement('div');
+      author.className = 'pz-decision-card-meta-row';
+      author.textContent = `👤 ${doc.author}`;
+
+      const date = document.createElement('div');
+      date.className = 'pz-decision-card-meta-row';
+      date.textContent = `🗓 ${formatHistoryTime(doc.updatedAt)}`;
+
+      const count = document.createElement('div');
+      count.className = 'pz-decision-card-meta-row';
+      count.textContent = `🗂 저장 이력 ${doc.recordCount}건`;
+
+      meta.append(author, date, count);
+      card.append(icon, stage, title, summary, meta);
+      card.addEventListener('click', () => openDecisionSession(doc.sessionId));
+      grid.appendChild(card);
+    });
+  }
+
+  async function renderHomeDashboard() {
+    const grid = el('pz-dashboard-grid');
+    grid.innerHTML = '<div class="pz-dashboard-loading">저장된 문서를 불러오는 중입니다.</div>';
+
+    try {
+      const records = await getHistoryRecords('all');
+      dashboardDocuments = summarizeDashboardRecords(records);
+
+      el('pz-dashboard-document-count').textContent = String(dashboardDocuments.length);
+      el('pz-dashboard-record-count').textContent = String(records.length);
+      el('pz-dashboard-author-count').textContent = String(
+        new Set(dashboardDocuments.map(item => item.author).filter(name => name && name !== '작성자 미입력')).size
+      );
+
+      renderDashboardCards();
+    } catch(error) {
+      dashboardDocuments = [];
+      el('pz-dashboard-document-count').textContent = '0';
+      el('pz-dashboard-record-count').textContent = '0';
+      el('pz-dashboard-author-count').textContent = '0';
+      grid.innerHTML = '';
+
+      const failed = document.createElement('div');
+      failed.className = 'pz-dashboard-empty';
+      failed.textContent = `대시보드 조회 실패: ${error.message}`;
+      grid.appendChild(failed);
+    }
+  }
+
+  async function getSessionHistoryRecords(sessionId) {
+    if(shouldUseExternalDb()) {
+      const payload = await externalDbRequest(
+        `/api/history?sessionId=${encodeURIComponent(sessionId)}&limit=1000`,
+        { method:'GET' }
+      );
+      return payload.records || [];
+    }
+
+    const records = await getLocalHistoryRecords('all');
+    return records.filter(item => (item.sessionId || item.session_id) === sessionId);
+  }
+
+  function setLoadedReviewState(stage, checked) {
+    const review = el(`s${stage}-review`);
+    if(!review) return;
+
+    const checkbox = review.querySelector('input[type=checkbox]');
+    const tag = review.querySelector('.pz-review-tag');
+
+    if(checkbox) checkbox.checked = checked;
+    review.classList.toggle('checked', checked);
+    if(tag) tag.textContent = checked ? '검토 완료' : '확인 대기';
+  }
+
+  function applyLoadedPipeline(highestStage, hasReport) {
+    for(let stage = 1; stage <= 4; stage++) {
+      const panel = el(`stage-${stage}`);
+      const isUnlocked = hasReport || stage <= highestStage;
+
+      panel.classList.toggle('locked', !isUnlocked);
+
+      if(!isUnlocked) {
+        pipeState[stage] = 'locked';
+        setLoadedReviewState(stage, false);
+      } else if(hasReport || stage < highestStage) {
+        pipeState[stage] = 'done';
+        setLoadedReviewState(stage, true);
+      } else {
+        pipeState[stage] = 'current';
+        setLoadedReviewState(stage, false);
+      }
+    }
+
+    renderPipeline(pipeState);
+    updateStageResetButtons();
+  }
+
+  function latestSessionRecord(records, stage, kind) {
+    return [...records]
+      .filter(item => Number(item.stage) === Number(stage) && (!kind || item.kind === kind))
+      .sort((a, b) =>
+        String(b.createdAt || b.created_at || '').localeCompare(
+          String(a.createdAt || a.created_at || '')
+        )
+      )[0] || null;
+  }
+
+  async function openDecisionSession(sessionId, updateHash = true) {
+    const grid = el('pz-dashboard-grid');
+    const originalGrid = grid.innerHTML;
+    grid.innerHTML = '<div class="pz-dashboard-loading">선택한 의사결정 문서를 불러오는 중입니다.</div>';
+
+    try {
+      const records = await getSessionHistoryRecords(sessionId);
+      if(records.length === 0) throw new Error('선택한 문서의 저장 이력을 찾지 못했습니다.');
+
+      clearWorkspaceForNavigation();
+      currentHistorySessionId = sessionId;
+
+      const sorted = [...records].sort((a, b) =>
+        String(b.createdAt || b.created_at || '').localeCompare(
+          String(a.createdAt || a.created_at || '')
+        )
+      );
+
+      const metadata = sorted.find(item =>
+        item.decisionTitle || item.decision_title || item.authorName || item.author_name
+      ) || sorted[0];
+
+      const decisionTitle = metadata.decisionTitle || metadata.decision_title || '';
+      const authorName = metadata.authorName || metadata.author_name || '';
+
+      state.decisionTitle = decisionTitle;
+      state.authorName = authorName;
+      el('pz-author-name').value = authorName;
+
+      const stage1Input = latestSessionRecord(records, 1, 'input');
+      const stage2Input = latestSessionRecord(records, 2, 'input');
+      const stage4Input = latestSessionRecord(records, 4, 'input');
+
+      if(stage1Input) {
+        state.agenda = stage1Input.content || '';
+        currentHistoryAgenda = state.agenda;
+        el('pz-agenda-text').value = state.agenda;
+        uploadedAgendaFileText = stage1Input.fileText || stage1Input.file_text || '';
+        el('pz-agenda-file-name').textContent =
+          (stage1Input.fileName || stage1Input.file_name)
+            ? `📄 ${stage1Input.fileName || stage1Input.file_name} DB 이력 로드`
+            : '';
+      }
+
+      if(stage2Input) {
+        el('s2-input').value = stage2Input.content || '';
+        uploadedS2FileText = stage2Input.fileText || stage2Input.file_text || '';
+        el('s2-file-name').textContent =
+          (stage2Input.fileName || stage2Input.file_name)
+            ? `📄 ${stage2Input.fileName || stage2Input.file_name} DB 이력 로드`
+            : '';
+      }
+
+      if(stage4Input) {
+        el('s4-input').value = stage4Input.content || '';
+      }
+
+      for(let stage = 1; stage <= 4; stage++) {
+        const outputRecord = latestSessionRecord(records, stage, 'output');
+        if(outputRecord && Array.isArray(outputRecord.display)) {
+          const stateKey = `s${stage}`;
+          if(outputRecord.data) state[stateKey] = [outputRecord.data];
+
+          const container = el(`s${stage}-history-container`);
+          appendCardsGroup(container, outputRecord.display);
+        }
+      }
+
+      const reportRecord = [...records]
+        .filter(item => Number(item.stage) === 5 || item.kind === 'report')
+        .sort((a, b) =>
+          String(b.createdAt || b.created_at || '').localeCompare(
+            String(a.createdAt || a.created_at || '')
+          )
+        )[0];
+
+      const highestStage = records.reduce((max, item) => {
+        const stage = Number(item.stage);
+        return stage >= 1 && stage <= 4 ? Math.max(max, stage) : max;
+      }, 1);
+
+      applyLoadedPipeline(highestStage, !!reportRecord);
+
+      if(reportRecord) {
+        el('pz-report-area').style.display = 'block';
+        const reportText = reportRecord.content || reportRecord.data?.reportText || '';
+        el('pz-report-output').innerHTML = formatContent(reportText);
+        el('pz-report-output').style.display = 'block';
+      }
+
+      updateDecisionTitle();
+
+      if(decisionTitle) {
+        state.decisionTitle = decisionTitle;
+        el('pz-generated-title').textContent = decisionTitle;
+        el('pz-generated-title').classList.remove('empty');
+        el('pz-title-source').textContent = 'DB 저장 문서';
+        el('pz-title-updated').textContent = `최종 저장: ${formatHistoryTime(sorted[0].createdAt || sorted[0].created_at)}`;
+      }
+
+      setView('editor', false);
+      if(updateHash) history.replaceState(null, '', `#decision=${encodeURIComponent(sessionId)}`);
+      window.scrollTo({ top:0, behavior:'smooth' });
+    } catch(error) {
+      grid.innerHTML = originalGrid;
+      alert('문서 불러오기 실패: ' + error.message);
+    }
+  }
+
+  async function routeFromHash() {
+    const hash = window.location.hash || '#home';
+
+    if(hash.startsWith('#decision=')) {
+      const sessionId = decodeURIComponent(hash.slice('#decision='.length));
+      if(sessionId) {
+        await openDecisionSession(sessionId, false);
+        return;
+      }
+    }
+
+    if(hash === '#new') {
+      startNewDecision();
+      return;
+    }
+
+    setView('home', false);
+    await renderHomeDashboard();
+  }
+
+
+  el('pz-open-history').addEventListener('click', async () => {
+    const modal = el('pz-history-modal');
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    await renderInputHistoryRecords();
+  });
+
+  el('pz-close-history').addEventListener('click', closeHistoryModal);
+  el('pz-history-backdrop').addEventListener('click', closeHistoryModal);
+  el('pz-history-filter').addEventListener('change', renderInputHistoryRecords);
+  el('pz-history-refresh').addEventListener('click', renderInputHistoryRecords);
+
+  el('pz-history-clear').addEventListener('click', async () => {
+    if(!confirm('저장된 이력을 모두 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+    try {
+      await clearAllHistoryRecords();
+      await renderInputHistoryRecords();
+      updateHistoryDbStatus(shouldUseExternalDb() ? '공유 DB 전체 삭제 완료' : '로컬 DB 전체 삭제 완료', 'ok');
+    } catch(error) {
+      alert('이력 전체 삭제 실패: ' + error.message);
+    }
+  });
+
+  el('pz-db-api-url').addEventListener('input', () => {
+    try { localStorage.setItem('pz_external_db_api_url', el('pz-db-api-url').value.trim()); } catch(e){}
+  });
+
+  el('pz-use-external-db').addEventListener('change', async () => {
+    try { localStorage.setItem('pz_use_external_db', el('pz-use-external-db').checked ? 'Y' : 'N'); } catch(e){}
+    await checkExternalDbHealth();
+    await refreshHistoryCount();
+  });
+
+  document.addEventListener('keydown', event => {
+    if(event.key === 'Escape' && el('pz-history-modal').classList.contains('open')) {
+      closeHistoryModal();
+    }
+  });
+
+  // 입력 데이터 저장: 원래 버튼 동작과 병렬 실행
+  el('pz-run-agenda').addEventListener('click', async () => {
+    const agenda = el('pz-agenda-text').value.trim();
+    if(!agenda) return;
+
+    const fileData = await getSelectedFileData('pz-agenda-file');
+    const sessionId = ensureHistorySession(agenda);
+
+    await saveHistoryRecordSafe({
+      sessionId,
+      stage:1,
+      kind:'input',
+      type:'agenda',
+      title:'STAGE 01 · 안건 입력',
+      content:agenda,
+      fileName:fileData.fileName,
+      fileText:fileData.fileText || uploadedAgendaFileText,
+      agendaSummary:agenda
+    });
+  });
+
+  el('s2-run').addEventListener('click', async () => {
+    const notes = el('s2-input').value.trim();
+    const fileData = await getSelectedFileData('s2-file');
+
+    await saveHistoryRecordSafe({
+      sessionId: currentHistorySessionId || ensureHistorySession(el('pz-agenda-text').value.trim()),
+      stage:2,
+      kind:'input',
+      type:'meeting_notes',
+      title:'STAGE 02 · 회의 입력',
+      content:notes,
+      fileName:fileData.fileName,
+      fileText:fileData.fileText || uploadedS2FileText,
+      agendaSummary:el('pz-agenda-text').value.trim()
+    });
+  });
+
+  el('s4-run').addEventListener('click', async () => {
+    const progress = el('s4-input').value.trim();
+
+    await saveHistoryRecordSafe({
+      sessionId: currentHistorySessionId || ensureHistorySession(el('pz-agenda-text').value.trim()),
+      stage:4,
+      kind:'input',
+      type:'progress',
+      title:'STAGE 04 · 진행 현황 입력',
+      content:progress,
+      fileName:'',
+      fileText:'',
+      agendaSummary:el('pz-agenda-text').value.trim()
+    });
+  });
+
+  el('pz-new-decision').addEventListener('click', startNewDecision);
+
+  el('pz-refresh-dashboard').addEventListener('click', async () => {
+    await checkExternalDbHealth();
+    await renderHomeDashboard();
+  });
+
+  el('pz-home-open-history').addEventListener('click', async () => {
+    const modal = el('pz-history-modal');
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    await renderInputHistoryRecords();
+  });
+
+  el('pz-go-home').addEventListener('click', async () => {
+    setView('home', true);
+    await renderHomeDashboard();
+  });
+
+  el('pz-dashboard-search').addEventListener('input', renderDashboardCards);
+
+  window.addEventListener('hashchange', () => {
+    routeFromHash();
+  });
+
+  // 초기 DB 설정 로드 및 연결 확인
+  try {
+    const savedApiUrl = localStorage.getItem('pz_external_db_api_url');
+    if(savedApiUrl) el('pz-db-api-url').value = savedApiUrl;
+
+    const savedUseExternal = localStorage.getItem('pz_use_external_db');
+    if(savedUseExternal) el('pz-use-external-db').checked = savedUseExternal === 'Y';
+  } catch(e) {}
+
+  checkExternalDbHealth()
+    .then(async () => {
+      await refreshHistoryCount();
+      await routeFromHash();
+    })
+    .catch(async error => {
+      console.warn('DB init failed:', error);
+      updateHistoryDbStatus('DB 연결 실패', 'error');
+      await routeFromHash();
+    });
+
 
 })();
 </script>
