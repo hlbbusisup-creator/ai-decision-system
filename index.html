@@ -3585,13 +3585,18 @@ ${categoryOutputFormat}`;
     txtArea.addEventListener('click', (e) => e.stopPropagation());
   }
 
-  function appendCardsGroup(container, entries){
+  function appendCardsGroup(container, entries, options = {}){
     const group = document.createElement('div');
     group.className = 'pz-history-group';
     
+    const savedTime = options.createdAt
+      ? formatHistoryTime(options.createdAt)
+      : getTimestamp();
+    const resultLabel = options.resultLabel || '분석 결과';
+
     const timeLabel = document.createElement('div');
     timeLabel.className = 'pz-history-timestamp';
-    timeLabel.textContent = `[${getTimestamp()}] 분석 결과`;
+    timeLabel.textContent = `[${savedTime}] ${resultLabel}`;
     group.appendChild(timeLabel);
 
     const cardsGrid = document.createElement('div');
@@ -3652,7 +3657,9 @@ ${categoryOutputFormat}`;
     group.appendChild(cardsGrid);
     container.appendChild(group);
     
-    group.scrollIntoView({behavior:'smooth', block:'start'});
+    if(options.scroll !== false) {
+      group.scrollIntoView({behavior:'smooth', block:'start'});
+    }
   }
 
   document.querySelectorAll('.pz-review input[type=checkbox]').forEach(cb=>{
@@ -3839,7 +3846,42 @@ ${categoryOutputFormat}`;
     updateDecisionTitle();
   }
 
-  function resetStage(stage) {
+  async function saveStageResetMarker(stage) {
+    if(!currentHistorySessionId) return true;
+
+    const resetAt = new Date().toISOString();
+    const labels = {
+      1:'STAGE 01 · 회의 준비',
+      2:'STAGE 02 · 회의 중',
+      3:'STAGE 03 · 의사결정 요약',
+      4:'STAGE 04 · 진행 현황'
+    };
+
+    const saved = await saveHistoryRecordSafe({
+      sessionId:currentHistorySessionId,
+      stage,
+      kind:'input',
+      type:'stage_reset',
+      title:`${labels[stage] || `STAGE ${stage}`} 초기화 기준`,
+      content:`STAGE ${String(stage).padStart(2, '0')}부터 이후 단계의 기존 산출 결과를 자동 복원하지 않도록 초기화 기준을 저장했습니다.`,
+      fileName:'',
+      fileText:'',
+      agendaSummary:el('pz-agenda-text')?.value.trim() || state.agenda || '',
+      data:{
+        resetFromStage:stage,
+        resetThroughStage:5,
+        resetAt,
+        preserveAgenda:stage === 1,
+        preserveAttachment:stage === 1
+      },
+      display:null,
+      createdAt:resetAt
+    });
+
+    return Boolean(saved);
+  }
+
+  async function resetStage(stage) {
     const activeStage = getLatestActiveStage();
     if(stage !== activeStage || isStageBusy(stage)) {
       updateStageResetButtons();
@@ -3854,8 +3896,8 @@ ${categoryOutputFormat}`;
     };
 
     const message = stage === 1
-      ? 'STAGE 01을 초기화하면 1~4단계 산출 결과만 초기화됩니다. 주제 및 안건, 첨부자료, 5대 핵심요소와 현재 문서 세션은 유지되며 외부 DB의 과거 이력도 삭제되지 않습니다. 계속하시겠습니까?'
-      : `STAGE ${String(stage).padStart(2, '0')} ${labels[stage]} 내용을 초기화하고 직전 STAGE로 돌아가시겠습니까? 외부 DB에 저장된 과거 이력은 삭제되지 않습니다.`;
+      ? 'STAGE 01을 초기화하면 1~4단계 산출 결과만 초기화됩니다. 주제 및 안건, 첨부자료, 5대 핵심요소와 현재 문서 세션은 유지되며 외부 DB의 과거 이력은 감사 기록으로 유지되지만 문서 재조회 시 자동 복원되지 않습니다. 계속하시겠습니까?'
+      : `STAGE ${String(stage).padStart(2, '0')} ${labels[stage]} 내용을 초기화하고 직전 STAGE로 돌아가시겠습니까? 외부 DB의 과거 이력은 감사 기록으로 유지되지만 문서 재조회 시 자동 복원되지 않습니다.`;
 
     if(!confirm(message)) return;
 
@@ -3892,14 +3934,27 @@ ${categoryOutputFormat}`;
     updateDecisionTitle();
     updateStageResetButtons();
 
+    const resetSaved = await saveStageResetMarker(stage);
+    if(!resetSaved && shouldUseExternalDb()) {
+      alert(
+        '화면 초기화는 완료되었지만 공유 DB에 초기화 기준을 저장하지 못했습니다. ' +
+        'DB 연결을 확인한 후 초기화를 다시 실행해 주세요.'
+      );
+    } else if(resetSaved) {
+      setDraftSaveStatus(
+        `STAGE ${String(stage).padStart(2, '0')} 초기화 기준 저장 완료`,
+        'ok'
+      );
+    }
+
     const targetStage = stage > 1 ? stage - 1 : 1;
     const target = el(`stage-${targetStage}`) || el('pz-agenda-text');
     if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
   }
 
   document.querySelectorAll('.pz-stage-reset').forEach(button => {
-    button.addEventListener('click', () => {
-      resetStage(Number(button.dataset.resetStage));
+    button.addEventListener('click', async () => {
+      await resetStage(Number(button.dataset.resetStage));
     });
   });
 
@@ -4984,9 +5039,32 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     });
   }
 
-  async function deleteHistoryRecord(id) {
+  function requestHistoryDeleteCode() {
+    const deleteCode = window.prompt('삭제코드를 입력하시오');
+    if(deleteCode === null) return null;
+
+    const normalized = deleteCode.trim();
+    if(!normalized) {
+      alert('삭제코드를 입력해 주세요.');
+      return null;
+    }
+
+    return normalized;
+  }
+
+  function isInvalidDeleteCodeError(error) {
+    const message = String(error?.message || error || '').toLowerCase();
+    return message.includes('(401)') || message.includes('invalid delete code');
+  }
+
+  async function deleteHistoryRecord(id, deleteCode = '') {
     if(shouldUseExternalDb()) {
-      await externalDbRequest(`/api/history/${encodeURIComponent(id)}`, { method:'DELETE' });
+      await externalDbRequest(`/api/history/${encodeURIComponent(id)}`, {
+        method:'DELETE',
+        headers:{
+          'x-delete-code':deleteCode
+        }
+      });
     } else {
       await deleteLocalHistoryRecord(id);
     }
@@ -5003,9 +5081,14 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     });
   }
 
-  async function clearAllHistoryRecords() {
+  async function clearAllHistoryRecords(deleteCode = '') {
     if(shouldUseExternalDb()) {
-      await externalDbRequest('/api/history', { method:'DELETE' });
+      await externalDbRequest('/api/history', {
+        method:'DELETE',
+        headers:{
+          'x-delete-code':deleteCode
+        }
+      });
     } else {
       await clearLocalHistoryRecords();
     }
@@ -5023,7 +5106,8 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     return labels[Number(stage)] || `STAGE ${String(stage).padStart(2, '0')}`;
   }
 
-  function getHistoryKindLabel(kind) {
+  function getHistoryKindLabel(kind, type = '') {
+    if(type === 'stage_reset') return '초기화 기준';
     if(kind === 'output') return '산출 결과';
     if(kind === 'report') return '종합 보고서';
     return '입력 데이터';
@@ -5129,7 +5213,10 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
         if(item.data && state[stateMap[stage]]) {
           state[stateMap[stage]].push(extractStageResultData(item.data));
         }
-        appendCardsGroup(el(containerMap[stage]), item.display);
+        appendCardsGroup(el(containerMap[stage]), item.display, {
+          createdAt:item.createdAt || item.created_at,
+          resultLabel:'저장된 분석 결과'
+        });
         updateDecisionTitle();
         updateStageResetButtons();
         closeHistoryModal();
@@ -5150,6 +5237,10 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
   }
 
   function createHistoryPreview(item) {
+    if(item.type === 'stage_reset') {
+      const resetFromStage = Number(item.data?.resetFromStage || item.stage || 1);
+      return `STAGE ${String(resetFromStage).padStart(2, '0')}부터 이후 단계의 자동 복원을 중단하는 초기화 기준입니다. 이전 이력은 감사 기록으로 유지됩니다.`;
+    }
     if(item.kind === 'input') return item.content || '(입력 텍스트 없음)';
     if(item.kind === 'report') return item.content || item.title || '(종합 보고서)';
     if(item.kind === 'output') {
@@ -5191,7 +5282,7 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
 
         const kind = document.createElement('span');
         kind.className = 'pz-history-stage';
-        kind.textContent = getHistoryKindLabel(item.kind);
+        kind.textContent = getHistoryKindLabel(item.kind, item.type);
 
         const time = document.createElement('span');
         time.className = 'pz-history-time';
@@ -5232,20 +5323,38 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
         const loadBtn = document.createElement('button');
         loadBtn.type = 'button';
         loadBtn.className = 'pz-history-action load';
-        loadBtn.textContent = item.kind === 'input' ? '입력 불러오기' : '결과 불러오기';
-        loadBtn.addEventListener('click', () => loadHistoryRecord(item));
+        loadBtn.textContent = item.type === 'stage_reset'
+          ? '초기화 기준'
+          : (item.kind === 'input' ? '입력 불러오기' : '결과 불러오기');
+        loadBtn.disabled = item.type === 'stage_reset';
+        if(item.type !== 'stage_reset') {
+          loadBtn.addEventListener('click', () => loadHistoryRecord(item));
+        }
 
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.className = 'pz-history-action delete';
         deleteBtn.textContent = '삭제';
         deleteBtn.addEventListener('click', async () => {
-          if(!confirm('선택한 이력을 삭제하시겠습니까?')) return;
+          const warning = item.type === 'stage_reset'
+            ? '이 초기화 기준을 삭제하면 이전 STAGE 산출 결과가 문서 재조회 시 다시 복원될 수 있습니다. 계속하시겠습니까?'
+            : '선택한 이력을 삭제하시겠습니까?';
+          if(!confirm(warning)) return;
+
+          const deleteCode = shouldUseExternalDb()
+            ? requestHistoryDeleteCode()
+            : '';
+          if(shouldUseExternalDb() && deleteCode === null) return;
+
           try {
-            await deleteHistoryRecord(item.id);
+            await deleteHistoryRecord(item.id, deleteCode || '');
             await renderInputHistoryRecords();
           } catch(error) {
-            alert('이력 삭제 실패: ' + error.message);
+            if(isInvalidDeleteCodeError(error)) {
+              alert('삭제코드가 올바르지 않습니다.');
+            } else {
+              alert('이력 삭제 실패: ' + error.message);
+            }
           }
         });
 
@@ -6051,13 +6160,71 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     updateStageResetButtons();
   }
 
-  function latestSessionRecord(records, stage, kind) {
-    return [...records]
-      .filter(item => Number(item.stage) === Number(stage) && (!kind || item.kind === kind))
-      .sort((a, b) =>
-        String(b.createdAt || b.created_at || '').localeCompare(
-          String(a.createdAt || a.created_at || '')
+  function getHistoryRecordTimestamp(item) {
+    const value = item?.createdAt || item?.created_at || '';
+    const timestamp = Date.parse(value);
+    return Number.isFinite(timestamp) ? timestamp : 0;
+  }
+
+  function getStageResetRange(item) {
+    if(String(item?.type || '') !== 'stage_reset') return null;
+
+    const data = item?.data || {};
+    const resetFromStage = Math.max(
+      1,
+      Math.min(5, Number(data.resetFromStage || item.stage || 1))
+    );
+    const resetThroughStage = Math.max(
+      resetFromStage,
+      Math.min(5, Number(data.resetThroughStage || 5))
+    );
+
+    return {
+      resetFromStage,
+      resetThroughStage,
+      timestamp:getHistoryRecordTimestamp(item)
+    };
+  }
+
+  function getActiveSessionRecords(records) {
+    const resetRanges = records
+      .map(getStageResetRange)
+      .filter(Boolean);
+
+    return records.filter(item => {
+      if(String(item?.type || '') === 'stage_reset') return true;
+
+      const stage = Number(item.stage);
+      const applicableReset = resetRanges
+        .filter(reset =>
+          stage >= reset.resetFromStage &&
+          stage <= reset.resetThroughStage
         )
+        .sort((a, b) => b.timestamp - a.timestamp)[0];
+
+      if(!applicableReset) return true;
+
+      if(
+        stage === 1 &&
+        item.kind === 'input' &&
+        ['agenda', 'draft_save'].includes(String(item.type || ''))
+      ) {
+        return true;
+      }
+
+      return getHistoryRecordTimestamp(item) > applicableReset.timestamp;
+    });
+  }
+
+  function latestSessionRecord(records, stage, kind, predicate = null) {
+    return [...records]
+      .filter(item =>
+        Number(item.stage) === Number(stage) &&
+        (!kind || item.kind === kind) &&
+        (!predicate || predicate(item))
+      )
+      .sort(
+        (a, b) => getHistoryRecordTimestamp(b) - getHistoryRecordTimestamp(a)
       )[0] || null;
   }
 
@@ -6073,11 +6240,10 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
       clearWorkspaceForNavigation();
       currentHistorySessionId = sessionId;
 
-      const sorted = [...records].sort((a, b) =>
-        String(b.createdAt || b.created_at || '').localeCompare(
-          String(a.createdAt || a.created_at || '')
-        )
+      const sorted = [...records].sort(
+        (a, b) => getHistoryRecordTimestamp(b) - getHistoryRecordTimestamp(a)
       );
+      const activeRecords = getActiveSessionRecords(records);
 
       const metadata = sorted.find(item =>
         item.decisionTitle || item.decision_title || item.authorName || item.author_name
@@ -6086,7 +6252,7 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
       const decisionTitle = metadata.decisionTitle || metadata.decision_title || '';
       const authorName = metadata.authorName || metadata.author_name || '';
 
-      const frameworkRecord = [...sorted].reverse().find(item => item?.data?.decisionFramework);
+      const frameworkRecord = sorted.find(item => item?.data?.decisionFramework);
       if(frameworkRecord?.data?.decisionFramework) {
         loadDecisionFrameworkData(frameworkRecord.data.decisionFramework);
       }
@@ -6095,9 +6261,24 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
       state.authorName = authorName;
       el('pz-author-name').value = authorName;
 
-      const stage1Input = latestSessionRecord(records, 1, 'input');
-      const stage2Input = latestSessionRecord(records, 2, 'input');
-      const stage4Input = latestSessionRecord(records, 4, 'input');
+      const stage1Input = latestSessionRecord(
+        activeRecords,
+        1,
+        'input',
+        item => String(item.type || '') !== 'stage_reset'
+      );
+      const stage2Input = latestSessionRecord(
+        activeRecords,
+        2,
+        'input',
+        item => String(item.type || '') !== 'stage_reset'
+      );
+      const stage4Input = latestSessionRecord(
+        activeRecords,
+        4,
+        'input',
+        item => String(item.type || '') !== 'stage_reset'
+      );
 
       if(stage1Input) {
         state.agenda = stage1Input.content || '';
@@ -6124,17 +6305,21 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
       }
 
       for(let stage = 1; stage <= 4; stage++) {
-        const outputRecord = latestSessionRecord(records, stage, 'output');
+        const outputRecord = latestSessionRecord(activeRecords, stage, 'output');
         if(outputRecord && Array.isArray(outputRecord.display)) {
           const stateKey = `s${stage}`;
           if(outputRecord.data) state[stateKey] = [extractStageResultData(outputRecord.data)];
 
           const container = el(`s${stage}-history-container`);
-          appendCardsGroup(container, outputRecord.display);
+          appendCardsGroup(container, outputRecord.display, {
+            createdAt:outputRecord.createdAt || outputRecord.created_at,
+            resultLabel:'저장된 분석 결과',
+            scroll:false
+          });
         }
       }
 
-      const reportRecord = [...records]
+      const reportRecord = [...activeRecords]
         .filter(item => Number(item.stage) === 5 || item.kind === 'report')
         .sort((a, b) =>
           String(b.createdAt || b.created_at || '').localeCompare(
@@ -6142,10 +6327,12 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
           )
         )[0];
 
-      const highestStage = records.reduce((max, item) => {
-        const stage = Number(item.stage);
-        return stage >= 1 && stage <= 4 ? Math.max(max, stage) : max;
-      }, 1);
+      const highestStage = activeRecords
+        .filter(item => String(item.type || '') !== 'stage_reset')
+        .reduce((max, item) => {
+          const stage = Number(item.stage);
+          return stage >= 1 && stage <= 4 ? Math.max(max, stage) : max;
+        }, 1);
 
       applyLoadedPipeline(highestStage, !!reportRecord);
 
@@ -6210,12 +6397,22 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
 
   el('pz-history-clear').addEventListener('click', async () => {
     if(!confirm('저장된 이력을 모두 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+
+    const deleteCode = shouldUseExternalDb()
+      ? requestHistoryDeleteCode()
+      : '';
+    if(shouldUseExternalDb() && deleteCode === null) return;
+
     try {
-      await clearAllHistoryRecords();
+      await clearAllHistoryRecords(deleteCode || '');
       await renderInputHistoryRecords();
       updateHistoryDbStatus(shouldUseExternalDb() ? '공유 DB 전체 삭제 완료' : '로컬 DB 전체 삭제 완료', 'ok');
     } catch(error) {
-      alert('이력 전체 삭제 실패: ' + error.message);
+      if(isInvalidDeleteCodeError(error)) {
+        alert('삭제코드가 올바르지 않습니다.');
+      } else {
+        alert('이력 전체 삭제 실패: ' + error.message);
+      }
     }
   });
 
