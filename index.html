@@ -3656,12 +3656,181 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     };
   }
 
+  async function fetchAllSharedHistoryForAnalytics() {
+    const records = [];
+    let page = 1;
+    const pageSize = 500;
+    let total = 0;
+
+    do {
+      const params = new URLSearchParams({
+        page:String(page),
+        pageSize:String(pageSize)
+      });
+
+      const payload = await externalDbRequest(
+        `/api/history?${params.toString()}`,
+        { method:'GET' }
+      );
+
+      total = Number(payload.total || 0);
+      records.push(...(payload.records || []));
+      page++;
+    } while(records.length < total);
+
+    return records;
+  }
+
+  function getAnalyticsDateKey(value) {
+    const date = new Date(value);
+    if(Number.isNaN(date.getTime())) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function buildDashboardAnalyticsFallback(documents, records) {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const normalizedDocuments = Array.isArray(documents) ? documents : [];
+    const normalizedRecords = Array.isArray(records) ? records : [];
+
+    const documentCount = normalizedDocuments.length;
+    const completedCount = normalizedDocuments.filter(doc =>
+      Boolean(doc.hasReport) || doc.status === 'completed'
+    ).length;
+
+    const recentRecords = normalizedRecords.filter(record => {
+      const createdAt = new Date(record.createdAt || record.created_at || '');
+      return !Number.isNaN(createdAt.getTime()) && createdAt >= sevenDaysAgo;
+    });
+
+    const activeDocumentsLast7Days = new Set(
+      recentRecords
+        .map(record => record.sessionId || record.session_id)
+        .filter(Boolean)
+    ).size;
+
+    const stageOrder = ['신규','STAGE 01','STAGE 02','STAGE 03','STAGE 04','REPORT'];
+    const stageMap = new Map(stageOrder.map(label => [label, 0]));
+
+    normalizedDocuments.forEach(doc => {
+      let label = '신규';
+
+      if(Boolean(doc.hasReport) || doc.status === 'completed') {
+        label = 'REPORT';
+      } else {
+        const stage = Number(doc.highestStage || doc.currentStage || 0);
+        if(stage >= 1 && stage <= 4) label = `STAGE 0${stage}`;
+      }
+
+      stageMap.set(label, Number(stageMap.get(label) || 0) + 1);
+    });
+
+    const statusMap = new Map([
+      ['draft', 0],
+      ['in_progress', 0],
+      ['completed', 0]
+    ]);
+
+    normalizedDocuments.forEach(doc => {
+      let status = doc.status;
+
+      if(Boolean(doc.hasReport) || status === 'completed') {
+        status = 'completed';
+      } else if(status === 'draft' || Number(doc.highestStage || 0) === 0) {
+        status = 'draft';
+      } else {
+        status = 'in_progress';
+      }
+
+      statusMap.set(status, Number(statusMap.get(status) || 0) + 1);
+    });
+
+    const authorMap = new Map();
+    normalizedDocuments.forEach(doc => {
+      const author = String(doc.author || '작성자 미입력').trim() || '작성자 미입력';
+      authorMap.set(author, Number(authorMap.get(author) || 0) + 1);
+    });
+
+    const authorDistribution = [...authorMap.entries()]
+      .map(([author, count]) => ({ author, count }))
+      .sort((a, b) => b.count - a.count || a.author.localeCompare(b.author, 'ko'))
+      .slice(0, 10);
+
+    const dailyMap = new Map();
+    const dailyActivity = [];
+
+    for(let offset = 13; offset >= 0; offset--) {
+      const date = new Date(now);
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() - offset);
+
+      const key = getAnalyticsDateKey(date);
+      dailyMap.set(key, 0);
+      dailyActivity.push({ date:key, count:0 });
+    }
+
+    normalizedRecords.forEach(record => {
+      const key = getAnalyticsDateKey(record.createdAt || record.created_at || '');
+      if(dailyMap.has(key)) {
+        dailyMap.set(key, Number(dailyMap.get(key) || 0) + 1);
+      }
+    });
+
+    dailyActivity.forEach(item => {
+      item.count = Number(dailyMap.get(item.date) || 0);
+    });
+
+    return {
+      generatedAt:new Date().toISOString(),
+      source:'browser_fallback',
+      summary:{
+        documentCount,
+        completedCount,
+        completionRate:documentCount
+          ? Number(((completedCount / documentCount) * 100).toFixed(1))
+          : 0,
+        averageRecordsPerDocument:documentCount
+          ? Number((normalizedRecords.length / documentCount).toFixed(1))
+          : 0,
+        recordsLast7Days:recentRecords.length,
+        activeDocumentsLast7Days
+      },
+      stageDistribution:stageOrder
+        .map(label => ({ label, count:Number(stageMap.get(label) || 0) }))
+        .filter(item => item.count > 0),
+      statusDistribution:[...statusMap.entries()].map(([status, count]) => ({
+        status,
+        count
+      })),
+      authorDistribution,
+      dailyActivity
+    };
+  }
+
   async function fetchDashboardAnalytics() {
     if(!shouldUseExternalDb()) {
       throw new Error('공유 DB API 연결이 필요합니다.');
     }
 
-    return externalDbRequest('/api/analytics', { method:'GET' });
+    try {
+      return await externalDbRequest('/api/analytics', { method:'GET' });
+    } catch(error) {
+      const message = String(error.message || '');
+
+      // Render 백엔드가 아직 이전 버전이라 /api/analytics가 없을 때
+      // 기존 /api/history 데이터를 이용해 브라우저에서 자동 집계합니다.
+      if(!message.includes('(404)')) {
+        throw error;
+      }
+
+      const records = await fetchAllSharedHistoryForAnalytics();
+      return buildDashboardAnalyticsFallback(dashboardDocuments, records);
+    }
   }
 
   function setAnalyticsKpi(id, value, suffix = '') {
@@ -3917,7 +4086,12 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
     );
 
     const updated = el('pz-analytics-updated');
-    if(updated) updated.textContent = `최종 집계: ${getTimestamp()}`;
+    if(updated) {
+      const sourceLabel = payload?.source === 'browser_fallback'
+        ? '브라우저 호환 집계'
+        : 'DB 서버 집계';
+      updated.textContent = `${sourceLabel} · ${getTimestamp()}`;
+    }
   }
 
   async function refreshDashboardAnalytics() {
