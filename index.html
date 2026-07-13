@@ -652,6 +652,55 @@
 #pz-root .pz-framework-readiness-value{
   font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:700; color:var(--ink-900);
 }
+
+#pz-root .pz-framework-review{
+  margin-top:10px; padding:15px 16px; border:1px solid #C9CFEC; border-radius:9px;
+  background:linear-gradient(135deg,#F8F9FF,#FFFFFF);
+}
+#pz-root .pz-framework-review.stale{
+  border-color:#E2C58D; background:linear-gradient(135deg,#FFF9EE,#FFFFFF);
+}
+#pz-root .pz-framework-review.error{
+  border-color:#E0B0B0; background:linear-gradient(135deg,#FFF8F8,#FFFFFF);
+}
+#pz-root .pz-framework-review-head{
+  display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+}
+#pz-root .pz-framework-review-eyebrow{
+  font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.12em;
+  color:var(--ai-500); font-weight:800; margin-bottom:3px;
+}
+#pz-root .pz-framework-review-title{
+  font-size:13px; color:var(--ink-900); font-weight:900;
+}
+#pz-root .pz-framework-review-badge{
+  flex:0 0 auto; padding:4px 8px; border-radius:5px;
+  font-size:9.5px; font-weight:800; background:#E9ECF8; color:var(--ai-500);
+}
+#pz-root .pz-framework-review-badge.empty{background:var(--line-100); color:var(--ink-500);}
+#pz-root .pz-framework-review-badge.analyzing{background:#FFF0D1; color:#9B681B;}
+#pz-root .pz-framework-review-badge.stale{background:#FFF0D1; color:#9B681B;}
+#pz-root .pz-framework-review-badge.ai{background:#DDEFE3; color:var(--ok-500);}
+#pz-root .pz-framework-review-badge.fallback{background:#E9ECF8; color:var(--ai-500);}
+#pz-root .pz-framework-review-badge.error{background:#F8DEDE; color:#A23C3C;}
+#pz-root .pz-framework-review-body{
+  margin-top:11px; font-size:11.5px; line-height:1.68; color:var(--ink-700);
+}
+#pz-root .pz-framework-review-body p{margin:0 0 7px;}
+#pz-root .pz-framework-review-body p:last-child{margin-bottom:0;}
+#pz-root .pz-framework-review-foot{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  margin-top:11px; padding-top:9px; border-top:1px solid var(--line-100);
+  color:var(--ink-300); font-size:9.5px;
+}
+#pz-root .pz-framework-review-refresh{
+  appearance:none; border:1px solid var(--line-200); border-radius:6px;
+  padding:6px 9px; background:#fff; color:var(--ai-500); cursor:pointer;
+  font-family:'Noto Sans KR',sans-serif; font-size:9.5px; font-weight:800;
+}
+#pz-root .pz-framework-review-refresh:disabled{
+  opacity:.55; cursor:not-allowed;
+}
 #pz-root .pz-framework-flow{
   display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; margin-top:14px;
 }
@@ -1012,6 +1061,23 @@
       <div class="pz-framework-readiness-value" id="pz-framework-readiness-value">0%</div>
     </div>
 
+    <div class="pz-framework-review" id="pz-framework-review">
+      <div class="pz-framework-review-head">
+        <div>
+          <div class="pz-framework-review-eyebrow">AI REVIEW</div>
+          <div class="pz-framework-review-title">5대 핵심요소 적정성</div>
+        </div>
+        <span class="pz-framework-review-badge empty" id="pz-framework-review-badge">아직 미생성</span>
+      </div>
+      <div class="pz-framework-review-body" id="pz-framework-review-body">
+        ① 회의 준비 자동 산출을 실행하면 현재 5대 핵심요소의 적정성과 보완사항이 이 위치에 표시됩니다.
+      </div>
+      <div class="pz-framework-review-foot">
+        <span id="pz-framework-review-meta">최근 분석 기록 없음</span>
+        <button type="button" class="pz-framework-review-refresh" id="pz-framework-review-refresh">적정성 다시 분석</button>
+      </div>
+    </div>
+
     <div class="pz-framework-flow" id="pz-framework-flow">
       <button type="button" class="pz-framework-step active" data-framework-panel="1">
         <span class="pz-framework-step-num">1</span><span class="pz-framework-step-stage">초기</span>
@@ -1337,6 +1403,16 @@
   let frameworkScores = {};
   let frameworkActivePanel = 1;
 
+  let frameworkSuitabilityReview = {
+    content:'',
+    updatedAt:'',
+    sourceStage:0,
+    sourceLabel:'',
+    status:'empty',
+    signature:''
+  };
+  let frameworkSuitabilityReviewPromise = null;
+
   function makeFrameworkId(prefix) {
     if(window.crypto && typeof window.crypto.randomUUID === 'function') {
       return `${prefix}_${window.crypto.randomUUID()}`;
@@ -1507,6 +1583,7 @@
 
           renderFrameworkScoreResults();
           refreshFrameworkReadiness();
+          markFrameworkSuitabilityReviewStale('대안 평가점수 변경');
         });
 
         td.appendChild(select);
@@ -1577,6 +1654,7 @@
         criterion.name = event.target.value;
         renderDecisionMatrix();
         refreshFrameworkReadiness();
+        markFrameworkSuitabilityReviewStale('평가기준 변경');
       });
 
       const weight = document.createElement('input');
@@ -1592,6 +1670,7 @@
         updateFrameworkWeightTotal();
         renderDecisionMatrix();
         refreshFrameworkReadiness();
+        markFrameworkSuitabilityReviewStale('가중치 변경');
       });
 
       const rationale = document.createElement('input');
@@ -1602,6 +1681,7 @@
       rationale.addEventListener('input', event => {
         criterion.rationale = event.target.value;
         refreshFrameworkReadiness();
+        markFrameworkSuitabilityReviewStale('평가기준 선정 사유 변경');
       });
 
       const remove = document.createElement('button');
@@ -1616,6 +1696,7 @@
         renderFrameworkCriteriaRows();
         renderDecisionMatrix();
         refreshFrameworkReadiness();
+        markFrameworkSuitabilityReviewStale('평가기준 삭제');
       });
 
       row.append(name, weight, rationale, remove);
@@ -1649,6 +1730,7 @@
         alternative.name = event.target.value;
         renderDecisionMatrix();
         refreshFrameworkReadiness();
+        markFrameworkSuitabilityReviewStale('대안명 변경');
       });
 
       const remove = document.createElement('button');
@@ -1669,6 +1751,7 @@
         renderFrameworkAlternativeRows();
         renderDecisionMatrix();
         refreshFrameworkReadiness();
+        markFrameworkSuitabilityReviewStale('대안 삭제');
       });
 
       head.append(badge, name, remove);
@@ -1687,6 +1770,7 @@
       description.addEventListener('input', event => {
         alternative.description = event.target.value;
         refreshFrameworkReadiness();
+        markFrameworkSuitabilityReviewStale('대안 실행방식 변경');
       });
       descriptionField.append(descriptionLabel, description);
 
@@ -1701,6 +1785,7 @@
       best.addEventListener('input', event => {
         alternative.bestScenario = event.target.value;
         refreshFrameworkReadiness();
+        markFrameworkSuitabilityReviewStale('낙관 시나리오 변경');
       });
       bestField.append(bestLabel, best);
 
@@ -1715,6 +1800,7 @@
       worst.addEventListener('input', event => {
         alternative.worstScenario = event.target.value;
         refreshFrameworkReadiness();
+        markFrameworkSuitabilityReviewStale('최악 시나리오 변경');
       });
       worstField.append(worstLabel, worst);
 
@@ -1819,12 +1905,273 @@
     return { overall, elementScores, missing };
   }
 
-  function getDecisionFrameworkData() {
+  function getFrameworkSuitabilitySignature() {
+    const raw = collectDecisionFrameworkRawData();
+
+    return JSON.stringify({
+      objective:raw.objective,
+      criteria:raw.criteria.map(item => ({
+        name:item.name,
+        weight:item.weight,
+        rationale:item.rationale
+      })),
+      alternatives:raw.alternatives.map(item => ({
+        name:item.name,
+        description:item.description,
+        bestScenario:item.bestScenario,
+        worstScenario:item.worstScenario
+      })),
+      constraints:raw.constraints,
+      feedback:raw.feedback,
+      scoreMatrix:raw.scoreMatrix
+    });
+  }
+
+  function getFrameworkStageLabel(stage) {
+    const labels = {
+      0:'수동 검토',
+      1:'STAGE 01 · 회의 준비',
+      2:'STAGE 02 · 회의 중',
+      3:'STAGE 03 · 의사결정 요약',
+      4:'STAGE 04 · 진행 현황'
+    };
+    return labels[Number(stage)] || `STAGE ${stage}`;
+  }
+
+  function renderFrameworkSuitabilityReview() {
+    const panel = el('pz-framework-review');
+    const badge = el('pz-framework-review-badge');
+    const body = el('pz-framework-review-body');
+    const meta = el('pz-framework-review-meta');
+    const refreshButton = el('pz-framework-review-refresh');
+
+    if(!panel || !badge || !body || !meta) return;
+
+    const status = frameworkSuitabilityReview.status || 'empty';
+    panel.classList.toggle('stale', status === 'stale');
+    panel.classList.toggle('error', status === 'error');
+
+    const statusMeta = {
+      empty:{ label:'아직 미생성', className:'empty' },
+      analyzing:{ label:'AI 분석 중', className:'analyzing' },
+      stale:{ label:'재분석 필요', className:'stale' },
+      ai:{ label:'AI 적정성 검토', className:'ai' },
+      fallback:{ label:'자동 진단', className:'fallback' },
+      error:{ label:'분석 실패', className:'error' }
+    };
+    const selected = statusMeta[status] || statusMeta.empty;
+
+    badge.textContent = selected.label;
+    badge.className = `pz-framework-review-badge ${selected.className}`;
+
+    if(status === 'analyzing') {
+      body.textContent = '현재 5대 핵심요소와 최신 STAGE 산출물을 기준으로 적정성을 다시 분석하고 있습니다.';
+    } else if(frameworkSuitabilityReview.content) {
+      body.innerHTML = formatContent(frameworkSuitabilityReview.content);
+    } else {
+      body.textContent = '① 회의 준비 자동 산출을 실행하면 현재 5대 핵심요소의 적정성과 보완사항이 이 위치에 표시됩니다.';
+    }
+
+    const updatedAt = frameworkSuitabilityReview.updatedAt
+      ? new Date(frameworkSuitabilityReview.updatedAt).toLocaleString('ko-KR')
+      : '기록 없음';
+    const source = frameworkSuitabilityReview.sourceLabel ||
+      getFrameworkStageLabel(frameworkSuitabilityReview.sourceStage || 0);
+
+    meta.textContent = frameworkSuitabilityReview.updatedAt
+      ? `${source} 기준 · ${updatedAt}`
+      : '최근 분석 기록 없음';
+
+    if(refreshButton) {
+      refreshButton.disabled = status === 'analyzing';
+      refreshButton.textContent = status === 'analyzing'
+        ? '분석 중…'
+        : '적정성 다시 분석';
+    }
+  }
+
+  function setFrameworkSuitabilityReview(content, options = {}) {
+    const normalized = String(content || '').trim();
+
+    frameworkSuitabilityReview = {
+      content:normalized,
+      updatedAt:options.updatedAt || new Date().toISOString(),
+      sourceStage:Number(options.sourceStage || 0),
+      sourceLabel:options.sourceLabel ||
+        getFrameworkStageLabel(options.sourceStage || 0),
+      status:options.status || (normalized ? 'ai' : 'empty'),
+      signature:getFrameworkSuitabilitySignature()
+    };
+
+    renderFrameworkSuitabilityReview();
+  }
+
+  function clearFrameworkSuitabilityReview() {
+    frameworkSuitabilityReview = {
+      content:'',
+      updatedAt:'',
+      sourceStage:0,
+      sourceLabel:'',
+      status:'empty',
+      signature:''
+    };
+    renderFrameworkSuitabilityReview();
+  }
+
+  function markFrameworkSuitabilityReviewStale(reason = '5대 핵심요소가 변경됨') {
+    if(!frameworkSuitabilityReview.content) {
+      renderFrameworkSuitabilityReview();
+      return;
+    }
+
+    frameworkSuitabilityReview = {
+      ...frameworkSuitabilityReview,
+      status:'stale',
+      sourceLabel:`${reason} · 다음 STAGE 실행 시 재작성`
+    };
+    renderFrameworkSuitabilityReview();
+  }
+
+  function buildFrameworkSuitabilityFallback(sourceStage = 0) {
+    const raw = collectDecisionFrameworkRawData();
+    const readiness = calculateFrameworkReadiness(raw);
+    const weightTotal = raw.criteria.reduce(
+      (sum, item) => sum + Number(item.weight || 0),
+      0
+    );
+    const namedAlternatives = raw.alternatives.filter(item => item.name);
+    const completeScores = calculateAlternativeScoreResults()
+      .filter(item => item.complete);
+    const completedElements = readiness.elementScores
+      .map((score, index) => ({ score, index:index + 1 }))
+      .filter(item => item.score >= 80)
+      .map(item => `${item.index}번`)
+      .join(', ') || '없음';
+
+    const stageLabel = getFrameworkStageLabel(sourceStage);
+
+    return [
+      `■ 종합 진단: ${stageLabel} 기준 의사결정 준비도는 ${readiness.overall}%이며, ${
+        readiness.overall >= 80 ? '핵심 요소가 전반적으로 충족됨' :
+        readiness.overall >= 60 ? '조건부로 다음 단계 진행이 가능하나 보완이 필요함' :
+        '최종 판단 전 핵심 요소 보완이 우선 필요함'
+      }.`,
+      `▶ 완료 요소: ${completedElements}`,
+      `▶ 기준·대안 현황: 평가기준 ${raw.criteria.filter(item => item.name).length}개, 가중치 합계 ${weightTotal}%, 대안 ${namedAlternatives.length}개, 점수평가 완료 ${completeScores.length}개`,
+      `▶ 보완 요소: ${readiness.missing.length ? readiness.missing.join(' · ') : '추가 보완사항 없음'}`,
+      `▶ 다음 단계 권고: ${readiness.overall >= 80 ? '현재 기준을 유지하되 STAGE 산출물의 수치와 담당자 정보를 최종 검증할 필요가 있음.' : '누락 항목을 보완한 후 적정성 분석을 다시 실행할 필요가 있음.'}`
+    ].join('\n');
+  }
+
+  async function generateFrameworkSuitabilityReview(options = {}) {
+    const sourceStage = Number(options.sourceStage || 0);
+    const existingContent = String(options.existingContent || '').trim();
+
+    if(existingContent) {
+      setFrameworkSuitabilityReview(existingContent, {
+        sourceStage,
+        sourceLabel:getFrameworkStageLabel(sourceStage),
+        status:'ai'
+      });
+      return true;
+    }
+
+    if(frameworkSuitabilityReviewPromise) {
+      return await frameworkSuitabilityReviewPromise;
+    }
+
+    frameworkSuitabilityReview = {
+      ...frameworkSuitabilityReview,
+      status:'analyzing',
+      sourceStage,
+      sourceLabel:getFrameworkStageLabel(sourceStage)
+    };
+    renderFrameworkSuitabilityReview();
+
+    frameworkSuitabilityReviewPromise = (async () => {
+      try {
+        const context = {
+          agenda:String(state?.agenda || el('pz-agenda-text')?.value || '').trim(),
+          sourceStage,
+          sourceStageLabel:getFrameworkStageLabel(sourceStage),
+          framework:getDecisionFrameworkData({ includeSuitabilityReview:false }),
+          latestStageResult:options.stageResult || null,
+          stage1:state.s1[state.s1.length - 1] || null,
+          stage2:state.s2[state.s2.length - 1] || null,
+          stage3:state.s3[state.s3.length - 1] || null,
+          stage4:state.s4[state.s4.length - 1] || null
+        };
+
+        const prompt = `당신은 경영진 의사결정 품질을 검토하는 내부 감사·전략기획 전문가입니다.
+아래 최신 데이터를 기준으로 의사결정 5대 핵심요소의 적정성을 다시 작성하세요.
+
+[검토 데이터]
+"""${JSON.stringify(context)}"""
+
+[검토 기준]
+1. 목표·문제 정의가 실제 의사결정 질문과 연결되는지 확인하세요.
+2. 평가기준과 가중치가 균형적이며 합계가 100%인지 확인하세요.
+3. 대안이 2개 이상이고 낙관·최악 시나리오가 현실적으로 작성되었는지 확인하세요.
+4. 예산·일정·인력·기술·절대 준수조건이 실행 가능성을 판단하기에 충분한지 확인하세요.
+5. KPI·점검주기·경고조건·Plan B가 사후 통제장치로 충분한지 확인하세요.
+6. 최신 STAGE 실행으로 변경·추가된 내용을 반영하세요.
+7. 확인되지 않은 내용을 사실처럼 만들지 마세요.
+8. 7줄 이내의 두괄식 보고체로 작성하세요.
+
+[출력 형식]
+■ 종합 진단: 적정 / 조건부 적정 / 보완 필요 중 하나와 핵심 이유
+▶ 완료 요소: ...
+▶ 변경·추가 반영사항: ...
+▶ 보완 요소: ...
+▶ 다음 단계 권고: ...
+
+다른 설명 없이 검토 본문만 출력하세요.`;
+
+        const result = await callGemini(prompt, false);
+
+        setFrameworkSuitabilityReview(result, {
+          sourceStage,
+          sourceLabel:getFrameworkStageLabel(sourceStage),
+          status:'ai'
+        });
+
+        return true;
+      } catch(error) {
+        console.warn('Framework suitability review failed:', error);
+
+        setFrameworkSuitabilityReview(
+          buildFrameworkSuitabilityFallback(sourceStage),
+          {
+            sourceStage,
+            sourceLabel:`${getFrameworkStageLabel(sourceStage)} · 자동 진단`,
+            status:'fallback'
+          }
+        );
+
+        return false;
+      } finally {
+        frameworkSuitabilityReviewPromise = null;
+        renderFrameworkSuitabilityReview();
+      }
+    })();
+
+    return await frameworkSuitabilityReviewPromise;
+  }
+
+  function getLatestCompletedFrameworkStage() {
+    if(state.s4.length) return 4;
+    if(state.s3.length) return 3;
+    if(state.s2.length) return 2;
+    if(state.s1.length) return 1;
+    return 0;
+  }
+
+  function getDecisionFrameworkData(options = {}) {
     const raw = collectDecisionFrameworkRawData();
     const readiness = calculateFrameworkReadiness(raw);
     const alternativeScores = calculateAlternativeScoreResults();
 
-    return {
+    const result = {
       ...raw,
       computed:{
         readiness,
@@ -1836,6 +2183,14 @@
             .sort((a, b) => b.score - a.score)[0] || null
       }
     };
+
+    if(options.includeSuitabilityReview !== false) {
+      result.suitabilityReview = {
+        ...frameworkSuitabilityReview
+      };
+    }
+
+    return result;
   }
 
   function refreshFrameworkReadiness() {
@@ -1879,6 +2234,7 @@
     renderFrameworkCriteriaRows();
     renderDecisionMatrix();
     refreshFrameworkReadiness();
+    markFrameworkSuitabilityReviewStale('평가기준 추가');
   }
 
   function addFrameworkAlternative() {
@@ -1892,6 +2248,7 @@
     renderFrameworkAlternativeRows();
     renderDecisionMatrix();
     refreshFrameworkReadiness();
+    markFrameworkSuitabilityReviewStale('대안 추가');
   }
 
   function loadDecisionFrameworkData(data) {
@@ -1937,10 +2294,31 @@
       ? JSON.parse(JSON.stringify(data.scoreMatrix))
       : {};
 
+    if(data.suitabilityReview && typeof data.suitabilityReview === 'object') {
+      frameworkSuitabilityReview = {
+        content:String(data.suitabilityReview.content || ''),
+        updatedAt:String(data.suitabilityReview.updatedAt || ''),
+        sourceStage:Number(data.suitabilityReview.sourceStage || 0),
+        sourceLabel:String(data.suitabilityReview.sourceLabel || ''),
+        status:String(data.suitabilityReview.status || 'ai'),
+        signature:String(data.suitabilityReview.signature || '')
+      };
+    } else {
+      frameworkSuitabilityReview = {
+        content:'',
+        updatedAt:'',
+        sourceStage:0,
+        sourceLabel:'',
+        status:'empty',
+        signature:''
+      };
+    }
+
     renderFrameworkCriteriaRows();
     renderFrameworkAlternativeRows();
     renderDecisionMatrix();
     refreshFrameworkReadiness();
+    renderFrameworkSuitabilityReview();
   }
 
   function resetDecisionFramework(showConfirm = true) {
@@ -1963,6 +2341,7 @@
     frameworkCriteria = createDefaultFrameworkCriteria();
     frameworkAlternatives = createDefaultFrameworkAlternatives();
     frameworkScores = {};
+    clearFrameworkSuitabilityReview();
     setFrameworkPanel(1);
     renderFrameworkCriteriaRows();
     renderFrameworkAlternativeRows();
@@ -2048,6 +2427,7 @@
     renderFrameworkAlternativeRows();
     renderDecisionMatrix();
     refreshFrameworkReadiness();
+    markFrameworkSuitabilityReviewStale('AI 초안으로 5대 핵심요소 변경');
     updateDecisionTitle();
   }
 
@@ -2328,6 +2708,7 @@ ${getFrameworkDraftSchema(requestedSections)}`;
     ].forEach(id => {
       el(id)?.addEventListener('input', () => {
         refreshFrameworkReadiness();
+        markFrameworkSuitabilityReviewStale('5대 핵심요소 직접 수정');
         updateDecisionTitle();
       });
     });
@@ -2336,11 +2717,18 @@ ${getFrameworkDraftSchema(requestedSections)}`;
     el('pz-add-alternative')?.addEventListener('click', addFrameworkAlternative);
     el('pz-framework-reset')?.addEventListener('click', () => resetDecisionFramework(true));
     el('pz-framework-ai-fill')?.addEventListener('click', autoFillDecisionFramework);
+    el('pz-framework-review-refresh')?.addEventListener('click', () => {
+      generateFrameworkSuitabilityReview({
+        sourceStage:getLatestCompletedFrameworkStage(),
+        stageResult:null
+      });
+    });
 
     renderFrameworkCriteriaRows();
     renderFrameworkAlternativeRows();
     renderDecisionMatrix();
     refreshFrameworkReadiness();
+    renderFrameworkSuitabilityReview();
   }
 
   const DEFAULT_API_KEY = 'AQ.Ab8RN6KzWeBN-x9bETmgxgGMfai--GX5uJ-KiyxnfVWQ0XNtGA';
@@ -3745,7 +4133,7 @@ ${categoryOutputFormat}`;
     setStageUnlocked(1);
     el('s1-error').textContent='';
     
-    const titles = ['사업자료 분석','경쟁사 비교','시장 규모 추정','리스크 시나리오','투자 분석','AI 선정 필수 분석','5대 핵심요소 적정성'];
+    const titles = ['사업자료 분석','경쟁사 비교','시장 규모 추정','리스크 시나리오','투자 분석','AI 선정 필수 분석'];
     showSkeleton(el('s1-skeleton-holder'), titles);
     
     try{
@@ -3852,6 +4240,13 @@ ${categoryOutputFormat}`;
         ])
       );
 
+      await generateFrameworkSuitabilityReview({
+        sourceStage:1,
+        stageResult:r,
+        existingContent:r.decision_framework_review,
+        silent:true
+      });
+
       state.s1.push(r);
       updateStageResetButtons();
       updateDecisionTitle();
@@ -3869,8 +4264,7 @@ ${categoryOutputFormat}`;
           ['시장 규모 추정', r.market_size, groundedSources.market_size],
           ['리스크 시나리오', r.risk_analysis, groundedSources.risk_analysis],
           ['투자 분석', r.investment_scenario, groundedSources.investment_scenario],
-          [aiSelectedCategoryTitle, aiSelectedCategoryContent, groundedSources.additional_category_content],
-          ['5대 핵심요소 적정성', r.decision_framework_review]
+          [aiSelectedCategoryTitle, aiSelectedCategoryContent, groundedSources.additional_category_content]
         ],
         agendaSummary: state.agenda
       });
@@ -3883,7 +4277,6 @@ ${categoryOutputFormat}`;
         ['리스크 시나리오', r.risk_analysis, groundedSources.risk_analysis],
         ['투자 분석', r.investment_scenario, groundedSources.investment_scenario],
         [aiSelectedCategoryTitle, aiSelectedCategoryContent, groundedSources.additional_category_content],
-        ['5대 핵심요소 적정성', r.decision_framework_review],
       ]);
     }catch(e){
       hideSkeleton(el('s1-skeleton-holder'));
@@ -3924,6 +4317,11 @@ ${categoryOutputFormat}`;
       
       const r = await callGemini(prompt);
       state.s2.push(r);
+      await generateFrameworkSuitabilityReview({
+        sourceStage:2,
+        stageResult:r,
+        silent:true
+      });
       updateStageResetButtons();
       updateDecisionTitle();
 
@@ -3993,6 +4391,11 @@ ${categoryOutputFormat}`;
       
       const r = await callGemini(prompt);
       state.s3.push(r);
+      await generateFrameworkSuitabilityReview({
+        sourceStage:3,
+        stageResult:r,
+        silent:true
+      });
       updateStageResetButtons();
       updateDecisionTitle();
 
@@ -4067,6 +4470,11 @@ ${categoryOutputFormat}`;
       
       const r = await callGemini(prompt);
       state.s4.push(r);
+      await generateFrameworkSuitabilityReview({
+        sourceStage:4,
+        stageResult:r,
+        silent:true
+      });
       updateStageResetButtons();
       updateDecisionTitle();
 
@@ -5638,7 +6046,7 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
       const decisionTitle = metadata.decisionTitle || metadata.decision_title || '';
       const authorName = metadata.authorName || metadata.author_name || '';
 
-      const frameworkRecord = sorted.find(item => item?.data?.decisionFramework);
+      const frameworkRecord = [...sorted].reverse().find(item => item?.data?.decisionFramework);
       if(frameworkRecord?.data?.decisionFramework) {
         loadDecisionFrameworkData(frameworkRecord.data.decisionFramework);
       }
