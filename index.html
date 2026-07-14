@@ -1476,7 +1476,7 @@ body{margin:0;background:#f5f7fb;color:#172033;}
     <input type="password" class="pz-key-input" id="pz-api-key" value="AQ.Ab8RN6KzWeBN-x9bETmgxgGMfai--GX5uJ-KiyxnfVWQ0XNtGA" placeholder="필요 시 API Key를 수정하세요." autocomplete="off">
     <label class="pz-save"><input type="checkbox" id="pz-key-save"> 이 브라우저에 저장</label>
     <span class="pz-key-status missing" id="pz-key-status">키 미입력</span>
-    <span class="pz-ai-call-status" id="pz-ai-call-status">AI 준비됨</span>
+    <span class="pz-ai-call-status" id="pz-ai-call-status" title="회의 준비는 Flash → Flash-Lite → Flash-Lite 재시도 2회 → Flash 최종 전환 순서로 자동 복구합니다. 근거 조회는 별도 최적화 모델과 12시간 캐시를 사용합니다.">AI 준비됨</span>
     <button type="button" class="pz-history-open" id="pz-open-history">🗂 입력 이력 <span id="pz-history-count">0</span></button>
     <span class="pz-db-status" id="pz-db-status">공유 DB 연결 확인 중</span>
     <p class="pz-sub"><b>공개 배포 보안:</b> 사용자별 Gemini API 키를 입력하세요. 공유 DB는 시스템에 고정된 API로 자동 연결됩니다.</p>
@@ -3144,7 +3144,16 @@ ${getFrameworkDraftRules(requestedSections)}
 [응답 JSON 구조]
 ${getFrameworkDraftSchema(requestedSections)}`;
 
-        const result = await callGemini(prompt);
+        const result = await callGemini(
+          prompt,
+          true,
+          options.trigger === 'stage1_meeting_preparation'
+            ? {
+                profile:'meetingPreparation',
+                requestLabel:'5대 핵심요소 초안'
+              }
+            : {}
+        );
         const filteredResult = filterFrameworkDraftBySections(
           result,
           requestedSections
@@ -3427,7 +3436,45 @@ ${getFrameworkDraftSchema(requestedSections)}`;
   const GEMINI_PRIMARY_MODEL = 'gemini-2.5-flash';
   const GEMINI_FALLBACK_MODEL = 'gemini-2.5-flash-lite';
   const GEMINI_TRANSIENT_HTTP = new Set([408, 429, 500, 502, 503, 504]);
-  const GEMINI_REQUEST_TIMEOUT_MS = 90000;
+
+  const GEMINI_REQUEST_PROFILES = Object.freeze({
+    analysis:{
+      attemptPlan:[
+        GEMINI_PRIMARY_MODEL,
+        GEMINI_PRIMARY_MODEL,
+        GEMINI_PRIMARY_MODEL,
+        GEMINI_FALLBACK_MODEL,
+        GEMINI_FALLBACK_MODEL
+      ],
+      timeoutMs:90000,
+      maxBackoffMs:8000
+    },
+    meetingPreparation:{
+      // 요청 순서:
+      // 1) Flash 실행
+      // 2) Flash-Lite 실행
+      // 3~4) Flash-Lite 자동 재시도 2회
+      // 5) 필요할 때 Flash 최종 전환
+      attemptPlan:[
+        GEMINI_PRIMARY_MODEL,
+        GEMINI_FALLBACK_MODEL,
+        GEMINI_FALLBACK_MODEL,
+        GEMINI_FALLBACK_MODEL,
+        GEMINI_PRIMARY_MODEL
+      ],
+      timeoutMs:75000,
+      maxBackoffMs:5000
+    },
+    grounding:{
+      attemptPlan:[
+        GEMINI_FALLBACK_MODEL,
+        GEMINI_FALLBACK_MODEL,
+        GEMINI_PRIMARY_MODEL
+      ],
+      timeoutMs:60000,
+      maxBackoffMs:5000
+    }
+  });
 
   function setGeminiCallStatus(message, type = '') {
     const status = el('pz-ai-call-status');
@@ -3463,9 +3510,16 @@ ${getFrameworkDraftSchema(requestedSections)}`;
     return Math.max(0, Math.min(retryAfterMs, 30000));
   }
 
-  function getGeminiBackoffMs(failureIndex, retryAfterMs = 0) {
-    const exponential = Math.min(1000 * (2 ** Math.max(failureIndex, 0)), 8000);
-    const jitter = Math.floor(Math.random() * 900);
+  function getGeminiBackoffMs(
+    failureIndex,
+    retryAfterMs = 0,
+    maxBackoffMs = 8000
+  ) {
+    const exponential = Math.min(
+      1000 * (2 ** Math.max(failureIndex, 0)),
+      maxBackoffMs
+    );
+    const jitter = Math.floor(Math.random() * 700);
     return Math.max(exponential + jitter, retryAfterMs);
   }
 
@@ -3484,53 +3538,111 @@ ${getFrameworkDraftSchema(requestedSections)}`;
     return apiMessage || response.statusText || '알 수 없는 Gemini API 오류';
   }
 
-  async function fetchGeminiWithResilience(payload, requestLabel = 'AI 분석') {
+  async function fetchGeminiWithResilience(
+    payload,
+    requestLabel = 'AI 분석',
+    options = {}
+  ) {
     const apiKey = requireKey();
-    const attemptPlan = [
-      GEMINI_PRIMARY_MODEL,
-      GEMINI_PRIMARY_MODEL,
-      GEMINI_PRIMARY_MODEL,
-      GEMINI_FALLBACK_MODEL,
-      GEMINI_FALLBACK_MODEL
-    ];
+    const profileName = options.profile === 'grounding'
+      ? 'grounding'
+      : (
+          options.profile === 'meetingPreparation'
+            ? 'meetingPreparation'
+            : 'analysis'
+        );
+    const profile = GEMINI_REQUEST_PROFILES[profileName];
+    const attemptPlan = options.attemptPlan || profile.attemptPlan;
+    const requestTimeoutMs = Number(options.timeoutMs || profile.timeoutMs);
+    const maxBackoffMs = Number(options.maxBackoffMs || profile.maxBackoffMs);
+    const isGroundingRequest = profileName === 'grounding';
+    const isMeetingPreparationRequest = profileName === 'meetingPreparation';
+    const preferredModel = attemptPlan[0];
 
     let lastFailure = {
       status:0,
       message:'응답 없음',
-      model:GEMINI_PRIMARY_MODEL
+      model:preferredModel
     };
     let nextDelayMs = 0;
 
     for(let attemptIndex = 0; attemptIndex < attemptPlan.length; attemptIndex++) {
       const model = attemptPlan[attemptIndex];
-      const isFallback = model === GEMINI_FALLBACK_MODEL;
+      const switchedModel = model !== preferredModel;
 
       if(attemptIndex > 0) {
         const seconds = Math.max(1, Math.ceil(nextDelayMs / 1000));
-        setGeminiCallStatus(
-          isFallback
-            ? `혼잡 지속 · 대체 모델 전환 (${seconds}초 후)`
-            : `서비스 혼잡 · 자동 재시도 ${attemptIndex + 1}/5 (${seconds}초 후)`,
-          isFallback ? 'fallback' : 'retry'
-        );
+
+        if(isMeetingPreparationRequest) {
+          const waitMessages = {
+            1:`Flash 혼잡 감지 · Flash-Lite 전환 (${seconds}초 후)`,
+            2:`Flash-Lite 자동 재시도 1/2 (${seconds}초 후)`,
+            3:`Flash-Lite 자동 재시도 2/2 (${seconds}초 후)`,
+            4:`최종 복구 · Flash 재전환 (${seconds}초 후)`
+          };
+          setGeminiCallStatus(
+            waitMessages[attemptIndex] ||
+              `${requestLabel} 자동 복구 ${attemptIndex + 1}/${attemptPlan.length}`,
+            attemptIndex === 1 || attemptIndex === 4 ? 'fallback' : 'retry'
+          );
+        } else if(isGroundingRequest) {
+          setGeminiCallStatus(
+            switchedModel
+              ? `근거 조회 모델 자동 전환 · ${seconds}초 후 재개`
+              : `근거 조회 일시 지연 · 재시도 ${attemptIndex + 1}/${attemptPlan.length} (${seconds}초 후)`,
+            switchedModel ? 'fallback' : 'retry'
+          );
+        } else {
+          setGeminiCallStatus(
+            switchedModel
+              ? `혼잡 지속 · 대체 모델 전환 (${seconds}초 후)`
+              : `서비스 혼잡 · 자동 재시도 ${attemptIndex + 1}/${attemptPlan.length} (${seconds}초 후)`,
+            switchedModel ? 'fallback' : 'retry'
+          );
+        }
+
         await sleep(nextDelayMs);
       }
 
-      setGeminiCallStatus(
-        isFallback
-          ? `대체 모델로 ${requestLabel} 처리 중`
-          : `${requestLabel} 처리 중${attemptIndex ? ` · 재시도 ${attemptIndex + 1}/5` : ''}`,
-        isFallback ? 'fallback' : (attemptIndex ? 'retry' : '')
-      );
+      if(isMeetingPreparationRequest) {
+        const runningMessages = {
+          0:`${requestLabel} · Flash 실행 중 · 1/5`,
+          1:`${requestLabel} · Flash-Lite 실행 중 · 2/5`,
+          2:`${requestLabel} · Flash-Lite 재시도 1/2 · 3/5`,
+          3:`${requestLabel} · Flash-Lite 재시도 2/2 · 4/5`,
+          4:`${requestLabel} · Flash 최종 전환 · 5/5`
+        };
+        setGeminiCallStatus(
+          runningMessages[attemptIndex] ||
+            `${requestLabel} 처리 중 · ${attemptIndex + 1}/${attemptPlan.length}`,
+          attemptIndex === 1 || attemptIndex === 4
+            ? 'fallback'
+            : (attemptIndex >= 2 ? 'retry' : '')
+        );
+      } else if(isGroundingRequest) {
+        setGeminiCallStatus(
+          switchedModel
+            ? `근거 조회 안정 모델로 처리 중 · ${attemptIndex + 1}/${attemptPlan.length}`
+            : `근거 조회 최적화 모델로 처리 중 · ${attemptIndex + 1}/${attemptPlan.length}`,
+          switchedModel ? 'fallback' : (attemptIndex ? 'retry' : '')
+        );
+      } else {
+        setGeminiCallStatus(
+          switchedModel
+            ? `대체 모델로 ${requestLabel} 처리 중`
+            : `${requestLabel} 처리 중${attemptIndex ? ` · 재시도 ${attemptIndex + 1}/${attemptPlan.length}` : ''}`,
+          switchedModel ? 'fallback' : (attemptIndex ? 'retry' : '')
+        );
+      }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), GEMINI_REQUEST_TIMEOUT_MS);
+      const timeoutId = setTimeout(() => controller.abort(), requestTimeoutMs);
 
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
         const response = await fetch(url, {
           method:'POST',
-          headers:{ 'Content-Type':'application/json' },
+          headers:{'Content-Type':'application/json'},
           body:JSON.stringify(payload),
           signal:controller.signal
         });
@@ -3540,14 +3652,38 @@ ${getFrameworkDraftSchema(requestedSections)}`;
         if(response.ok) {
           const data = await response.json();
 
-          setGeminiCallStatus(
-            isFallback
-              ? '대체 모델로 완료'
-              : (attemptIndex > 0 ? '자동 재시도 후 완료' : 'AI 응답 완료'),
-            'ok'
-          );
+          let successMessage = '';
 
-          return { data, model, attemptCount:attemptIndex + 1 };
+          if(isMeetingPreparationRequest) {
+            const successMessages = {
+              0:`${requestLabel} · Flash 완료`,
+              1:`${requestLabel} · Flash-Lite 전환 후 완료`,
+              2:`${requestLabel} · Flash-Lite 재시도 1회 후 완료`,
+              3:`${requestLabel} · Flash-Lite 재시도 2회 후 완료`,
+              4:`${requestLabel} · Flash 최종 복구 완료`
+            };
+            successMessage =
+              successMessages[attemptIndex] ||
+              `${requestLabel} 자동 복구 후 완료`;
+          } else if(isGroundingRequest) {
+            successMessage = switchedModel
+              ? '근거 조회 모델 전환 후 완료'
+              : (attemptIndex > 0 ? '근거 조회 재시도 후 완료' : '근거 조회 완료');
+          } else {
+            successMessage = switchedModel
+              ? '대체 모델로 완료'
+              : (attemptIndex > 0 ? '자동 재시도 후 완료' : 'AI 응답 완료');
+          }
+
+          setGeminiCallStatus(successMessage, 'ok');
+
+          return {
+            data,
+            model,
+            attemptCount:attemptIndex + 1,
+            profile:profileName,
+            switchedModel
+          };
         }
 
         const apiMessage = await parseGeminiErrorResponse(response);
@@ -3567,7 +3703,8 @@ ${getFrameworkDraftSchema(requestedSections)}`;
 
         nextDelayMs = getGeminiBackoffMs(
           attemptIndex,
-          getGeminiRetryAfterMs(response, apiMessage)
+          getGeminiRetryAfterMs(response, apiMessage),
+          maxBackoffMs
         );
       } catch(error) {
         clearTimeout(timeoutId);
@@ -3580,22 +3717,28 @@ ${getFrameworkDraftSchema(requestedSections)}`;
         lastFailure = {
           status:error?.status || 0,
           message:isTimeout
-            ? `요청 제한시간 ${Math.round(GEMINI_REQUEST_TIMEOUT_MS / 1000)}초 초과`
+            ? `요청 제한시간 ${Math.round(requestTimeoutMs / 1000)}초 초과`
             : (error?.message || '네트워크 요청 실패'),
           model
         };
 
-        nextDelayMs = getGeminiBackoffMs(attemptIndex, 0);
+        nextDelayMs = getGeminiBackoffMs(
+          attemptIndex,
+          0,
+          maxBackoffMs
+        );
       }
     }
 
     const statusText = lastFailure.status
       ? `HTTP ${lastFailure.status}`
       : '네트워크/시간 초과';
+    const triedModels = attemptPlan.join(' → ');
 
     const finalError = new Error(
       `${requestLabel} 실패 — ${statusText}. ` +
-      `Gemini 2.5 Flash 3회와 Flash-Lite 대체 모델 2회까지 자동 시도했으나 응답하지 않았습니다. ` +
+      `${attemptPlan.length}회 자동 복구를 시도했으나 응답하지 않았습니다. ` +
+      `시도 모델: ${triedModels}. ` +
       `잠시 후 다시 시도해 주세요. 마지막 오류: ${lastFailure.message}`
     );
 
@@ -3605,17 +3748,34 @@ ${getFrameworkDraftSchema(requestedSections)}`;
       lastFailure.status === 503 ||
       /high demand|overload|capacity|unavailable/i.test(lastFailure.message);
 
-    setGeminiCallStatus('자동 복구 실패 · 잠시 후 재시도', 'error');
+    setGeminiCallStatus(
+      isMeetingPreparationRequest
+        ? '회의 준비 자동 복구 실패 · 입력 내용은 유지됨'
+        : (
+            isGroundingRequest
+              ? '근거 조회 자동 복구 실패 · 본문 분석은 유지됨'
+              : '자동 복구 실패 · 잠시 후 재시도'
+          ),
+      'error'
+    );
     throw finalError;
   }
 
-  async function callGemini(promptText, isJson = true){
+  async function callGemini(
+    promptText,
+    isJson = true,
+    options = {}
+  ){
     const payload = {
       contents:[{ parts:[{ text:promptText }] }],
       generationConfig:isJson ? { responseMimeType:'application/json' } : {}
     };
 
-    const result = await fetchGeminiWithResilience(payload, 'AI 산출');
+    const result = await fetchGeminiWithResilience(
+      payload,
+      options.requestLabel || 'AI 산출',
+      options
+    );
     const data = result.data;
 
     try {
@@ -3899,10 +4059,19 @@ ${getFrameworkDraftSchema(requestedSections)}`;
     const payload = {
       contents:[{ parts:[{ text:promptText }] }],
       tools:[{ google_search:{} }],
-      generationConfig:{ temperature:0.2 }
+      generationConfig:{
+        temperature:0.1,
+        candidateCount:1,
+        maxOutputTokens:2400,
+        thinkingConfig:{thinkingBudget:0}
+      }
     };
 
-    const result = await fetchGeminiWithResilience(payload, 'Google Search 근거 조회');
+    const result = await fetchGeminiWithResilience(
+      payload,
+      'Google Search 근거 조회',
+      {profile:'grounding'}
+    );
     const candidate = result.data.candidates?.[0];
 
     if(!candidate) {
@@ -3943,12 +4112,131 @@ ${getFrameworkDraftSchema(requestedSections)}`;
     return Math.min(Math.ceil(seconds * 1000) + 700, 20000);
   }
 
+  const GROUNDING_CACHE_STORAGE_KEY = 'pz_grounding_cache_v3';
+  const GROUNDING_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+  const GROUNDING_CACHE_MAX_ENTRIES = 8;
+
+  function hashGroundingText(value) {
+    const text = String(value || '');
+    let hash = 2166136261;
+    for(let index = 0; index < text.length; index++) {
+      hash ^= text.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(16).padStart(8, '0');
+  }
+
+  function compactGroundingEvidenceBody(body, maxChars = 1100) {
+    const normalized = String(body || '')
+      .replace(/\r/g, '')
+      .replace(/[ \t]+/g, ' ')
+      .trim();
+
+    if(normalized.length <= maxChars) return normalized;
+
+    const lines = normalized
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean);
+    const priority = [];
+    const remainder = [];
+
+    lines.forEach(line => {
+      if(/핵심|결론|요약|지표|근거|시장|리스크|투자|경쟁|규제|%|억|조|년|건/i.test(line)) {
+        priority.push(line);
+      } else {
+        remainder.push(line);
+      }
+    });
+
+    const selected = [];
+    for(const line of [...priority, ...remainder]) {
+      if(selected.includes(line)) continue;
+      selected.push(line);
+      if(selected.join('\n').length >= maxChars) break;
+    }
+
+    return selected.join('\n').slice(0, maxChars).trim();
+  }
+
+  function buildGroundingCacheKey(agenda, sourceTargets) {
+    return hashGroundingText(JSON.stringify({
+      agenda:String(agenda || '').trim().slice(0, 5000),
+      targets:sourceTargets.map(([key, title, body]) => ({
+        key,
+        title,
+        body:compactGroundingEvidenceBody(body)
+      }))
+    }));
+  }
+
+  function readGroundingCache(cacheKey) {
+    try {
+      const raw = localStorage.getItem(GROUNDING_CACHE_STORAGE_KEY);
+      const entries = raw ? JSON.parse(raw) : [];
+      const now = Date.now();
+      const validEntries = Array.isArray(entries)
+        ? entries.filter(item =>
+            item &&
+            item.key &&
+            Number(item.savedAt) &&
+            now - Number(item.savedAt) <= GROUNDING_CACHE_TTL_MS
+          )
+        : [];
+
+      localStorage.setItem(
+        GROUNDING_CACHE_STORAGE_KEY,
+        JSON.stringify(validEntries.slice(0, GROUNDING_CACHE_MAX_ENTRIES))
+      );
+
+      return validEntries.find(item => item.key === cacheKey)?.results || null;
+    } catch(error) {
+      return null;
+    }
+  }
+
+  function writeGroundingCache(cacheKey, results) {
+    try {
+      const compactResults = Object.fromEntries(
+        Object.entries(results || {}).map(([key, value]) => [
+          key,
+          {
+            text:String(value?.text || ''),
+            searchHtml:'',
+            error:String(value?.error || '')
+          }
+        ])
+      );
+
+      const raw = localStorage.getItem(GROUNDING_CACHE_STORAGE_KEY);
+      const entries = raw ? JSON.parse(raw) : [];
+      const filtered = (Array.isArray(entries) ? entries : [])
+        .filter(item => item?.key !== cacheKey)
+        .filter(item =>
+          item &&
+          Number(item.savedAt) &&
+          Date.now() - Number(item.savedAt) <= GROUNDING_CACHE_TTL_MS
+        );
+
+      filtered.unshift({
+        key:cacheKey,
+        savedAt:Date.now(),
+        results:compactResults
+      });
+
+      localStorage.setItem(
+        GROUNDING_CACHE_STORAGE_KEY,
+        JSON.stringify(filtered.slice(0, GROUNDING_CACHE_MAX_ENTRIES))
+      );
+    } catch(error) {}
+  }
+
   async function getStage1SourceEvidenceBatch(agenda, sourceTargets, isRetry = false) {
     const categoryInput = sourceTargets.map(([key, title, body]) => `
 [[INPUT:${key}]]
 카테고리명: ${title}
-분석 내용:
-"""${body}"""
+핵심 검증 대상:
+"""${compactGroundingEvidenceBody(body)}"""
 `).join('\n');
 
     const categoryOutputFormat = sourceTargets.map(([key]) => `
@@ -3980,13 +4268,13 @@ ${categoryInput}
 ${retryRules}
 
 [핵심 수행 원칙]
-1. 각 카테고리별로 해당 분석 내용을 확인할 수 있는 【실제로 존재하는 원문 자료】를 1~2개 선정하세요.
+1. 각 카테고리별로 핵심 주장과 수치를 가장 직접적으로 확인할 수 있는 【실제로 존재하는 원문 자료】 1개를 선정하세요.
 2. 실제 뉴스 기사, 공식 기관 보고서, 정부·공공기관 통계, 기업 공식 발표, 학술·산업 보고서처럼 구체적인 원문 내용이 존재하는 자료만 사용하세요.
 3. 검색어, 검색 문장, '검색해 보세요' 같은 안내는 출력하지 마세요.
 4. URL을 직접 작성하거나 추측하지 마세요. Google Search Grounding으로 실제 확인된 자료만 사용하세요.
 5. 분석과 직접 관련 없는 자료는 제외하세요.
 6. 가능하면 공식 기관·기업 원문 또는 신뢰도 높은 언론·조사기관 자료를 우선하세요.
-7. 서로 다른 자료를 2개 제시할 경우 실제로 각각 확인된 서로 다른 원문 자료를 사용하세요.
+7. 여러 후보가 있더라도 가장 직접적이고 신뢰도 높은 원문 1개만 최종 선택하세요.
 8. 입력된 카테고리를 서로 합치지 말고 반드시 아래 CATEGORY 마커를 정확히 1회씩, 입력된 순서대로 출력하세요.
 9. 각 CATEGORY 아래에는 기존 화면 형식을 유지하기 위해 반드시 '• 자료명:', '발행처:', '관련성:' 형식만 사용하세요.
 10. 자료명은 실제 원문 제목을 최대한 정확히 작성하세요.
@@ -4062,69 +4350,98 @@ ${categoryOutputFormat}`;
   }
 
   async function getStage1AllSourceEvidence(agenda, sourceTargets) {
-    // 1차: 6개 카테고리 통합 Grounding
-    let results;
+    const cacheKey = buildGroundingCacheKey(agenda, sourceTargets);
+    const cachedResults = readGroundingCache(cacheKey) || {};
+    const results = {};
+
+    sourceTargets.forEach(([key]) => {
+      const cached = cachedResults[key];
+      if(cached && !cached.error && cached.text) {
+        results[key] = {
+          text:cached.text,
+          searchHtml:'',
+          error:'',
+          fromCache:true
+        };
+      }
+    });
+
+    const uncachedTargets = sourceTargets.filter(
+      ([key]) => !results[key] || results[key].error
+    );
+
+    if(uncachedTargets.length === 0) {
+      setGeminiCallStatus('검증된 근거 캐시 재사용 · 즉시 완료', 'ok');
+      return results;
+    }
+
+    setGeminiCallStatus(
+      Object.keys(results).length
+        ? `기존 근거 ${Object.keys(results).length}건 재사용 · 나머지 조회 중`
+        : '검증된 근거 캐시 확인 완료 · 신규 조회 시작',
+      Object.keys(results).length ? 'ok' : ''
+    );
 
     try {
-      results = await getStage1SourceEvidenceBatch(agenda, sourceTargets, false);
-    } catch(initialError) {
-      // 통합 호출 자체가 실패한 경우 모든 카테고리를 실패 상태로 두고
-      // 아래 보완 재검색 1회 대상으로 넘김
-      results = Object.fromEntries(
-        sourceTargets.map(([key]) => [
-          key,
-          { text:'', searchHtml:'', error: initialError.message }
-        ])
+      const initialResults = await getStage1SourceEvidenceBatch(
+        agenda,
+        uncachedTargets,
+        false
       );
 
+      uncachedTargets.forEach(([key]) => {
+        results[key] = initialResults[key] || {
+          text:'',
+          searchHtml:'',
+          error:'근거 조회 결과가 누락되었습니다.'
+        };
+      });
+    } catch(initialError) {
+      uncachedTargets.forEach(([key]) => {
+        results[key] = {
+          text:'',
+          searchHtml:'',
+          error:initialError.message
+        };
+      });
+
       if(initialError?.isGeminiCapacityError) {
+        writeGroundingCache(cacheKey, results);
         return results;
       }
 
-      const waitMs = getRetryDelayMs(initialError.message);
-      await sleep(waitMs);
+      await sleep(getRetryDelayMs(initialError.message));
     }
 
-    // 2차 Grounding 대상: 1차에서 실패한 카테고리만 추출
     const failedTargets = sourceTargets.filter(
       ([key]) => !results[key] || results[key].error
     );
 
-    if(failedTargets.length === 0) {
-      return results;
+    if(failedTargets.length > 0) {
+      try {
+        const retryResults = await getStage1SourceEvidenceBatch(
+          agenda,
+          failedTargets,
+          true
+        );
+        failedTargets.forEach(([key]) => {
+          if(retryResults[key]) results[key] = retryResults[key];
+        });
+      } catch(retryError) {
+        failedTargets.forEach(([key]) => {
+          results[key] = {
+            text:'',
+            searchHtml:'',
+            error:`보완 재검색 실패: ${retryError.message}`
+          };
+        });
+      }
     }
 
-    try {
-      // 실패 카테고리들을 다시 하나로 묶어 Grounding 1회만 추가 수행
-      const retryResults = await getStage1SourceEvidenceBatch(
-        agenda,
-        failedTargets,
-        true
-      );
-
-      failedTargets.forEach(([key]) => {
-        const retryValue = retryResults[key];
-
-        // 재검색 성공 시 1차 실패 결과를 성공 결과로 교체
-        if(retryValue && !retryValue.error) {
-          results[key] = retryValue;
-        } else if(retryValue) {
-          // 재검색도 실패한 경우 최종 실패 사유만 유지
-          results[key] = retryValue;
-        }
-      });
-    } catch(retryError) {
-      failedTargets.forEach(([key]) => {
-        results[key] = {
-          text: '',
-          searchHtml: '',
-          error: `보완 재검색 실패: ${retryError.message}`
-        };
-      });
-    }
-
+    writeGroundingCache(cacheKey, results);
     return results;
   }
+
 
   function enableCardEditing(bodyElement, originalRawText) {
     if (bodyElement.classList.contains('editing')) return;
@@ -5090,9 +5407,19 @@ ${categoryOutputFormat}`;
   el('pz-save-draft').addEventListener('click', saveDraftDecision);
 
   // ---- STAGE 1 ----
+  let stage1RunInProgress = false;
+
   el('pz-run-agenda').addEventListener('click', async ()=>{
     const agenda = el('pz-agenda-text').value.trim();
-    if(!agenda) return;
+    if(!agenda || stage1RunInProgress) return;
+
+    stage1RunInProgress = true;
+    const runButton = el('pz-run-agenda');
+    const originalRunButtonText = runButton.textContent;
+    runButton.disabled = true;
+    runButton.setAttribute('aria-busy', 'true');
+    runButton.textContent = '① 회의 준비 산출 중…';
+
     state.agenda = agenda;
     updateDecisionTitle();
     
@@ -5156,7 +5483,14 @@ ${categoryOutputFormat}`;
  "additional_category_content":"■ 추가 선정 사유: 이 안건의 의사결정에서 ... 관점이 필수임.\\n[AI 판단에 따라 세부 분석 1~3개. 1개면 번호 없이 작성]\\n▶ [구체적 사실·지표·사례 근거]",
  "decision_framework_review":"■ 5대 요소 종합 진단: ...\n▶ 완료 요소: ...\n▶ 보완 요소: ...\n▶ 다음 단계 권고: ..."}`;
 
-      const r = await callGemini(prompt);
+      const r = await callGemini(
+        prompt,
+        true,
+        {
+          profile:'meetingPreparation',
+          requestLabel:'회의 준비 자동 산출'
+        }
+      );
 
       const stage1TextFields = [
         'business_data',
@@ -5249,6 +5583,11 @@ ${categoryOutputFormat}`;
     }catch(e){
       hideSkeleton(el('s1-skeleton-holder'));
       el('s1-error').textContent = '산출 실패: '+e.message+' — 다시 시도해 주세요.';
+    }finally{
+      stage1RunInProgress = false;
+      runButton.disabled = false;
+      runButton.removeAttribute('aria-busy');
+      runButton.textContent = originalRunButtonText;
     }
   });
 
