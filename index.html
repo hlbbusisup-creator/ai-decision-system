@@ -1437,7 +1437,7 @@ body{margin:0;background:#f5f7fb;color:#172033;}
     <nav class="pz-sidebar-nav">
       <button type="button" class="pz-sidebar-link active" data-scroll-target="pz-editor-overview"><span class="pz-sidebar-icon">⌂</span><span>개요</span></button>
       <button type="button" class="pz-sidebar-link" data-scroll-target="pz-agenda-section"><span class="pz-sidebar-icon">01</span><span>안건 입력</span></button>
-      <button type="button" class="pz-sidebar-link" data-scroll-target="pz-framework"><span class="pz-sidebar-icon">05</span><span>핵심요소 설계</span></button>
+      <button type="button" class="pz-sidebar-link" data-scroll-target="pz-framework"><span class="pz-sidebar-icon">02</span><span>핵심요소 설계</span></button>
       <div class="pz-sidebar-nav-label">WORKFLOW</div>
       <button type="button" class="pz-sidebar-link" data-scroll-target="stage-1"><span class="pz-sidebar-icon">1</span><span>회의 준비</span><span class="pz-sidebar-data-state empty" data-workflow-status="1">미입력</span></button>
       <button type="button" class="pz-sidebar-link" data-scroll-target="stage-2"><span class="pz-sidebar-icon">2</span><span>회의 중</span><span class="pz-sidebar-data-state empty" data-workflow-status="2">미입력</span></button>
@@ -3175,11 +3175,11 @@ ${getFrameworkDraftSchema(requestedSections)}`;
         console.warn(`Framework sections ${requestedSections.join(',')} auto draft failed:`, error);
 
         if(status) {
-          status.textContent = `${sectionLabel} 초안 작성 실패: ${error.message}`;
+          status.textContent = `${sectionLabel} 초안 작성 실패: ${getGeminiUserFacingMessage(error)}`;
         }
 
         if(!options.silent) {
-          alert(`${sectionLabel} AI 초안 작성 실패: ${error.message}`);
+          alert(`${sectionLabel} AI 초안 작성 실패: ${getGeminiUserFacingMessage(error)}`);
         }
 
         return false;
@@ -3439,15 +3439,14 @@ ${getFrameworkDraftSchema(requestedSections)}`;
 
   const GEMINI_REQUEST_PROFILES = Object.freeze({
     analysis:{
+      // 일반 STAGE 분석은 불필요한 반복 요청을 줄입니다.
       attemptPlan:[
-        GEMINI_PRIMARY_MODEL,
-        GEMINI_PRIMARY_MODEL,
         GEMINI_PRIMARY_MODEL,
         GEMINI_FALLBACK_MODEL,
         GEMINI_FALLBACK_MODEL
       ],
-      timeoutMs:90000,
-      maxBackoffMs:8000
+      timeoutMs:75000,
+      maxBackoffMs:5000
     },
     meetingPreparation:{
       // 요청 순서:
@@ -3483,6 +3482,31 @@ ${getFrameworkDraftSchema(requestedSections)}`;
     status.className = 'pz-ai-call-status' + (type ? ` ${type}` : '');
   }
 
+  const GEMINI_MIN_REQUEST_INTERVAL_MS = 3500;
+  let geminiRequestQueue = Promise.resolve();
+  let geminiLastRequestStartedAt = 0;
+
+  function enqueueGeminiRequest(task) {
+    const scheduled = geminiRequestQueue.then(async () => {
+      const elapsed = Date.now() - geminiLastRequestStartedAt;
+      const waitMs = Math.max(0, GEMINI_MIN_REQUEST_INTERVAL_MS - elapsed);
+
+      if(waitMs > 0) {
+        setGeminiCallStatus(
+          `API 요청 간격 조정 · ${Math.ceil(waitMs / 1000)}초 후 실행`,
+          'retry'
+        );
+        await sleep(waitMs);
+      }
+
+      geminiLastRequestStartedAt = Date.now();
+      return await task();
+    });
+
+    geminiRequestQueue = scheduled.catch(() => {});
+    return scheduled;
+  }
+
   function getGeminiRetryAfterMs(response, errorMessage = '') {
     let retryAfterMs = 0;
     const headerValue = response?.headers?.get?.('retry-after');
@@ -3499,15 +3523,75 @@ ${getFrameworkDraftSchema(requestedSections)}`;
       }
     }
 
-    const messageMatch = String(errorMessage || '').match(/retry in\s+([0-9.]+)s/i);
-    if(messageMatch) {
-      const seconds = Number(messageMatch[1]);
+    const message = String(errorMessage || '');
+    [
+      /retry in\s+([0-9.]+)s/i,
+      /retry after\s+([0-9.]+)\s*seconds?/i,
+      /retryDelay["']?\s*[:=]\s*["']?([0-9.]+)s/i
+    ].forEach(pattern => {
+      const match = message.match(pattern);
+      if(!match) return;
+      const seconds = Number(match[1]);
       if(Number.isFinite(seconds)) {
         retryAfterMs = Math.max(retryAfterMs, Math.ceil(seconds * 1000));
       }
+    });
+
+    return Math.max(0, Math.min(retryAfterMs, 120000));
+  }
+
+  function isGeminiQuotaError(status, message = '') {
+    return Number(status) === 429 ||
+      /resource[_\s-]?exhausted|quota exceeded|rate limit|free_tier_requests/i.test(
+        String(message || '')
+      );
+  }
+
+  function isGeminiDailyQuotaError(message = '') {
+    return /requests? per day|perday|rpd|GenerateRequestsPerDayPerProjectPerModel/i.test(
+      String(message || '')
+    );
+  }
+
+  function getGeminiUserFacingMessage(error) {
+    if(error?.userMessage) return error.userMessage;
+
+    const status = Number(error?.status || 0);
+    const technical = String(
+      error?.technicalMessage || error?.message || ''
+    );
+
+    if(isGeminiQuotaError(status, technical)) {
+      const retrySeconds = Math.max(
+        0,
+        Math.ceil(Number(error?.retryAfterMs || 0) / 1000)
+      );
+
+      if(isGeminiDailyQuotaError(technical)) {
+        return 'Gemini 무료 API의 일일 요청 한도에 도달했습니다. Google AI Studio에서 사용량을 확인하거나 할당량이 초기화된 후 다시 실행해 주세요.';
+      }
+
+      return retrySeconds
+        ? `Gemini API의 단기 요청 한도에 도달했습니다. 약 ${retrySeconds}초 후 다시 실행해 주세요. 입력 데이터는 유지됩니다.`
+        : 'Gemini API 요청 한도에 도달했습니다. 잠시 후 다시 실행해 주세요. 입력 데이터는 유지됩니다.';
     }
 
-    return Math.max(0, Math.min(retryAfterMs, 30000));
+    if(status === 503 || /high demand|overload|unavailable/i.test(technical)) {
+      return 'Gemini 서비스가 일시적으로 혼잡합니다. 자동 복구를 완료하지 못했습니다. 잠시 후 다시 실행해 주세요.';
+    }
+
+    if(error?.name === 'AbortError' || /시간 초과|timeout/i.test(technical)) {
+      return 'AI 응답 제한시간을 초과했습니다. 입력 내용은 유지되므로 잠시 후 다시 실행해 주세요.';
+    }
+
+    const cleaned = technical
+      .replace(/https?:\/\/\S+/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return cleaned.length > 260
+      ? `${cleaned.slice(0, 257)}…`
+      : (cleaned || '알 수 없는 AI 처리 오류가 발생했습니다.');
   }
 
   function getGeminiBackoffMs(
@@ -3562,9 +3646,11 @@ ${getFrameworkDraftSchema(requestedSections)}`;
     let lastFailure = {
       status:0,
       message:'응답 없음',
-      model:preferredModel
+      model:preferredModel,
+      retryAfterMs:0
     };
     let nextDelayMs = 0;
+    let waitReason = '';
 
     for(let attemptIndex = 0; attemptIndex < attemptPlan.length; attemptIndex++) {
       const model = attemptPlan[attemptIndex];
@@ -3573,7 +3659,12 @@ ${getFrameworkDraftSchema(requestedSections)}`;
       if(attemptIndex > 0) {
         const seconds = Math.max(1, Math.ceil(nextDelayMs / 1000));
 
-        if(isMeetingPreparationRequest) {
+        if(waitReason === 'quota') {
+          setGeminiCallStatus(
+            `API 요청 한도 대기 · ${seconds}초 후 자동 재시도`,
+            'retry'
+          );
+        } else if(isMeetingPreparationRequest) {
           const waitMessages = {
             1:`Flash 혼잡 감지 · Flash-Lite 전환 (${seconds}초 후)`,
             2:`Flash-Lite 자동 재시도 1/2 (${seconds}초 후)`,
@@ -3595,8 +3686,8 @@ ${getFrameworkDraftSchema(requestedSections)}`;
         } else {
           setGeminiCallStatus(
             switchedModel
-              ? `혼잡 지속 · 대체 모델 전환 (${seconds}초 후)`
-              : `서비스 혼잡 · 자동 재시도 ${attemptIndex + 1}/${attemptPlan.length} (${seconds}초 후)`,
+              ? `Flash-Lite 자동 전환 · ${seconds}초 후 실행`
+              : `API 안내 대기 후 자동 재시도 · ${seconds}초`,
             switchedModel ? 'fallback' : 'retry'
           );
         }
@@ -3628,30 +3719,37 @@ ${getFrameworkDraftSchema(requestedSections)}`;
         );
       } else {
         setGeminiCallStatus(
-          switchedModel
-            ? `대체 모델로 ${requestLabel} 처리 중`
-            : `${requestLabel} 처리 중${attemptIndex ? ` · 재시도 ${attemptIndex + 1}/${attemptPlan.length}` : ''}`,
-          switchedModel ? 'fallback' : (attemptIndex ? 'retry' : '')
+          attemptIndex === 0
+            ? `${requestLabel} · Flash 실행 중 · 1/${attemptPlan.length}`
+            : (
+                attemptIndex === 1
+                  ? `${requestLabel} · Flash-Lite 전환 · 2/${attemptPlan.length}`
+                  : `${requestLabel} · Flash-Lite 재시도 · ${attemptIndex + 1}/${attemptPlan.length}`
+              ),
+          attemptIndex === 1 ? 'fallback' : (attemptIndex >= 2 ? 'retry' : '')
         );
       }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), requestTimeoutMs);
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        requestTimeoutMs
+      );
 
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const response = await fetch(url, {
+
+        const response = await enqueueGeminiRequest(() => fetch(url, {
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify(payload),
           signal:controller.signal
-        });
+        }));
 
         clearTimeout(timeoutId);
 
         if(response.ok) {
           const data = await response.json();
-
           let successMessage = '';
 
           if(isMeetingPreparationRequest) {
@@ -3670,9 +3768,13 @@ ${getFrameworkDraftSchema(requestedSections)}`;
               ? '근거 조회 모델 전환 후 완료'
               : (attemptIndex > 0 ? '근거 조회 재시도 후 완료' : '근거 조회 완료');
           } else {
-            successMessage = switchedModel
-              ? '대체 모델로 완료'
-              : (attemptIndex > 0 ? '자동 재시도 후 완료' : 'AI 응답 완료');
+            successMessage = attemptIndex === 0
+              ? `${requestLabel} · Flash 완료`
+              : (
+                  attemptIndex === 1
+                    ? `${requestLabel} · Flash-Lite 전환 후 완료`
+                    : `${requestLabel} · 요청 한도 대기 후 완료`
+                );
           }
 
           setGeminiCallStatus(successMessage, 'ok');
@@ -3687,25 +3789,53 @@ ${getFrameworkDraftSchema(requestedSections)}`;
         }
 
         const apiMessage = await parseGeminiErrorResponse(response);
+        const retryAfterMs = getGeminiRetryAfterMs(response, apiMessage);
+        const quotaError = isGeminiQuotaError(
+          response.status,
+          apiMessage
+        );
+
         lastFailure = {
           status:response.status,
           message:apiMessage,
-          model
+          model,
+          retryAfterMs
         };
 
         if(!GEMINI_TRANSIENT_HTTP.has(response.status)) {
-          const error = new Error(`API 호출 실패 (${response.status}) — ${apiMessage}`);
+          const error = new Error(
+            `API 호출 실패 (${response.status}) — ${apiMessage}`
+          );
           error.status = response.status;
-          error.isGeminiCapacityError = false;
+          error.technicalMessage = apiMessage;
+          error.retryAfterMs = retryAfterMs;
+          error.userMessage = getGeminiUserFacingMessage(error);
           setGeminiCallStatus(`AI 오류 ${response.status}`, 'error');
           throw error;
         }
 
-        nextDelayMs = getGeminiBackoffMs(
-          attemptIndex,
-          getGeminiRetryAfterMs(response, apiMessage),
-          maxBackoffMs
-        );
+        if(quotaError && isGeminiDailyQuotaError(apiMessage)) {
+          break;
+        }
+
+        const nextModel = attemptPlan[attemptIndex + 1];
+
+        if(quotaError) {
+          waitReason = 'quota';
+          nextDelayMs = nextModel && nextModel !== model
+            ? 1200 + Math.floor(Math.random() * 500)
+            : Math.max(
+                retryAfterMs,
+                getGeminiBackoffMs(attemptIndex, 0, maxBackoffMs)
+              );
+        } else {
+          waitReason = 'transient';
+          nextDelayMs = getGeminiBackoffMs(
+            attemptIndex,
+            retryAfterMs,
+            maxBackoffMs
+          );
+        }
       } catch(error) {
         clearTimeout(timeoutId);
 
@@ -3718,10 +3848,12 @@ ${getFrameworkDraftSchema(requestedSections)}`;
           status:error?.status || 0,
           message:isTimeout
             ? `요청 제한시간 ${Math.round(requestTimeoutMs / 1000)}초 초과`
-            : (error?.message || '네트워크 요청 실패'),
-          model
+            : (error?.technicalMessage || error?.message || '네트워크 요청 실패'),
+          model,
+          retryAfterMs:Number(error?.retryAfterMs || 0)
         };
 
+        waitReason = 'transient';
         nextDelayMs = getGeminiBackoffMs(
           attemptIndex,
           0,
@@ -3730,34 +3862,30 @@ ${getFrameworkDraftSchema(requestedSections)}`;
       }
     }
 
-    const statusText = lastFailure.status
-      ? `HTTP ${lastFailure.status}`
-      : '네트워크/시간 초과';
-    const triedModels = attemptPlan.join(' → ');
-
-    const finalError = new Error(
-      `${requestLabel} 실패 — ${statusText}. ` +
-      `${attemptPlan.length}회 자동 복구를 시도했으나 응답하지 않았습니다. ` +
-      `시도 모델: ${triedModels}. ` +
-      `잠시 후 다시 시도해 주세요. 마지막 오류: ${lastFailure.message}`
-    );
+    const technicalMessage = String(lastFailure.message || '');
+    const finalError = new Error(technicalMessage || `${requestLabel} 실패`);
 
     finalError.status = lastFailure.status;
+    finalError.retryAfterMs = lastFailure.retryAfterMs;
+    finalError.technicalMessage = technicalMessage;
     finalError.isGeminiCapacityError =
-      lastFailure.status === 429 ||
       lastFailure.status === 503 ||
-      /high demand|overload|capacity|unavailable/i.test(lastFailure.message);
+      /high demand|overload|capacity|unavailable/i.test(technicalMessage);
+    finalError.isGeminiQuotaError =
+      isGeminiQuotaError(lastFailure.status, technicalMessage);
+    finalError.userMessage = getGeminiUserFacingMessage(finalError);
 
     setGeminiCallStatus(
-      isMeetingPreparationRequest
-        ? '회의 준비 자동 복구 실패 · 입력 내용은 유지됨'
+      finalError.isGeminiQuotaError
+        ? 'API 요청 한도 초과 · 입력 데이터 유지'
         : (
             isGroundingRequest
               ? '근거 조회 자동 복구 실패 · 본문 분석은 유지됨'
-              : '자동 복구 실패 · 잠시 후 재시도'
+              : '자동 복구 실패 · 입력 데이터 유지'
           ),
       'error'
     );
+
     throw finalError;
   }
 
@@ -5430,15 +5558,6 @@ ${categoryOutputFormat}`;
     showSkeleton(el('s1-skeleton-holder'), titles);
     
     try{
-      await autoFillDecisionFrameworkSections(
-        [1, 2, 3],
-        {
-          trigger:'stage1_meeting_preparation',
-          silent:true,
-          activatePanel:false
-        }
-      );
-
       let combinedAgenda = agenda;
       if(uploadedAgendaFileText) {
         combinedAgenda += `\n\n[첨부된 추가 참고 서류 데이터]\n"""${uploadedAgendaFileText}"""`;
@@ -5471,8 +5590,9 @@ ${categoryOutputFormat}`;
 10. additional_category_title에는 짧고 명확한 한국어 카테고리명만 작성하세요. 예: '법률·규제 검토', 'IP 시너지 분석', '기술·보안 적합성'.
 11. additional_category_content 첫 줄에는 반드시 '■ 추가 선정 사유:'로 시작하여 왜 이 안건에 해당 카테고리가 필수인지 선언하세요. 이후 세부 분석 역시 AI가 판단하여 1~3개로 작성하고, 1개일 때는 번호를 붙이지 마세요.
 12. 추가 카테고리도 다른 카테고리와 동일하게 구체적인 사실·지표·사례를 기반으로 작성하세요. 실제 원문 출처 연결은 별도의 Grounding 검증 단계에서 처리합니다.
-13. 입력된 의사결정 5대 핵심요소를 검토하여 목표 명확성, 가중치 합계, 대안 수, 제약조건, KPI·Plan B의 누락 및 보완사항을 decision_framework_review에 작성하세요.
-14. 단정형 어조(~임, ~함, ~로 파악됨)를 유지하고, 오직 아래 지정된 JSON 구조로만 출력하세요. JSON 키는 누락하거나 이름을 변경하지 마세요.
+13. framework_draft에는 안건을 기준으로 1번 목표·문제 정의, 2번 기준·가중치, 3번 대안·시나리오 초안을 함께 작성하세요. 평가기준 가중치 합계는 100으로 맞추고 대안은 2~4개로 작성하세요.
+14. 자동 작성한 framework_draft까지 포함하여 목표 명확성, 가중치 합계, 대안 수, 제약조건, KPI·Plan B의 누락 및 보완사항을 decision_framework_review에 작성하세요.
+15. 단정형 어조(~임, ~함, ~로 파악됨)를 유지하고, 오직 아래 지정된 JSON 구조로만 출력하세요. JSON 키는 누락하거나 이름을 변경하지 마세요.
 
 {"business_data":"■ 핵심 결론: ...\\n[AI 판단에 따라 세부 분석 1~3개 작성. 1개면 번호 없이 작성, 2~3개면 번호 사용]\\n▶ [관련 지표 또는 근거]", 
  "competitor_analysis":"■ 핵심 결론: ...\\n[AI 판단에 따라 세부 분석 1~3개]\\n▶ [경쟁사·벤치마킹 근거]", 
@@ -5481,6 +5601,7 @@ ${categoryOutputFormat}`;
  "investment_scenario":"■ 핵심 결론: ...\\n[AI 판단에 따라 세부 분석 1~3개]\\n▶ [투자·밸류에이션·수익성 근거]",
  "additional_category_title":"안건 특성에 맞춰 AI가 직접 선정한 카테고리명",
  "additional_category_content":"■ 추가 선정 사유: 이 안건의 의사결정에서 ... 관점이 필수임.\\n[AI 판단에 따라 세부 분석 1~3개. 1개면 번호 없이 작성]\\n▶ [구체적 사실·지표·사례 근거]",
+ "framework_draft":{"objective":{"problem":"...","target":"...","decisionQuestion":"..."},"criteria":[{"name":"기대효과","weight":30,"rationale":"..."}],"alternatives":[{"name":"대안 A","description":"...","bestScenario":"...","worstScenario":"..."}]},
  "decision_framework_review":"■ 5대 요소 종합 진단: ...\n▶ 완료 요소: ...\n▶ 보완 요소: ...\n▶ 다음 단계 권고: ..."}`;
 
       const r = await callGemini(
@@ -5491,6 +5612,12 @@ ${categoryOutputFormat}`;
           requestLabel:'회의 준비 자동 산출'
         }
       );
+
+      if(r.framework_draft && typeof r.framework_draft === 'object') {
+        applyFrameworkAiDraft(
+          filterFrameworkDraftBySections(r.framework_draft, [1, 2, 3])
+        );
+      }
 
       const stage1TextFields = [
         'business_data',
@@ -5582,7 +5709,7 @@ ${categoryOutputFormat}`;
       ], {stage:1, recordData:r});
     }catch(e){
       hideSkeleton(el('s1-skeleton-holder'));
-      el('s1-error').textContent = '산출 실패: '+e.message+' — 다시 시도해 주세요.';
+      el('s1-error').textContent = '산출 실패: ' + getGeminiUserFacingMessage(e);
     }finally{
       stage1RunInProgress = false;
       runButton.disabled = false;
@@ -5623,7 +5750,14 @@ ${categoryOutputFormat}`;
 
 {"minutes_summary":"■ 핵심 요약: ...\\n1. ...\\n2. ...", "opinion_classification":"■ 핵심 요약: ...\\n1. ...\\n2. ...", "pros_cons":"■ 핵심 요약: ...\\n1. ...\\n2. ...", "criteria_evaluation":"■ 기준별 대안 평가: ...\\n1. 평가기준과 가중치에 따른 우선순위 ...\\n2. 낙관·최악 시나리오 비교 ...", "action_items":"■ 핵심 요약: ...\\n1. ...\\n2. ...", "framework_suitability_review":"■ 종합 진단: 적정/조건부 적정/보완 필요 ...\\n▶ 완료 요소: ...\\n▶ 변경·추가 반영사항: ...\\n▶ 보완 요소: ...\\n▶ 다음 단계 권고: ..."}`;
       
-      const r = await callGemini(prompt);
+      const r = await callGemini(
+        prompt,
+        true,
+        {
+          profile:'analysis',
+          requestLabel:'회의록 분석'
+        }
+      );
       state.s2.push(r);
       setFrameworkSuitabilityReview(
         r.framework_suitability_review || buildFrameworkSuitabilityFallback(2),
@@ -5663,7 +5797,7 @@ ${categoryOutputFormat}`;
       ], {stage:2, recordData:r});
     }catch(e){
       hideSkeleton(el('s2-skeleton-holder'));
-      el('s2-error').textContent = '산출 실패: '+e.message+' — 다시 시도해 주세요.';
+      el('s2-error').textContent = '산출 실패: ' + getGeminiUserFacingMessage(e);
     }
   });
 
@@ -5676,15 +5810,6 @@ ${categoryOutputFormat}`;
     showSkeleton(el('s3-skeleton-holder'), titles);
     
     try{
-      await autoFillDecisionFrameworkSections(
-        [4],
-        {
-          trigger:'stage3_decision_summary',
-          silent:true,
-          activatePanel:false
-        }
-      );
-
       const latestS2 = state.s2[state.s2.length - 1];
       const prompt = `당신은 비즈니스 의사결정을 최종 패키징하는 전략 에이전트입니다. 앞선 모든 결론을 바탕으로 구체적인 실행 계획을 구성하세요.
 
@@ -5696,12 +5821,27 @@ ${categoryOutputFormat}`;
 1. 무조건 【두괄식 구조】로 첫 문장에 최종 실행 결론을 명시하세요.
 2. 각 지표 카드별로 최소 [2개 이상]의 구체적인 담당조직 업무, 세부 마일스톤 타임라인, 정량적 KPI 목표 수치 등이 강제 명시되어야 합니다.
 3. 번호 표기('1.', '2.')와 시각 기호('■', '▶')를 적극적으로 매칭하여 작성하세요.
-4. 새로 작성된 실행력·자원 제약과 최신 결정 결과를 반영하여 framework_suitability_review에 7줄 이내의 적정성 진단을 작성하세요.
-5. 다른 설명 없이 JSON으로만 응답하세요.
+4. constraints_draft에는 4번 실행력·자원 제약 초안을 예산, 일정, 인력·기술, 절대 준수조건으로 구분하여 작성하세요.
+5. 새로 작성한 constraints_draft와 최신 결정 결과를 반영하여 framework_suitability_review에 7줄 이내의 적정성 진단을 작성하세요.
+6. 다른 설명 없이 JSON으로만 응답하세요.
 
-{"decision_summary":"■ 최종 결론: ...\\n1. ...\\n2. ...", "feasibility_check":"■ 실행 가능성 판단: ...\\n1. 예산·일정·인력·기술 검증 ...\\n2. 절대 준수조건 및 조건부 추진사항 ...", "owner_assignment":"■ 담당 조직: ...\\n1. ...\\n2. ...", "schedule":"■ 마일스톤: ...\\n1. ...\\n2. ...", "kpi":"■ 평가지표: ...\\n1. ...\\n2. ...", "contingency_plan":"■ Plan B: ...\\n1. 경고·중단·전환 조건 ...\\n2. 복구·대체 실행안 ...", "next_agenda":"■ 후속 안건: ...\\n1. ...\\n2. ...", "framework_suitability_review":"■ 종합 진단: 적정/조건부 적정/보완 필요 ...\\n▶ 완료 요소: ...\\n▶ 변경·추가 반영사항: ...\\n▶ 보완 요소: ...\\n▶ 다음 단계 권고: ..."}`;
+{"decision_summary":"■ 최종 결론: ...\\n1. ...\\n2. ...", "feasibility_check":"■ 실행 가능성 판단: ...\\n1. 예산·일정·인력·기술 검증 ...\\n2. 절대 준수조건 및 조건부 추진사항 ...", "owner_assignment":"■ 담당 조직: ...\\n1. ...\\n2. ...", "schedule":"■ 마일스톤: ...\\n1. ...\\n2. ...", "kpi":"■ 평가지표: ...\\n1. ...\\n2. ...", "contingency_plan":"■ Plan B: ...\\n1. 경고·중단·전환 조건 ...\\n2. 복구·대체 실행안 ...", "next_agenda":"■ 후속 안건: ...\\n1. ...\\n2. ...", "constraints_draft":{"budget":"...","time":"...","resource":"...","nonNegotiable":"..."}, "framework_suitability_review":"■ 종합 진단: 적정/조건부 적정/보완 필요 ...\\n▶ 완료 요소: ...\\n▶ 변경·추가 반영사항: ...\\n▶ 보완 요소: ...\\n▶ 다음 단계 권고: ..."}`;
       
-      const r = await callGemini(prompt);
+      const r = await callGemini(
+        prompt,
+        true,
+        {
+          profile:'analysis',
+          requestLabel:'의사결정 요약 생성'
+        }
+      );
+
+      if(r.constraints_draft && typeof r.constraints_draft === 'object') {
+        applyFrameworkAiDraft({
+          constraints:r.constraints_draft
+        });
+      }
+
       state.s3.push(r);
       setFrameworkSuitabilityReview(
         r.framework_suitability_review || buildFrameworkSuitabilityFallback(3),
@@ -5745,7 +5885,7 @@ ${categoryOutputFormat}`;
       ], {stage:3, recordData:r});
     }catch(e){
       hideSkeleton(el('s3-skeleton-holder'));
-      el('s3-error').textContent = '산출 실패: '+e.message+' — 다시 시도해 주세요.';
+      el('s3-error').textContent = '산출 실패: ' + getGeminiUserFacingMessage(e);
     }
   });
 
@@ -5758,16 +5898,6 @@ ${categoryOutputFormat}`;
     showSkeleton(el('s4-skeleton-holder'), titles);
     
     try{
-      await autoFillDecisionFrameworkSections(
-        [5],
-        {
-          trigger:'stage4_progress_analysis',
-          silent:true,
-          activatePanel:false,
-          progress
-        }
-      );
-
       const latestS3 = state.s3[state.s3.length - 1];
       const prompt = `당신은 사업의 사후 관리를 담당하는 PMO 에이전트입니다. 진행 현황 데이터를 바탕으로 현재 사업의 지연 요소와 지표를 정밀 분석해 주세요.
 
@@ -5779,12 +5909,27 @@ ${categoryOutputFormat}`;
 1. 【두괄식 구조】를 준수하여 첫 문장에 위험 등급 및 종합 리스크 진단을 선언하세요.
 2. 각 항목별로 최소 [2개 이상]의 명확한 리스크 관리 포인트 및 정량 분석 현황이 구조적으로 작성되어야 합니다.
 3. 본문에는 숫자 번호('1.', '2.')와 기호('■', '▶')를 사용하여 가독성 있게 작성하세요.
-4. 새로 작성된 KPI·Plan B와 현재 진행 현황을 반영하여 framework_suitability_review에 7줄 이내의 적정성 진단을 작성하세요.
-5. 다른 설명 없이 JSON으로만 응답하세요.
+4. feedback_draft에는 5번 피드백·Plan B 초안을 KPI, 점검주기·책임자, 경고·전환 조건, 대체 실행안으로 구분하여 작성하세요.
+5. 새로 작성한 feedback_draft와 현재 진행 현황을 반영하여 framework_suitability_review에 7줄 이내의 적정성 진단을 작성하세요.
+6. 다른 설명 없이 JSON으로만 응답하세요.
 
-{"kpi_tracking":"■ 종합 진단: ...\\n1. ...\\n2. ...", "schedule_management":"■ 리스크 수준: ...\\n1. ...\\n2. ...", "investment_status":"■ 투자 집행 현황: ...\\n1. ...\\n2. ...", "contract_status":"■ 건전성 평가: ...\\n1. ...\\n2. ...", "contingency_status":"■ Plan B 판단: 유지/주의/발동 중 하나로 진단\\n1. 사전 정의된 경고·전환 조건 대비 현재 상태 ...\\n2. 즉시 조치 및 전환 권고 ...", "framework_suitability_review":"■ 종합 진단: 적정/조건부 적정/보완 필요 ...\\n▶ 완료 요소: ...\\n▶ 변경·추가 반영사항: ...\\n▶ 보완 요소: ...\\n▶ 다음 단계 권고: ..."}`;
+{"kpi_tracking":"■ 종합 진단: ...\\n1. ...\\n2. ...", "schedule_management":"■ 리스크 수준: ...\\n1. ...\\n2. ...", "investment_status":"■ 투자 집행 현황: ...\\n1. ...\\n2. ...", "contract_status":"■ 건전성 평가: ...\\n1. ...\\n2. ...", "contingency_status":"■ Plan B 판단: 유지/주의/발동 중 하나로 진단\\n1. 사전 정의된 경고·전환 조건 대비 현재 상태 ...\\n2. 즉시 조치 및 전환 권고 ...", "feedback_draft":{"kpi":"...","reviewCycle":"...","trigger":"...","planB":"..."}, "framework_suitability_review":"■ 종합 진단: 적정/조건부 적정/보완 필요 ...\\n▶ 완료 요소: ...\\n▶ 변경·추가 반영사항: ...\\n▶ 보완 요소: ...\\n▶ 다음 단계 권고: ..."}`;
       
-      const r = await callGemini(prompt);
+      const r = await callGemini(
+        prompt,
+        true,
+        {
+          profile:'analysis',
+          requestLabel:'진행 현황 AI 분석'
+        }
+      );
+
+      if(r.feedback_draft && typeof r.feedback_draft === 'object') {
+        applyFrameworkAiDraft({
+          feedback:r.feedback_draft
+        });
+      }
+
       state.s4.push(r);
       setFrameworkSuitabilityReview(
         r.framework_suitability_review || buildFrameworkSuitabilityFallback(4),
@@ -5826,7 +5971,7 @@ ${categoryOutputFormat}`;
       setStageDone(4);
     }catch(e){
       hideSkeleton(el('s4-skeleton-holder'));
-      alert('산출 실패: ' + e.message);
+      alert('산출 실패: ' + getGeminiUserFacingMessage(e));
     }
   });
 
@@ -5924,7 +6069,7 @@ STAGE 01부터 STAGE 04까지 도출된 전 과정의 데이터를 종합 분석
       reportOutput.scrollIntoView({behavior:'smooth', block:'start'});
     } catch(e) {
       skeletonHolder.innerHTML = '';
-      alert('보고서 생성 실패: ' + e.message);
+      alert('보고서 생성 실패: ' + getGeminiUserFacingMessage(e));
     }
   });
 
