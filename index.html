@@ -4633,12 +4633,13 @@ ${categoryOutputFormat}`;
     ],
     3:[
       {key:'decision_summary', title:'최종 의사결정 결론'},
-      {key:'feasibility_check', title:'실행 가능성·제약 검증'},
-      {key:'owner_assignment', title:'실무 조직 지정'},
-      {key:'schedule', title:'마일스톤 일정'},
-      {key:'kpi', title:'핵심 관리 KPI'},
-      {key:'contingency_plan', title:'컨틴전시 플랜'},
-      {key:'next_agenda', title:'후속 안건 제언'}
+      {key:'feasibility_check', title:'실행 전제·제약'},
+      {key:'owner_assignment', title:'담당자·R&R'},
+      {key:'schedule', title:'실행 일정'},
+      {key:'kpi', title:'관리 KPI'},
+      {key:'contingency_plan', title:'리스크 대응 조건'},
+      {key:'next_agenda', title:'후속 회의 Agenda'},
+      {key:'reliability_review', title:'산출 근거·역할 적합성'}
     ],
     4:[
       {key:'kpi_tracking', title:'KPI 달성도 현황'},
@@ -4732,6 +4733,8 @@ ${categoryOutputFormat}`;
       /리스크\s*수준/,
       /투자\s*집행\s*현황/,
       /건전성\s*평가/,
+      /신뢰도\s*(진단|검증)/,
+      /시간축\s*검증/,
       /Plan\s*B\s*판단/i
     ];
 
@@ -5801,31 +5804,716 @@ ${categoryOutputFormat}`;
     }
   });
 
+  function formatLocalIsoDate(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function extractExplicitDateReferences(value) {
+    const matches = String(value || '').match(
+      /20\d{2}년\s*[1-4]\s*분기|20\d{2}년\s*\d{1,2}월(?:\s*\d{1,2}일)?|20\d{2}[-./]\d{1,2}(?:[-./]\d{1,2})?|20\d{2}년/g
+    ) || [];
+
+    return [...new Set(matches.map(item => item.replace(/\s+/g, ' ').trim()))];
+  }
+
+  function parseDateReferenceEnd(reference) {
+    const text = String(reference || '').trim();
+    let match = text.match(/^(20\d{2})년\s*([1-4])\s*분기$/);
+    if(match) {
+      return new Date(Number(match[1]), Number(match[2]) * 3, 0, 23, 59, 59);
+    }
+
+    match = text.match(/^(20\d{2})년\s*(\d{1,2})월(?:\s*(\d{1,2})일)?$/);
+    if(match) {
+      const year = Number(match[1]);
+      const month = Number(match[2]);
+      const day = match[3] ? Number(match[3]) : new Date(year, month, 0).getDate();
+      return new Date(year, month - 1, day, 23, 59, 59);
+    }
+
+    match = text.match(/^(20\d{2})[-./](\d{1,2})(?:[-./](\d{1,2}))?$/);
+    if(match) {
+      const year = Number(match[1]);
+      const month = Number(match[2]);
+      const day = match[3] ? Number(match[3]) : new Date(year, month, 0).getDate();
+      return new Date(year, month - 1, day, 23, 59, 59);
+    }
+
+    match = text.match(/^(20\d{2})년$/);
+    if(match) {
+      return new Date(Number(match[1]), 11, 31, 23, 59, 59);
+    }
+
+    return null;
+  }
+
+  function isFutureOrCurrentDateReference(reference, baselineDate) {
+    const endDate = parseDateReferenceEnd(reference);
+    return endDate ? endDate.getTime() >= baselineDate.getTime() : false;
+  }
+
+  function buildStage3ReliabilityContext(latestS2) {
+    const baselineDate = new Date();
+    baselineDate.setHours(0, 0, 0, 0);
+
+    const latestS1 = state.s1[state.s1.length - 1] || null;
+    const framework = getDecisionFrameworkData();
+    const trustedText = [
+      state.agenda,
+      JSON.stringify(latestS1 || {}),
+      JSON.stringify(latestS2 || {}),
+      JSON.stringify(framework || {})
+    ].join('\n');
+
+    const explicitDates = extractExplicitDateReferences(trustedText);
+    const futureTrustedDates = explicitDates.filter(reference =>
+      isFutureOrCurrentDateReference(reference, baselineDate)
+    );
+
+    return {
+      baselineDate,
+      baselineIso:formatLocalIsoDate(baselineDate),
+      trustedText,
+      explicitDates,
+      futureTrustedDates,
+      framework
+    };
+  }
+
+  function normalizeStage3Schedule(schedule, context) {
+    const original = String(schedule || '').trim();
+    const windows = [
+      '승인일 기준 T+0~2주',
+      '승인일 기준 T+3~6주',
+      '승인일 기준 T+7~12주',
+      '승인일 기준 T+3~6개월',
+      '승인일 기준 T+6개월 이후'
+    ];
+
+    if(!original) {
+      return {
+        text:
+          `■ 일정 기준: ${context.baselineIso} 현재, 승인일(T+0) 기준 상대 일정\n` +
+          '1. T+0~2주: 실행 범위·담당자·예산 확정\n' +
+          '2. T+3~6주: 파일럿 및 중간 검증\n' +
+          '3. T+7~12주: 확대 적용 여부 결정',
+        correctedReferences:[],
+        correctionCount:0,
+        scheduleMode:'relative'
+      };
+    }
+
+    let windowIndex = 0;
+    const correctedReferences = [];
+    const absoluteDatePattern =
+      /20\d{2}년\s*[1-4]\s*분기|20\d{2}년\s*\d{1,2}월(?:\s*\d{1,2}일)?|20\d{2}[-./]\d{1,2}(?:[-./]\d{1,2})?|20\d{2}년/g;
+
+    const normalized = original.replace(absoluteDatePattern, reference => {
+      const compactReference = reference.replace(/\s+/g, ' ').trim();
+      const explicitlyProvided = context.trustedText.includes(compactReference);
+      const futureOrCurrent = isFutureOrCurrentDateReference(
+        compactReference,
+        context.baselineDate
+      );
+
+      if(explicitlyProvided && futureOrCurrent) {
+        return compactReference;
+      }
+
+      const replacement = windows[Math.min(windowIndex, windows.length - 1)];
+      windowIndex += 1;
+      correctedReferences.push({
+        original:compactReference,
+        replacement,
+        reason:futureOrCurrent
+          ? '입력 근거에 없는 절대일정'
+          : '기준일 이전 또는 만료된 일정'
+      });
+      return replacement;
+    });
+
+    const hasTrustedAbsoluteDate = context.futureTrustedDates.some(
+      reference => normalized.includes(reference)
+    );
+    const scheduleMode = hasTrustedAbsoluteDate ? 'trusted-absolute' : 'relative';
+    const header = scheduleMode === 'trusted-absolute'
+      ? `■ 일정 기준: ${context.baselineIso} 현재, 입력에서 확인된 확정일정만 사용`
+      : `■ 일정 기준: ${context.baselineIso} 현재, 승인일(T+0) 기준 상대 일정`;
+
+    return {
+      text:normalized.startsWith('■ 일정 기준:')
+        ? normalized
+        : `${header}\n${normalized}`,
+      correctedReferences,
+      correctionCount:correctedReferences.length,
+      scheduleMode
+    };
+  }
+
+  function ensureStage3ProposalLabel(value, type) {
+    const text = String(value || '').trim();
+    if(!text) return text;
+
+    if(type === 'kpi') {
+      if(/제안\s*(KPI|평가지표)|확정\s*필요/i.test(text)) return text;
+      return text.replace(
+        /^■\s*(평가지표|핵심 관리 KPI)\s*:/,
+        '■ 제안 평가지표(담당자 확정 필요):'
+      );
+    }
+
+    if(type === 'owner') {
+      if(/확정\s*필요|책임자\s*확정/i.test(text)) return text;
+      return text.replace(
+        /^■\s*(담당 조직|실무 조직)\s*:/,
+        '■ 담당 조직 제안(책임자 확정 필요):'
+      );
+    }
+
+    if(type === 'planB') {
+      if(/제안안|확정\s*필요/i.test(text)) return text;
+      return text.replace(
+        /^■\s*Plan\s*B\s*:/i,
+        '■ Plan B 제안안(발동 조건 확정 필요):'
+      );
+    }
+
+    return text;
+  }
+
+  function hasMeaningfulFrameworkValue(value) {
+    const text = String(value || '').trim();
+    return Boolean(
+      text &&
+      !/미작성|미입력|없음|확인 필요|미확정/i.test(text)
+    );
+  }
+
+  function normalizeStage3SourceLine(value) {
+    return String(value || '')
+      .replace(/\r/g, '')
+      .replace(/\*\*/g, '')
+      .replace(/^[\s▶■◆●○\-–—·]+/, '')
+      .replace(/^\d+[.)]\s*/, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function collectStage3Evidence(sources, pattern, limit = 3, fallback = false) {
+    const matched = [];
+    const fallbackLines = [];
+
+    (sources || []).forEach(source => {
+      const lines = String(source?.text || '')
+        .split('\n')
+        .map(normalizeStage3SourceLine)
+        .filter(Boolean);
+
+      lines.forEach(line => {
+        const item = {
+          label:String(source?.label || '입력 근거'),
+          excerpt:line.slice(0, 180)
+        };
+
+        if(pattern?.test(line)) {
+          matched.push(item);
+        } else if(fallbackLines.length < limit * 2) {
+          fallbackLines.push(item);
+        }
+
+        if(pattern?.global) pattern.lastIndex = 0;
+      });
+    });
+
+    const selected = matched.length ? matched : (fallback ? fallbackLines : []);
+    const unique = [];
+    const seen = new Set();
+
+    selected.forEach(item => {
+      const key = `${item.label}|${item.excerpt}`;
+      if(seen.has(key) || unique.length >= limit) return;
+      seen.add(key);
+      unique.push(item);
+    });
+
+    return unique;
+  }
+
+  function formatStage3Evidence(items, emptyText = '확인 가능한 직접 근거 없음') {
+    if(!Array.isArray(items) || items.length === 0) return emptyText;
+
+    return items
+      .map(item => `${item.label} — ${item.excerpt}`)
+      .join(' | ');
+  }
+
+  function appendStage3Evidence(value, items, emptyText = '') {
+    const text = String(value || '').trim();
+    const evidenceText = formatStage3Evidence(items, emptyText);
+
+    if(!evidenceText || text.includes('▶ 산출 근거:')) return text;
+    return `${text}\n▶ 산출 근거: ${evidenceText}`.trim();
+  }
+
+  function buildStage3RoleEvidence(latestS1, latestS2, framework) {
+    const stage1Sources = [
+      {label:'STAGE 01 사업자료', text:latestS1?.business_data},
+      {label:'STAGE 01 리스크', text:latestS1?.risk_analysis},
+      {label:'STAGE 01 투자분석', text:latestS1?.investment_scenario},
+      {label:'STAGE 01 추가분석', text:latestS1?.additional_category_content}
+    ];
+    const stage2Sources = [
+      {label:'STAGE 02 회의요약', text:latestS2?.minutes_summary},
+      {label:'STAGE 02 의견분류', text:latestS2?.opinion_classification},
+      {label:'STAGE 02 찬반논리', text:latestS2?.pros_cons},
+      {label:'STAGE 02 대안평가', text:latestS2?.criteria_evaluation},
+      {label:'STAGE 02 Action Item', text:latestS2?.action_items}
+    ];
+
+    const decisionPattern =
+      /최종\s*결정|결정됨|확정|채택|선정|승인|추진하기로|도입하기로|보류|기각/i;
+    const ownerPattern =
+      /담당|책임|주관|R&R|owner|PMO|실무\s*조직|협업\s*부서/i;
+    const schedulePattern =
+      /일정|기한|완료일|마감|착수|개시|주차|분기|월|T\+\d|20\d{2}/i;
+    const kpiPattern =
+      /KPI|평가지표|성과지표|목표값|달성률|완료율|처리시간|비용|매출|수익|ROI|%/i;
+    const unresolvedPattern =
+      /미정|미확정|보완|추가\s*검토|확인\s*필요|쟁점|이견|반대|우려|리스크|조건부|보류/i;
+
+    const decision = collectStage3Evidence(
+      stage2Sources,
+      decisionPattern,
+      3,
+      false
+    );
+    const owner = collectStage3Evidence(
+      stage2Sources.filter(item => item.label.includes('Action Item')),
+      ownerPattern,
+      4,
+      false
+    );
+    const schedule = collectStage3Evidence(
+      [
+        ...stage2Sources.filter(item => item.label.includes('Action Item')),
+        {label:'5대 요소 일정 제약', text:framework?.constraints?.time},
+        ...stage1Sources.filter(item => item.label.includes('리스크'))
+      ],
+      schedulePattern,
+      4,
+      false
+    );
+    const kpi = collectStage3Evidence(
+      [
+        ...stage2Sources.filter(item =>
+          item.label.includes('대안평가') ||
+          item.label.includes('Action Item')
+        ),
+        ...stage1Sources.filter(item =>
+          item.label.includes('사업자료') ||
+          item.label.includes('리스크')
+        ),
+        {label:'5대 요소 KPI', text:framework?.feedback?.kpi}
+      ],
+      kpiPattern,
+      4,
+      false
+    );
+    const unresolved = collectStage3Evidence(
+      [
+        ...stage2Sources.filter(item =>
+          item.label.includes('의견분류') ||
+          item.label.includes('찬반논리') ||
+          item.label.includes('회의요약')
+        ),
+        {label:'STAGE 02 적정성 검토', text:latestS2?.framework_suitability_review}
+      ],
+      unresolvedPattern,
+      4,
+      false
+    );
+    const decisionSupport = collectStage3Evidence(
+      [
+        ...stage2Sources,
+        ...stage1Sources
+      ],
+      /결론|핵심|우선순위|대안|리스크|효과|근거/i,
+      4,
+      true
+    );
+    const risk = collectStage3Evidence(
+      [
+        ...stage1Sources.filter(item => item.label.includes('리스크')),
+        ...stage2Sources.filter(item =>
+          item.label.includes('찬반논리') ||
+          item.label.includes('의견분류')
+        )
+      ],
+      /리스크|위험|우려|중단|전환|실패|조건/i,
+      4,
+      true
+    );
+
+    return {
+      decision,
+      owner,
+      schedule,
+      kpi,
+      unresolved,
+      decisionSupport,
+      risk,
+      hasExplicitDecision:decision.length > 0,
+      hasExplicitOwner:owner.length > 0,
+      hasExplicitSchedule:schedule.length > 0,
+      hasExplicitKpi:kpi.length > 0
+    };
+  }
+
+  function buildRoleAlignedDecisionSummary(result, evidence) {
+    if(!evidence.hasExplicitDecision) {
+      return [
+        '■ 최종 의사결정: 미확정',
+        '1. STAGE 02 산출물에서 승인·채택·보류 등 명시적인 최종 결정 문구가 확인되지 않았습니다.',
+        '2. 현재 결과는 최종 결정안이 아니라 후속 의사결정을 위한 검토안으로 유지합니다.',
+        '▶ 조치: 후속 회의에서 최종 선택안과 승인 여부를 확정해야 합니다.',
+        `▶ 산출 근거: ${formatStage3Evidence(evidence.decisionSupport)}`
+      ].join('\n');
+    }
+
+    return appendStage3Evidence(
+      result.decision_summary,
+      evidence.decision
+    );
+  }
+
+  function buildRoleAlignedOwnerAssignment(evidence) {
+    if(!evidence.hasExplicitOwner) {
+      return [
+        '■ 담당자·R&R: 미확정',
+        '1. STAGE 02 Action Item에서 명시적인 담당자 또는 책임조직을 확인하지 못했습니다.',
+        '2. 후속 회의에서 업무별 담당자, 승인권자, 협업부서와 완료기한을 확정해야 합니다.',
+        '▶ 산출 근거: STAGE 02 Action Item — 직접 지정된 담당자·책임조직 없음'
+      ].join('\n');
+    }
+
+    const lines = evidence.owner.map(
+      (item, index) => `${index + 1}. ${item.excerpt}`
+    );
+
+    return [
+      '■ 담당자·R&R: STAGE 02 Action Item 기준',
+      ...lines,
+      '▶ 확인 필요: 담당자명·책임범위·완료기한이 불명확한 항목은 회의 주관자가 최종 확정',
+      `▶ 산출 근거: ${formatStage3Evidence(evidence.owner)}`
+    ].join('\n');
+  }
+
+  function buildRoleAlignedKpi(result, evidence) {
+    if(!evidence.hasExplicitKpi) {
+      return [
+        '■ 관리 KPI 제안(목표값 확정 필요)',
+        '1. Action Item 완료율: 담당자와 완료기한이 확정된 업무의 완료 비율',
+        '2. 실행 일정 준수율: 승인일 기준 계획 대비 완료 일정 준수 비율',
+        '3. 의사결정 목표 달성도: STAGE 01에서 정의한 목표의 달성 여부',
+        '▶ 기준값·목표값: STAGE 01·02에 확정 수치가 없어 후속 회의에서 확정 필요',
+        '▶ 산출 근거: STAGE 01·02 — 직접 확인 가능한 확정 KPI 수치 없음'
+      ].join('\n');
+    }
+
+    return appendStage3Evidence(
+      ensureStage3ProposalLabel(result.kpi, 'kpi'),
+      evidence.kpi
+    );
+  }
+
+  function buildRoleAlignedNextAgenda(evidence) {
+    const agendaItems = evidence.unresolved.map(item => item.excerpt);
+
+    if(!evidence.hasExplicitDecision) {
+      agendaItems.push('최종 선택안 및 승인·보류 여부 확정');
+    }
+    if(!evidence.hasExplicitOwner) {
+      agendaItems.push('업무별 담당자·승인권자·협업부서 확정');
+    }
+    if(!evidence.hasExplicitSchedule) {
+      agendaItems.push('승인일 기준 실행 일정과 완료기한 확정');
+    }
+    if(!evidence.hasExplicitKpi) {
+      agendaItems.push('관리 KPI의 기준값·목표값·측정주기 확정');
+    }
+
+    const unique = [];
+    agendaItems.forEach(item => {
+      const normalized = normalizeStage3SourceLine(item);
+      if(!normalized || unique.includes(normalized) || unique.length >= 5) return;
+      unique.push(normalized);
+    });
+
+    if(unique.length === 0) {
+      unique.push(
+        'STAGE 03 실행안 승인',
+        '담당자·일정·KPI 최종 확인',
+        'STAGE 04 진행 현황 보고 주기 확정'
+      );
+    }
+
+    return [
+      '■ 후속 회의 Agenda',
+      ...unique.map((item, index) => `${index + 1}. ${item}`),
+      `▶ 산출 근거: ${formatStage3Evidence(
+        evidence.unresolved,
+        'STAGE 01·02 검토 결과와 미확정 실행항목'
+      )}`
+    ].join('\n');
+  }
+
+  function buildStage3RoleComplianceReview(
+    result,
+    evidence,
+    scheduleValidation
+  ) {
+    const checks = [
+      {
+        name:'최종 결정',
+        ok:evidence.hasExplicitDecision,
+        detail:evidence.hasExplicitDecision
+          ? 'STAGE 02의 명시적 결정 문구를 사용'
+          : '명시적 결정이 없어 미확정으로 처리'
+      },
+      {
+        name:'담당자·R&R',
+        ok:evidence.hasExplicitOwner,
+        detail:evidence.hasExplicitOwner
+          ? 'STAGE 02 Action Item에서 추출'
+          : '직접 근거가 없어 확정 필요로 처리'
+      },
+      {
+        name:'일정',
+        ok:
+          evidence.hasExplicitSchedule ||
+          scheduleValidation.scheduleMode === 'relative',
+        detail:scheduleValidation.scheduleMode === 'relative'
+          ? '확정일이 없어 승인일 기준 T+ 일정 사용'
+          : '입력에서 확인된 미래 일정만 사용'
+      },
+      {
+        name:'KPI',
+        ok:evidence.hasExplicitKpi,
+        detail:evidence.hasExplicitKpi
+          ? 'STAGE 01·02의 지표 근거를 사용'
+          : '확정 수치가 없어 제안 KPI로 처리'
+      },
+      {
+        name:'후속 Agenda',
+        ok:Boolean(result.next_agenda),
+        detail:'STAGE 02 쟁점과 미확정 항목을 기준으로 작성'
+      }
+    ];
+
+    const passed = checks.filter(item => item.ok).length;
+    const score = Math.round((passed / checks.length) * 100);
+
+    return {
+      score,
+      status:score >= 80
+        ? '역할 적합'
+        : (score >= 60 ? '조건부 역할 적합' : '추가 확정 필요'),
+      checks
+    };
+  }
+
+  function buildStage3ReliabilityReview(
+    result,
+    context,
+    scheduleValidation,
+    roleValidation
+  ) {
+    const constraints = context.framework?.constraints || {};
+    const missingItems = [];
+
+    if(!hasMeaningfulFrameworkValue(constraints.budget)) missingItems.push('예산');
+    if(!hasMeaningfulFrameworkValue(constraints.time)) missingItems.push('일정 제약');
+    if(!hasMeaningfulFrameworkValue(constraints.resource)) missingItems.push('인력·기술 자원');
+    if(!hasMeaningfulFrameworkValue(constraints.nonNegotiable)) missingItems.push('절대 준수조건');
+
+    if(
+      !result.owner_assignment ||
+      /미정|미확정|확정 필요/i.test(String(result.owner_assignment))
+    ) {
+      missingItems.push('최종 책임자');
+    }
+
+    let score = 100;
+    score -= Math.min(scheduleValidation.correctionCount * 8, 24);
+    score -= Math.min(missingItems.length * 4, 20);
+    score = Math.round((score + roleValidation.score) / 2);
+    score = Math.max(55, score);
+
+    const trustedDateText = context.futureTrustedDates.length
+      ? context.futureTrustedDates.join(', ')
+      : '입력에서 확인된 미래 절대일정 없음';
+
+    const correctionText = scheduleValidation.correctionCount
+      ? `${scheduleValidation.correctionCount}건을 승인일 기준 T+ 일정으로 자동 정규화`
+      : '과거·미근거 절대일정 없음';
+
+    const checkText = roleValidation.checks
+      .map(item => `${item.name}: ${item.detail}`)
+      .join(' / ');
+
+    return [
+      `■ 종합 검증: ${roleValidation.status} · 신뢰도 ${score}점`,
+      `▶ ROLE 기준: STAGE 01·02를 바탕으로 최종 결정·담당자·일정·KPI·후속 Agenda 생성`,
+      `▶ ROLE 검증: ${checkText}`,
+      `▶ 기준일: ${context.baselineIso}`,
+      `▶ 시간축 검증: ${correctionText}`,
+      `▶ 입력 근거 일정: ${trustedDateText}`,
+      '▶ 신규 사실 통제: 입력 근거가 없는 조직·수치·날짜는 확정값으로 사용하지 않음',
+      `▶ 담당자 확인 필요: ${missingItems.length ? [...new Set(missingItems)].join(', ') : '없음'}`
+    ].join('\n');
+  }
+
+  function validateAndNormalizeStage3Result(
+    result,
+    latestS1,
+    latestS2
+  ) {
+    const context = buildStage3ReliabilityContext(latestS2);
+    const evidence = buildStage3RoleEvidence(
+      latestS1,
+      latestS2,
+      context.framework
+    );
+    const scheduleValidation = normalizeStage3Schedule(
+      result.schedule,
+      context
+    );
+
+    result.decision_summary = buildRoleAlignedDecisionSummary(
+      result,
+      evidence
+    );
+    result.feasibility_check = appendStage3Evidence(
+      result.feasibility_check,
+      [
+        ...evidence.decisionSupport.slice(0, 2),
+        ...evidence.risk.slice(0, 2)
+      ]
+    );
+    result.owner_assignment = buildRoleAlignedOwnerAssignment(evidence);
+    result.schedule = appendStage3Evidence(
+      scheduleValidation.text,
+      evidence.schedule,
+      'STAGE 01·02 — 확정 일정 없음, 승인일 기준 T+ 일정 적용'
+    );
+    result.kpi = buildRoleAlignedKpi(result, evidence);
+    result.contingency_plan = appendStage3Evidence(
+      ensureStage3ProposalLabel(
+        result.contingency_plan,
+        'planB'
+      ),
+      evidence.risk
+    );
+    result.next_agenda = buildRoleAlignedNextAgenda(evidence);
+
+    const roleValidation = buildStage3RoleComplianceReview(
+      result,
+      evidence,
+      scheduleValidation
+    );
+
+    result.source_trace = {
+      decision:evidence.decision,
+      owner:evidence.owner,
+      schedule:evidence.schedule,
+      kpi:evidence.kpi,
+      unresolved:evidence.unresolved,
+      risk:evidence.risk
+    };
+    result.role_compliance = roleValidation;
+    result.reliability_review = buildStage3ReliabilityReview(
+      result,
+      context,
+      scheduleValidation,
+      roleValidation
+    );
+    result.validation_metadata = {
+      baselineDate:context.baselineIso,
+      futureTrustedDates:context.futureTrustedDates,
+      correctedDateReferences:scheduleValidation.correctedReferences,
+      scheduleMode:scheduleValidation.scheduleMode,
+      roleScore:roleValidation.score,
+      roleStatus:roleValidation.status,
+      validatedAt:new Date().toISOString()
+    };
+
+    return result;
+  }
+
   // ---- STAGE 3 ----
   el('s3-run').addEventListener('click', async ()=>{
-    if(state.s2.length === 0){ el('s3-error').textContent='먼저 2단계를 실행해 주세요.'; return; }
+    if(state.s1.length === 0 || state.s2.length === 0){
+      el('s3-error').textContent =
+        'STAGE 03은 STAGE 01과 STAGE 02 산출물이 모두 있어야 실행할 수 있습니다.';
+      return;
+    }
     el('s3-error').textContent='';
     
-    const titles = ['최종 의사결정 결론','실행 가능성·제약 검증','실무 조직 지정','마일스톤 일정','핵심 관리 KPI','컨틴전시 플랜','후속 안건 제언'];
+    const titles = ['최종 의사결정 결론','실행 전제·제약','담당자·R&R','실행 일정','관리 KPI','리스크 대응 조건','후속 회의 Agenda','산출 근거·역할 적합성'];
     showSkeleton(el('s3-skeleton-holder'), titles);
     
     try{
+      const latestS1 = state.s1[state.s1.length - 1];
       const latestS2 = state.s2[state.s2.length - 1];
-      const prompt = `당신은 비즈니스 의사결정을 최종 패키징하는 전략 에이전트입니다. 앞선 모든 결론을 바탕으로 구체적인 실행 계획을 구성하세요.
+      const reliabilityContext = buildStage3ReliabilityContext(latestS2);
+      const trustedDateGuide = reliabilityContext.futureTrustedDates.length
+        ? reliabilityContext.futureTrustedDates.join(', ')
+        : '없음 — 절대 연·월·분기를 임의 생성하지 말고 승인일(T+0) 기준 상대일정을 사용';
+
+      const prompt = `당신의 유일한 역할은 STAGE 01과 STAGE 02 산출물을 최종 의사결정 실행안으로 패키징하는 것입니다.
+
+[STAGE 03 ROLE]
+1. STAGE 01 사전분석과 STAGE 02 회의결과를 바탕으로 최종 의사결정 상태를 정리합니다.
+2. STAGE 02 Action Item에 실제로 등장한 담당자·책임조직만 담당자·R&R에 사용합니다.
+3. STAGE 01·02에 확인된 일정만 사용하며, 확정일이 없으면 승인일(T+0) 기준 상대일정을 작성합니다.
+4. STAGE 01·02에서 확인된 평가기준·목표·수치만 KPI 근거로 사용합니다.
+5. STAGE 02의 쟁점·이견·미확정 항목을 후속 회의 Agenda로 전환합니다.
+6. STAGE 01·02에 명시적 최종 결정이 없으면 임의로 결정하지 말고 '최종 의사결정 미확정'으로 작성합니다.
+7. 새로운 대안, 조직명, 날짜, 예산, 수치, 외부사실을 추가로 창작하지 않습니다.
+8. 실행 가능성·Plan B는 최종 결정 실행을 지원하는 보조 항목으로만 작성합니다.
+
+[시간·근거 기준]
+- 현재 기준일: ${reliabilityContext.baselineIso}
+- 입력에서 확인된 미래 확정일정: ${trustedDateGuide}
+- 위 확정일정에 없는 연도·월·분기·날짜를 임의로 만들지 마세요.
+- 확정일이 없으면 모든 마일스톤을 승인일(T+0) 기준 T+2주, T+1개월처럼 상대일정으로 작성하세요.
+- 기준일 이전 날짜는 일정으로 사용하지 마세요. 과거 사실은 반드시 '과거 사례'로 표시하세요.
+- 입력 자료에 없는 예산·KPI·담당조직·일정은 'AI 제안값·확정 필요'로 표시하세요.
+- 안건, STAGE 01·02 결과, 5대 핵심요소에 없는 사실을 새롭게 단정하지 마세요.
+- 불명확한 정보는 추측하지 말고 '미확정' 또는 '담당자 확인 필요'로 작성하세요.
 
 안건: """${state.agenda}"""
-회의 요약: """${JSON.stringify(latestS2)}"""
-의사결정 5대 핵심요소: """${JSON.stringify(getDecisionFrameworkData())}"""
+STAGE 01 회의 준비 산출물: """${JSON.stringify(latestS1)}"""
+STAGE 02 회의 중 산출물: """${JSON.stringify(latestS2)}"""
+의사결정 5대 핵심요소(보조 검증자료): """${JSON.stringify(getDecisionFrameworkData())}"""
 
 [★양적 확장 및 가독성 지침★]
-1. 무조건 【두괄식 구조】로 첫 문장에 최종 실행 결론을 명시하세요.
-2. 각 지표 카드별로 최소 [2개 이상]의 구체적인 담당조직 업무, 세부 마일스톤 타임라인, 정량적 KPI 목표 수치 등이 강제 명시되어야 합니다.
-3. 번호 표기('1.', '2.')와 시각 기호('■', '▶')를 적극적으로 매칭하여 작성하세요.
-4. constraints_draft에는 4번 실행력·자원 제약 초안을 예산, 일정, 인력·기술, 절대 준수조건으로 구분하여 작성하세요.
-5. 새로 작성한 constraints_draft와 최신 결정 결과를 반영하여 framework_suitability_review에 7줄 이내의 적정성 진단을 작성하세요.
-6. 다른 설명 없이 JSON으로만 응답하세요.
+1. 각 출력은 반드시 STAGE 01 또는 STAGE 02의 해당 근거와 연결되어야 합니다.
+2. decision_summary는 STAGE 02 회의요약·대안평가의 결정 상태를 중심으로 작성합니다.
+3. owner_assignment는 STAGE 02 Action Item의 담당자·R&R만 사용합니다. 직접 근거가 없으면 미확정으로 작성합니다.
+4. schedule은 STAGE 02 Action Item과 STAGE 01 리스크·제약을 사용합니다. 확정일이 없으면 승인일 기준 T+ 일정으로 작성합니다.
+5. kpi는 STAGE 01 지표와 STAGE 02 평가기준·Action Item을 사용합니다. 확정 수치가 없으면 목표값 확정 필요로 작성합니다.
+6. next_agenda는 STAGE 02 쟁점·이견·미확정 사항과 담당자·일정·KPI의 미확정 항목으로 작성합니다.
+7. feasibility_check와 contingency_plan은 위 실행안의 전제조건과 위험 대응만 작성합니다.
+8. 번호 표기('1.', '2.')와 시각 기호('■', '▶')를 사용하되 입력에 없는 세부사항을 만들지 마세요.
+9. constraints_draft에는 예산, 일정, 인력·기술, 절대 준수조건을 입력 근거와 미확정으로 구분해 작성하세요.
+10. framework_suitability_review에는 STAGE 03 ROLE 충족 여부와 미확정 사항을 7줄 이내로 작성하세요.
+11. 다른 설명 없이 JSON으로만 응답하세요.
 
-{"decision_summary":"■ 최종 결론: ...\\n1. ...\\n2. ...", "feasibility_check":"■ 실행 가능성 판단: ...\\n1. 예산·일정·인력·기술 검증 ...\\n2. 절대 준수조건 및 조건부 추진사항 ...", "owner_assignment":"■ 담당 조직: ...\\n1. ...\\n2. ...", "schedule":"■ 마일스톤: ...\\n1. ...\\n2. ...", "kpi":"■ 평가지표: ...\\n1. ...\\n2. ...", "contingency_plan":"■ Plan B: ...\\n1. 경고·중단·전환 조건 ...\\n2. 복구·대체 실행안 ...", "next_agenda":"■ 후속 안건: ...\\n1. ...\\n2. ...", "constraints_draft":{"budget":"...","time":"...","resource":"...","nonNegotiable":"..."}, "framework_suitability_review":"■ 종합 진단: 적정/조건부 적정/보완 필요 ...\\n▶ 완료 요소: ...\\n▶ 변경·추가 반영사항: ...\\n▶ 보완 요소: ...\\n▶ 다음 단계 권고: ..."}`;
+{"decision_summary":"■ 최종 의사결정: 확정/조건부 확정/보류/미확정 중 근거에 맞는 상태\\n1. STAGE 02 결정 근거 ...\\n2. STAGE 01 분석 근거 ...", "feasibility_check":"■ 실행 전제·제약: ...\\n1. 예산·일정·인력·기술 검증 ...\\n2. 절대 준수조건 및 확인 필요사항 ...", "owner_assignment":"■ 담당자·R&R: STAGE 02 Action Item 기준 또는 미확정\\n1. 담당자·책임조직·업무 ...\\n2. 승인권자·협업부서·완료기한 ...", "schedule":"■ 실행 일정: 승인일(T+0) 기준 상대일정 또는 입력에서 확인된 미래 확정일정\\n1. T+0~2주: ...\\n2. T+3~6주: ...\\n3. T+7~12주: ...", "kpi":"■ 관리 KPI: 입력 근거가 있으면 사용하고 없으면 목표값 확정 필요\\n1. 지표·산식·측정주기 ...\\n2. 기준값·목표값·책임자 ...", "contingency_plan":"■ 리스크 대응 조건: STAGE 01 리스크와 STAGE 02 우려사항 기준\\n1. 경고·중단·전환 조건 ...\\n2. 복구·대체 실행안 ...", "next_agenda":"■ 후속 회의 Agenda: STAGE 02 쟁점과 미확정 실행항목 기준\\n1. ...\\n2. ...", "constraints_draft":{"budget":"입력 근거 또는 미확정","time":"입력 근거 또는 승인일 기준 상대일정","resource":"입력 근거 또는 미확정","nonNegotiable":"입력 근거 또는 확인 필요"}, "framework_suitability_review":"■ ROLE 적합성: 적합/조건부 적합/추가 확정 필요 ...\\n▶ STAGE 01 근거: ...\\n▶ STAGE 02 근거: ...\\n▶ 미확정 항목: ...\\n▶ 다음 단계 권고: ..."}`;
       
       const r = await callGemini(
         prompt,
@@ -5841,6 +6529,12 @@ ${categoryOutputFormat}`;
           constraints:r.constraints_draft
         });
       }
+
+      validateAndNormalizeStage3Result(
+        r,
+        latestS1,
+        latestS2
+      );
 
       state.s3.push(r);
       setFrameworkSuitabilityReview(
@@ -5859,16 +6553,17 @@ ${categoryOutputFormat}`;
         kind: 'output',
         type: 'stage3_decision',
         title: 'STAGE 03 · 회의 종료 후 산출 결과',
-        content: '최종 의사결정 / 담당 조직 / 일정 / KPI / 후속 안건',
+        content: 'STAGE 01·02 기반 최종 의사결정 / 담당자·R&R / 실행 일정 / 관리 KPI / 후속 회의 Agenda',
         data: r,
         display: [
           ['최종 의사결정 결론', r.decision_summary],
-          ['실행 가능성·제약 검증', r.feasibility_check],
-          ['실무 조직 지정', r.owner_assignment],
-          ['마일스톤 일정', r.schedule],
-          ['핵심 관리 KPI', r.kpi],
-          ['컨틴전시 플랜', r.contingency_plan],
-          ['후속 안건 제언', r.next_agenda]
+          ['실행 전제·제약', r.feasibility_check],
+          ['담당자·R&R', r.owner_assignment],
+          ['실행 일정', r.schedule],
+          ['관리 KPI', r.kpi],
+          ['리스크 대응 조건', r.contingency_plan],
+          ['후속 회의 Agenda', r.next_agenda],
+          ['산출 근거·역할 적합성', r.reliability_review]
         ],
         agendaSummary: state.agenda
       });
@@ -5876,12 +6571,13 @@ ${categoryOutputFormat}`;
       
       appendCardsGroup(el('s3-history-container'), [
         ['최종 의사결정 결론', r.decision_summary],
-        ['실행 가능성·제약 검증', r.feasibility_check],
-        ['실무 조직 지정', r.owner_assignment],
-        ['마일스톤 일정', r.schedule],
-        ['핵심 관리 KPI', r.kpi],
-        ['컨틴전시 플랜', r.contingency_plan],
-        ['후속 안건 제언', r.next_agenda],
+        ['실행 전제·제약', r.feasibility_check],
+        ['담당자·R&R', r.owner_assignment],
+        ['실행 일정', r.schedule],
+        ['관리 KPI', r.kpi],
+        ['리스크 대응 조건', r.contingency_plan],
+        ['후속 회의 Agenda', r.next_agenda],
+        ['산출 근거·역할 적합성', r.reliability_review],
       ], {stage:3, recordData:r});
     }catch(e){
       hideSkeleton(el('s3-skeleton-holder'));
